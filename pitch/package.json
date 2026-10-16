@@ -1,0 +1,12 @@
+{
+  "name": "pitch",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pdf": "node exportar-pdf.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.64.1",
+    "reveal.js": "^6.0.2"
+  }
+}
