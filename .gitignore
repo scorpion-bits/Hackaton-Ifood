@@ -17,3 +17,7 @@ frontend/dist/
 Thumbs.db
 
 # o PDF do pitch (pitch/pitch.pdf) É versionado de propósito
+
+# claude code local
+.claude/settings.local.json
+.claude/worktrees/

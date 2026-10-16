@@ -1,4 +1,4 @@
-# CLAUDE.md — memória operacional (só estado vigente; substituir linhas, não acumular)
+# CLAUDE.md — memória operacional (só estado vigente; máx. 250 linhas — o hook arquiva o excesso)
 
 ## Evento
 - Hackathon iFood × SEMCOMP 29, ONOVOLAB (São Carlos). 17/10 12h30 → 18/10 18h00 (BRT). Prêmio R$ 7 mil.
@@ -22,7 +22,23 @@
 - Resposta longa termina com: o que mudou · 🧪 como testar · 👥 o que a equipe faz. Máx. 3 perguntas por vez.
 
 ## Fase atual
-- **Fase 0 concluída** (esqueleto genérico). Próximo: receber o enunciado → produzir a análise da Fase 4 e PARAR.
+- **Fase 0 concluída.** O esqueleto é **só referência** (decisão da equipe em 16/10): reaproveitar o que servir à ideia aprovada.
+- **Aguardando o tema** (17/10 12h30). A equipe vai usar `/tema <enunciado>` → análise da Fase 4 e PARAR.
+
+- **Plano vigente:** nenhum ainda (o `/tema` cria `docs/planos/etapa-01-analise.md`). Índice: `docs/planos/README.md`.
+
+## Orquestração (detalhes em docs/orquestracao.md)
+- O chat principal é o **engenheiro-chefe (Opus)**: escreve o plano de cada etapa em `docs/planos/etapa-NN-*.md`
+  (modelo `TEMPLATE.md`), delega aos subagentes de `.claude/agents/`, integra, testa, commita.
+- Cada tarefa do plano tem agente, **modelo e esforço**; ao delegar, passe exatamente esses `model` e `effort` ao Agent tool.
+- Subagentes: `arquiteto`, `dev-backend`, `dev-mcp-ifood`, `dev-frontend`, `qa-testador`, `pitch-demo`, `pesquisador`.
+- Comandos: `/tema` → `/executar` → `/continuar` (repetir) · `/status`. Reserva: `docs/prompt-abertura.md`.
+- Tudo que precisa sobreviver a um `/clear` vai para o plano vigente ou para este arquivo.
+- Tarefas paralelas só com arquivos separados; subagente não faz commit.
+
+## Regra de memória deste arquivo
+- Máximo **250 linhas**, só estado vigente. Passou do limite → mover o que não vale mais para `docs/historico.md`
+  (topo, com data e motivo; arquivar, nunca apagar) e voltar a ~180 linhas. Um hook avisa automaticamente.
 
 ## Estado do código
 - `backend/app/main.py` — FastAPI: `/api/saude`, `/api/chat`, `/api/acoes[/{id}/confirmar|recusar]`, `/api/lojas`, `/api/demo/resetar`; serve `frontend/dist`.
