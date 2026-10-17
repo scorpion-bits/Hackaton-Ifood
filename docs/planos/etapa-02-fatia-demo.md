@@ -161,7 +161,7 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 | 02.4 | Checkout com consentimento e acompanhamento (C6) | dev-mcp-ifood | opus | high | `backend/app/match/checkout.py`, `backend/tests/test_checkout.py` | 02.1, 02.2 | testes: sem consentimento não envia; total mudou → para; falha no 2º pedido → 1º enviado e status "falhou" com loja | 🔄 |
 | 02.5 | API da sala + estado + pagamentos (C7) | dev-backend | sonnet | high | `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/app/main.py` (só incluir o router e estender o reset), `backend/tests/test_salas.py` | 02.2, 02.3, 02.4 | teste de API faz o fluxo inteiro do "Pronto quando" com TestClient; ações sem token → 403; enviar antes de 100% pago → 409 | ⬜ |
 | 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ✅ |
-| 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | 🔄 |
+| 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ✅ |
 | 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ✅ |
 | 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | ⬜ |
 
@@ -191,6 +191,11 @@ integração (engenheiro-chefe: `./iniciar.sh --testes`, build, Playwright no fl
   5db5261, 848af5f. Problema: 1 item por pessoa no C3 → C4b (slots). Formatos do demo MCP: `searchOffers` → `results`
   (ITEM: itemId, name, description, category, price, tags, perecivel + loja); `listAddresses` → `addresses`; entrega
   `DEFAULT`; pagamentos `pm-demo-*`. 02.7 adiantada (só dependia da 02.6).
+
+- 17/10 ~22h — 02.7 ✅ (build ok; sem teste no navegador até a 02.5). Suposições do front que a 02.5 deve cumprir:
+  `prazo_fim` ISO com `Z`; `pagamentos[pid].status` ∈ pendente|aguardando_confirmacao|pago; organizador =
+  `participantes[0]` (melhor: campo `organizador_id`); `junto` pode ir direto a `pronto_para_enviar`; `pedidos[]` com
+  `order_id`, `loja_id`, `loja_nome`, `total`, `status` (texto ou `{code,description}`), `erro`; `nota` 0–1.
 
 ## Fechamento
 (preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)

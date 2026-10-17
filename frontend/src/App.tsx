@@ -6,6 +6,9 @@ import Rastro from "./componentes/Rastro";
 import Inicio from "./telas/Inicio";
 import Organizador from "./telas/Organizador";
 import Convidado from "./telas/Convidado";
+import Resultado from "./telas/Resultado";
+import Pagamento from "./telas/Pagamento";
+import Pedidos from "./telas/Pedidos";
 
 type Rota =
   | { tipo: "inicio" }
@@ -57,35 +60,18 @@ function useSala(id: string): { sala: EstadoSala | null; erro: string } {
   return { sala, erro };
 }
 
-const ROTULO_FASE: Record<string, string> = {
-  match_pronto: "Resultado do Match",
-  aguardando_pagamentos: "Revisão e pagamento",
-  pronto_para_enviar: "Pronto para enviar",
-  enviado: "Pedidos",
-};
-
-// Placeholder: Resultado, Pagamento e Pedidos serão telas próprias (outra tarefa).
-function PlaceholderFase({ sala, organizador }: { sala: EstadoSala; organizador: boolean }) {
-  return (
-    <section className="tela">
-      <div className="cartao centro">
-        <h1>{ROTULO_FASE[sala.estado] ?? sala.estado}</h1>
-        <p className="suave">
-          {organizador
-            ? "Esta etapa ainda está em construção."
-            : sala.estado === "match_pronto"
-              ? "O organizador está escolhendo a melhor combinação."
-              : "O organizador está cuidando do pedido."}
-        </p>
-        {sala.resultado && (
-          <p>
-            {sala.resultado.combinacoes.length} combinação(ões) encontrada(s).
-          </p>
-        )}
-      </div>
-      <Rastro itens={sala.rastro} />
-    </section>
-  );
+function FaseSala({ salaId, sala, organizador }: { salaId: string; sala: EstadoSala; organizador: boolean }) {
+  switch (sala.estado) {
+    case "match_pronto":
+      return <Resultado salaId={salaId} sala={sala} organizador={organizador} />;
+    case "aguardando_pagamentos":
+    case "pronto_para_enviar":
+      return <Pagamento salaId={salaId} sala={sala} organizador={organizador} />;
+    case "enviado":
+      return <Pedidos salaId={salaId} sala={sala} organizador={organizador} />;
+    default:
+      return null;
+  }
 }
 
 function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }> }) {
@@ -116,7 +102,7 @@ function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }>
               <Convidado salaId={rota.id} sala={sala} />
             )
           ) : (
-            <PlaceholderFase sala={sala} organizador={org} />
+            <FaseSala salaId={rota.id} sala={sala} organizador={org} />
           )}
           {sala.estado === "coletando" && sala.rastro.length > 0 && <Rastro itens={sala.rastro} />}
         </>
