@@ -16,6 +16,7 @@ O LLM só dá a nota de cada candidato e o perfil; toda a conta é deste módulo
 
 from __future__ import annotations
 
+import heapq
 import itertools
 import math
 from dataclasses import dataclass
@@ -24,7 +25,7 @@ from .modelos import PERFIS, Candidato, Combinacao, Pesos
 
 MAX_CANDIDATOS_POR_PESSOA = 8  # por slot
 MAX_COMBINACOES = 50_000  # por conjunto de lojas
-MAX_AVALIACOES = 400_000  # no total
+MAX_AVALIACOES = 120_000  # no total (repartido entre os conjuntos de lojas)
 TEMPO_ALVO_MIN = 60
 DELTA_ETA_PERECIVEL_MIN = 15
 VERTICAL_RESTAURANTE = "RESTAURANT"
@@ -87,14 +88,14 @@ def _sem_repetidos(lista: list[Candidato]) -> list[Candidato]:
     return saida
 
 
-def _podar(listas: list[list[Candidato]]) -> list[list[Candidato]]:
-    """Corta o pior candidato de quem tem mais opções até o produto caber em MAX_COMBINACOES."""
+def _podar(listas: list[list], limite: int = MAX_COMBINACOES) -> list[list]:
+    """Corta a pior opção de quem tem mais opções até o produto caber em `limite` (listas já ordenadas)."""
     listas = [list(l) for l in listas]
-    while math.prod(len(l) for l in listas) > MAX_COMBINACOES:
+    while math.prod(len(l) for l in listas) > limite:
         maior = max(range(len(listas)), key=lambda i: len(listas[i]))
         if len(listas[maior]) <= 1:
             break
-        listas[maior].pop()  # já ordenadas por nota desc
+        listas[maior].pop()  # já ordenadas da melhor para a pior
     return listas
 
 
@@ -122,4 +123,253 @@ def _decimal(valor: float) -> str:
     return f"{valor:.1f}".replace(".", ",")
 
 
-__RESTO__
+def _explicar(n_lojas: int, nota_min: float, custo: float, taxa_conhecida: bool, atraso: int | None,
+              perecivel: float, sem_opcao: list[str], slots_fora: int = 0) -> str:
+    partes = [f"{n_lojas} loja" + ("s" if n_lojas != 1 else "")]
+    piso = math.floor(nota_min * 10 + 1e-9) / 10
+    partes.append(f"todos com nota ≥ {_decimal(piso)}")
+    partes.append(f"{_reais(custo)} " + ("com taxa" if taxa_conhecida else "sem taxa"))
+    if atraso:
+        partes.append(f"chega em até {atraso} min")
+    if perecivel:
+        partes.append("atenção: perecível chega em horário diferente")
+    if slots_fora:
+        partes.append(f"{slots_fora} " + ("item ficou de fora" if slots_fora == 1 else "itens ficaram de fora"))
+    if sem_opcao:
+        partes.append("sem opção válida para " + ", ".join(sem_opcao))
+    return " · ".join(partes)
+
+
+@dataclass(frozen=True)
+class _OpcaoPessoa:
+    """Uma escolha de itens para uma pessoa (1 candidato por slot escolhido; slots extras podem ficar de fora)."""
+
+    escolhidos: tuple[Candidato, ...]
+    n_fora: int
+    penal: float
+    preco: float
+    sat: float
+    lojas: frozenset[str]
+    mascara: int = 0  # bit de cada loja (para testar o conjunto de lojas rápido)
+    eta_max: int = 0
+    perecivel: bool = False
+
+
+def _slots_por_pessoa(slots: list[str], pessoa_de: dict[str, str]) -> dict[str, list[str]]:
+    """Agrupa os slots por pessoa, na ordem em que aparecem (o 1º slot é o principal)."""
+    grupos: dict[str, list[str]] = {}
+    for slot in slots:
+        grupos.setdefault(pessoa_de.get(slot, slot), []).append(slot)
+    return grupos
+
+
+def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], teto: float | None,
+                      bits: dict[str, int]) -> list[_OpcaoPessoa]:
+    com_opcao = [s for s in slots if validos.get(s)]
+    if not com_opcao:
+        return []
+    principal = slots[0]
+    varios = len(com_opcao) > 1
+    listas = [([None] + validos[s]) if varios else validos[s] for s in com_opcao]
+    opcoes: list[_OpcaoPessoa] = []
+    for combo in itertools.product(*listas):
+        escolhidos = tuple(c for c in combo if c is not None)
+        if not escolhidos:
+            continue
+        if len({(c.loja_id, c.item_id) for c in escolhidos}) < len(escolhidos):
+            continue  # o mesmo item não vale por dois slots
+        preco = round(sum(c.preco for c in escolhidos), 2)
+        if teto is not None and preco > teto + 1e-9:
+            continue
+        fora = [s for s, c in zip(com_opcao, combo) if c is None]
+        penal = sum(PENAL_SLOT_PRINCIPAL_FORA if s == principal else PENAL_SLOT_EXTRA_FORA for s in fora)
+        opcoes.append(_OpcaoPessoa(
+            escolhidos=escolhidos, n_fora=len(fora), penal=penal, preco=preco,
+            sat=sum(c.nota for c in escolhidos) / len(escolhidos),
+            lojas=frozenset(c.loja_id for c in escolhidos),
+            mascara=sum({bits[c.loja_id] for c in escolhidos}),
+            eta_max=max((c.eta_min for c in escolhidos if c.eta_min is not None), default=0),
+            perecivel=any(c.perecivel and c.vertical == VERTICAL_RESTAURANTE for c in escolhidos),
+        ))
+    opcoes.sort(key=lambda o: (o.penal, -o.sat, o.preco, tuple((c.loja_id, c.item_id) for c in o.escolhidos)))
+    return opcoes
+
+
+def _penal_ausente(slots: list[str], validos: dict[str, list[Candidato]]) -> tuple[int, float]:
+    """Slots com opção válida que ficam de fora quando a pessoa inteira fica de fora (e a penalidade deles)."""
+    com_opcao = [s for s in slots if validos.get(s)]
+    penal = sum(PENAL_SLOT_PRINCIPAL_FORA if s == slots[0] else PENAL_SLOT_EXTRA_FORA for s in com_opcao)
+    return len(com_opcao), penal
+
+
+def otimizar(
+    candidatos: dict[str, list[Candidato]],
+    pesos: Pesos,
+    max_lojas: int = 2,
+    taxas: dict[str, float] | None = None,
+    top: int = 3,
+    orcamentos: dict[str, float | None] | None = None,
+    pessoa_de: dict[str, str] | None = None,
+) -> list[Combinacao]:
+    """Devolve as `top` melhores combinações distintas, por score decrescente.
+
+    `candidatos` é por slot; `pessoa_de` (slot → pessoa) e `orcamentos` (por pessoa) são opcionais:
+    sem `pessoa_de`, cada chave é uma pessoa com 1 item. Pessoa sem nenhum candidato válido fica fora
+    (aparece em `componentes["pessoas_sem_opcao"]` e na `explicacao`); nada cabe → `[]`.
+    """
+    orcamentos = orcamentos or {}
+    pessoa_de = pessoa_de or {}
+    validos = filtrar_validos(candidatos, orcamentos, pessoa_de)
+    grupos = _slots_por_pessoa(list(candidatos), pessoa_de)
+    lojas_todas: list[str] = []
+    for slots in grupos.values():
+        for slot in slots:
+            for c in validos[slot]:
+                if c.loja_id not in lojas_todas:
+                    lojas_todas.append(c.loja_id)
+    bits = {loja: 1 << i for i, loja in enumerate(lojas_todas)}
+    opcoes = {p: _opcoes_da_pessoa(slots, validos, orcamentos.get(p), bits) for p, slots in grupos.items()}
+    sem_opcao = [p for p in grupos if not opcoes[p]]
+    ativas = [p for p in grupos if opcoes[p]]
+    if not ativas or top <= 0 or max_lojas <= 0:
+        return []
+    ausente = {p: _penal_ausente(grupos[p], validos) for p in ativas}
+
+    # Referência de orçamento: orçamento da pessoa, ou a soma do preço médio de cada slot dela.
+    orcamento_ref = 0.0
+    for p in ativas:
+        teto = orcamentos.get(p)
+        if teto:
+            orcamento_ref += teto
+        else:
+            orcamento_ref += sum(sum(c.preco for c in validos[s]) / len(validos[s]) for s in grupos[p] if validos[s])
+    if orcamento_ref <= 0:
+        orcamento_ref = 1.0
+
+    # Cada conjunto de lojas (≤ max_lojas) recebe uma fatia igual do orçamento de avaliações,
+    # para nenhum conjunto ficar sem ser visto. Uma combinação só conta no conjunto exato das lojas que usa.
+    tamanhos = range(1, min(max_lojas, len(lojas_todas)) + 1)
+    n_conjuntos = sum(math.comb(len(lojas_todas), k) for k in tamanhos)
+    por_conjunto = max(200, min(MAX_COMBINACOES, MAX_AVALIACOES // max(1, n_conjuntos)))
+    finalistas: list[tuple] = []  # heap com as melhores (score mais alto, depois custo menor)
+    limite_heap = max(top * 4, 12)
+    contador = itertools.count()
+
+    for k in tamanhos:
+        termo_lojas = pesos.delta_lojas * (k - 1)
+        for conjunto in itertools.combinations(lojas_todas, k):
+            alvo = sum(bits[l] for l in conjunto)
+            listas: list[list] = []
+            for p in ativas:
+                dentro = [o for o in opcoes[p] if o.mascara & ~alvo == 0]
+                listas.append(dentro or [None])  # None = a pessoa fica de fora neste conjunto de lojas
+            if all(l == [None] for l in listas):
+                continue
+            taxa_conhecida = taxas is not None and all(l in taxas for l in conjunto)
+            soma_taxas = sum(taxas[l] for l in conjunto) if taxa_conhecida else 0.0
+            for escolha in itertools.product(*_podar(listas, por_conjunto)):
+                mascara = 0
+                for o in escolha:
+                    if o is not None:
+                        mascara |= o.mascara
+                if mascara != alvo:
+                    continue  # esta combinação é contada no conjunto de lojas menor
+                soma_sat = 0.0
+                minimo = 1e9
+                preco = 0.0
+                penal_slots = 0.0
+                atraso = 0
+                tem_perecivel = False
+                for p, o in zip(ativas, escolha):
+                    if o is None:
+                        minimo = 0.0
+                        penal_slots += ausente[p][1]
+                        continue
+                    soma_sat += o.sat
+                    minimo = min(minimo, o.sat)
+                    preco += o.preco
+                    penal_slots += o.penal
+                    atraso = max(atraso, o.eta_max)
+                    tem_perecivel = tem_perecivel or o.perecivel
+                custo_total = round(preco + soma_taxas, 2)
+                penal = 0.0
+                if tem_perecivel:
+                    penal = _penal_perecivel([c for o in escolha if o is not None for c in o.escolhidos])
+                score = (soma_sat / len(ativas) + pesos.alfa_justica * minimo
+                         - pesos.beta_custo * (custo_total / orcamento_ref)
+                         - pesos.gama_atraso * (atraso / TEMPO_ALVO_MIN)
+                         - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots)
+                item = (round(score, 4), -custo_total, -next(contador), escolha)
+                if len(finalistas) < limite_heap:
+                    heapq.heappush(finalistas, item)
+                elif item[:2] > finalistas[0][:2]:
+                    heapq.heapreplace(finalistas, item)
+
+    resultado = []
+    for _, _, _, escolha in finalistas:
+        escolhidos = [c for o in escolha if o is not None for c in o.escolhidos]
+        lojas: list[str] = []
+        for c in escolhidos:
+            if c.loja_id not in lojas:
+                lojas.append(c.loja_id)
+        chave = tuple((c.participante_id, c.loja_id, c.item_id) for c in escolhidos)
+        resultado.append(_pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_ref,
+                                  ausente, sem_opcao))
+    # Desempate determinístico: score maior, depois mais barato, depois chave estável.
+    resultado.sort(key=lambda par: par[0])
+    return [comb for _, comb in resultado[:top]]
+
+
+def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_ref, ausente, sem_opcao):
+    sats = [o.sat if o is not None else 0.0 for o in escolha]
+    presentes = [o.sat for o in escolha if o is not None]
+    fora_pessoas = [p for p, o in zip(ativas, escolha) if o is None]
+    media = sum(sats) / len(sats)
+    minimo = min(sats)
+    slots_fora = sum(o.n_fora for o in escolha if o is not None) + sum(ausente[p][0] for p in fora_pessoas)
+    penal_slots = sum(o.penal for o in escolha if o is not None) + sum(ausente[p][1] for p in fora_pessoas)
+
+    soma_itens = sum(c.preco for c in escolhidos)
+    taxa_conhecida = taxas is not None and all(l in taxas for l in lojas)
+    soma_taxas = sum(taxas[l] for l in lojas) if taxa_conhecida else 0.0
+    custo_total = round(soma_itens + soma_taxas, 2)
+    etas = [c.eta_min for c in escolhidos if c.eta_min is not None]
+    atraso_max = max(etas) if etas else 0
+    penal = _penal_perecivel(escolhidos)
+
+    termo_justica = pesos.alfa_justica * minimo
+    termo_custo = pesos.beta_custo * (custo_total / orcamento_ref)
+    termo_atraso = pesos.gama_atraso * (atraso_max / TEMPO_ALVO_MIN)
+    termo_lojas = pesos.delta_lojas * (len(lojas) - 1)
+    termo_perecivel = pesos.epsilon_perecivel * penal
+    score = (media + termo_justica - termo_custo - termo_atraso - termo_lojas - termo_perecivel - penal_slots)
+
+    componentes = {
+        "media_nota": round(media, 4),
+        "min_nota": round(minimo, 4),
+        "custo_total": custo_total,
+        "orcamento_ref": round(orcamento_ref, 2),
+        "atraso_max_min": float(atraso_max),
+        "n_lojas": float(len(lojas)),
+        "penal_perecivel": penal,
+        "termo_justica": round(termo_justica, 4),
+        "termo_custo": round(-termo_custo, 4),
+        "termo_atraso": round(-termo_atraso, 4),
+        "termo_lojas": round(-termo_lojas, 4),
+        "termo_perecivel": round(-termo_perecivel, 4),
+        "slots_fora": float(slots_fora),
+        "termo_slots_fora": round(-penal_slots, 4),
+        "pessoas_sem_opcao": float(len(sem_opcao) + len(fora_pessoas)),
+    }
+    combinacao = Combinacao(
+        escolhas={c.participante_id: c for c in escolhidos},
+        lojas=lojas,
+        score=round(score, 4),
+        componentes=componentes,
+        taxa_conhecida=taxa_conhecida,
+        explicacao=_explicar(len(lojas), min(presentes) if presentes else 0.0, custo_total, taxa_conhecida,
+                             atraso_max or None, penal, [*sem_opcao, *fora_pessoas],
+                             slots_fora=int(slots_fora - sum(ausente[p][0] for p in fora_pessoas))),
+    )
+    # Desempate determinístico: score maior, depois mais barato, depois chave estável.
+    return ((-score, custo_total, chave), combinacao)
