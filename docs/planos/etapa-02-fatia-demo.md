@@ -128,7 +128,16 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 ### C8. Frontend — rotas por hash (`#/`, `#/s/{id}`, `#/s/{id}/org`), polling de 2 s em `GET /api/salas/{id}`
 - `frontend/src/tipos.ts` espelha C3/C7. `api.ts` ganha funções das rotas C7. Token do organizador e
   "lembrar de mim" (nome + chips) em `localStorage` com try/catch.
-- Telas: **Início** (criar Match) · **Sala do organizador** (QR + link, lista quem respondeu, botão Rodar) ·
+- **Visual "dentro do app do iFood"** (pedido da equipe, 17/10; referência com fontes: `docs/design-ifood.md` — tokens, ordem
+  da home, fonte Inter no lugar da proprietária): a tela **Início** imita a home do app — topo com
+  endereço, abas Início/Restaurantes/Mercados/Bebidas, chips (Ordenar · Pra retirar · Entrega grátis), círculos de
+  categorias, banner, "Últimas lojas" e barra inferior (Início · Busca · **Match** · Pedidos · Perfil). O Match entra
+  como **banner de destaque** ("Pedir em grupo? Dê um Match") + **aba central na barra inferior**. Paleta vermelha
+  (`--marca: #EA1D2C`), cantos arredondados, fonte do sistema. **Sem logo nem fotos do iFood**: ícones/emoji e
+  formas CSS; lojas e itens só do demo MCP. Rodapé fixo pequeno: "Protótipo de hackathon · não é o app oficial".
+  Só a home é decorativa; os itens da home que não funcionam ficam visualmente desabilitados (regra: botão que não
+  funciona não aparece como clicável).
+- Telas: **Início** (home estilo iFood + entrada do Match) · **Sala do organizador** (QR + link, lista quem respondeu, botão Rodar) ·
   **Convidado** (≤ 30 s: nome, frase, orçamento, chips) · **Resultado** (quadro por pessoa: item, loja, preço, nota,
   motivo; total; avisos; alternativas 2 e 3) · **Revisão e pagamento** (por loja: subtotal, taxa, total, ETA; aviso
   "N pedidos, N cobranças"; junto/separado; partes; Pix QR, cartão simulado, dinheiro; contador de prazo; recebi) ·
@@ -144,7 +153,7 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 | 02.3 | Motor: LLM JSON, intérprete, busca, juiz (C5) | dev-backend | opus | high | `backend/app/match/llm.py`, `interprete.py`, `busca.py`, `juiz.py`, `motor.py`, `backend/tests/test_motor.py` | 02.1, 02.2 | com `LLM_PROVIDER=mock`, 3 desejos do roteiro (japonês+sorvete / hambúrguer+sorvete / econômico vegetariano) geram top 3 coerente usando só preços do demo MCP; teste com provedor HTTP falso cobre o caminho LLM | ⬜ |
 | 02.4 | Checkout com consentimento e acompanhamento (C6) | dev-mcp-ifood | opus | high | `backend/app/match/checkout.py`, `backend/tests/test_checkout.py` | 02.1, 02.2 | testes: sem consentimento não envia; total mudou → para; falha no 2º pedido → 1º enviado e status "falhou" com loja | ⬜ |
 | 02.5 | API da sala + estado + pagamentos (C7) | dev-backend | sonnet | high | `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/app/main.py` (só incluir o router e estender o reset), `backend/tests/test_salas.py` | 02.2, 02.3, 02.4 | teste de API faz o fluxo inteiro do "Pronto quando" com TestClient; ações sem token → 403; enviar antes de 100% pago → 409 | ⬜ |
-| 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; criar sala e entrar como convidado funcionam contra o backend | ⬜ |
+| 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ⬜ |
 | 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ⬜ |
 | 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ⬜ |
 | 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | ⬜ |

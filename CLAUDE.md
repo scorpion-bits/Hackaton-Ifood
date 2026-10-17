@@ -32,7 +32,8 @@
   Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
   2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
 - **Plano vigente:** `docs/planos/etapa-02-fatia-demo.md`. Etapas 02–05: `docs/planos/README.md`.
-- 👥 Agente "IBits" aguardando aprovação no Portal. Redirect URLs: `http://localhost:8000/oauth/callback` (app),
+- ✅ Agente "IBits" **aprovado** (17/10). Portal: https://mcp-developer.ifood.com.br/pt-BR ("Faça login"). 3 contas de teste
+  (`unique-`, `safe-`, `fair-thales@test.ifood.com.br`, expiram em ~16 dias; OTP no portal). Redirect URLs: `http://localhost:8000/oauth/callback` (app),
   `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).
   Secret só no `.env` (`IFOOD_MCP_CLIENT_ID/SECRET`). Nunca pagar Pix de pedido de teste.
 - Respostas para a banca: `docs/pitch-perguntas-banca.md`.
@@ -68,9 +69,9 @@
 ## Pendências conhecidas
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
-- Credenciais do MCP ainda não existem (homologação pendente). Nomes das tools vêm da doc → confirmar com `list_tools`.
+- Credenciais do MCP só no `.env` do PC da equipe (não no container da nuvem). Nomes das tools vêm da doc → confirmar com `list_tools`.
 - O domínio antigo do esqueleto (lojas/vendedor/comprador, Merchant API) não é usado pelo Match; remover só depois da etapa 03.
 
 ## Docs
 - `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`
-  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/checklist-entrega.md`. Horários: `docs/planos/README.md` (o `plano-horas.md` é antigo).
+  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/design-ifood.md` (visual do app), `docs/checklist-entrega.md`. Horários: `docs/planos/README.md` (o `plano-horas.md` é antigo).
