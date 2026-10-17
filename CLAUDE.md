@@ -30,8 +30,9 @@
 - **Etapa 01 (análise) feita; aguardando a equipe escolher a ideia** (`/executar <ideia>`). Recomendação: "Racha Aí"
   (pedido em grupo). O esqueleto da Fase 0 é **só referência**.
 - **Plano vigente:** `docs/planos/etapa-01-analise.md`. Índice: `docs/planos/README.md`.
-- 👥 Acesso ao MCP: criar conta e agente no Portal (escopos todos, redirect `http://localhost:8000/oauth/callback`),
-  esperar a homologação, guardar o client secret só no `.env`.
+- 👥 Agente "IBits" sendo cadastrado no Portal (escopos todos). O formulário aceita **várias** Redirect URLs:
+  `http://localhost:8000/oauth/callback` (app), `http://127.0.0.1:19876/mcp/oauth/callback` e
+  `http://localhost:19876/mcp/oauth/callback` (opencode). Secret só no `.env` (`IFOOD_MCP_CLIENT_ID/SECRET`).
 
 ## Orquestração (detalhes em docs/orquestracao.md)
 - O chat principal é o **engenheiro-chefe (Opus)**: escreve o plano de cada etapa em `docs/planos/etapa-NN-*.md`

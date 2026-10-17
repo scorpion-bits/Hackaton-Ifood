@@ -64,6 +64,8 @@ meio** de agentes de compra.
 7. Explorar as tools com o **opencode** (como no vídeo): `opencode mcp add` → remoto → URL acima → OAuth com
    client id/secret → na config, `redirect` igual ao do Portal → `opencode mcp auth <nome>`.
 
+**Atualização 17/10:** o formulário real aceita **várias Redirect URLs** → um agente só ("IBits") com o callback do app e o do opencode. O texto abaixo ficou como histórico.
+
 **Redirect URL (decisão importante, não dá para mudar):** hoje é **uma por agente**. Sugestão: cada membro cria a
 própria conta e agente. O agente do **Milan** fica com `http://localhost:8000/oauth/callback` (o nosso app) e o do
 **Thales** com o redirect do opencode (exploração). 👥 Confirmar com um mentor se pode ter mais de um agente por
