@@ -3,7 +3,7 @@
 > Escrito pelo engenheiro-chefe (Opus). Este arquivo é a memória da etapa: depois de um `/clear`,
 > `/continuar` lê só o `CLAUDE.md` e este plano e segue daqui.
 
-- **Status da etapa:** planejada
+- **Status da etapa:** em execução (rodada 1 desde 17/10 ~21h)
 - **Objetivo (1 frase):** o fluxo inteiro do Match em grupo roda de ponta a ponta contra um **MCP de demonstração**
   (mesmos nomes de tools do iFood, dados gravados com selo), sem depender de credencial nem de internet.
 - **Pronto quando:** em `./iniciar.sh` (e `iniciar.bat`), em viewport 390×780: organizador cria a sala → 3 convidados
@@ -86,6 +86,13 @@ Parte(participante_id, nome, itens: float, taxa: float, desconto: float, total: 
   (campos 00, 26 [00 br.gov.bcb.pix, 01 chave], 52 0000, 53 986, 54 valor, 58 BR, 59 nome≤25, 60 cidade≤15,
   62 [05 txid], 63 CRC16-CCITT-FALSE). Sem acento em nome/cidade.
 
+### C4b. Vários itens por pessoa (decisão de 17/10 ~21h30, após a 02.2)
+- O intérprete divide um desejo em **slots** ("japonês e um sorvete" → 2 slots). `Candidato.participante_id` passa a
+  ser o id do slot: `"{pid}"` (1 item) ou `"{pid}#{k}"` (k ≥ 2). `otimizar(..., pessoa_de: dict[str, str] | None = None)`:
+  orçamento da pessoa vale para a **soma** dos slots dela; justiça (mín.) e média são calculadas **por pessoa** (média
+  das notas dos slots). `calcular_partes` já aceita lista de candidatos por pessoa. Assinatura real de `otimizar`
+  inclui `orcamentos: dict[str, float | None]` (por pessoa). `otimizar` devolve `[]` se nada cabe → o motor vira aviso.
+
 ### C5. Motor — `backend/app/match/motor.py` (+ `llm.py`, `interprete.py`, `juiz.py`, `busca.py`)
 - `llm.py`: `async def completar_json(cfg, sistema: str, usuario: str) -> dict` usando o provedor do `.env`
   (reaproveitar clientes de `agente/provedores.py`); `mock` → `None` (cada chamador tem fallback determinístico).
@@ -148,14 +155,14 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 
 | ID | Tarefa | Agente | Modelo | Esforço | Arquivos (só estes) | Depende de | Pronto quando | Status |
 |---|---|---|---|---|---|---|---|---|
-| 02.1 | MCP de demonstração + cliente MCP com rastro (C1, C2) | dev-mcp-ifood | opus | high | `backend/app/ifood_mcp/` (novo: `__init__.py`, `cliente.py`, `demo_server.py`, `dados_demo_match.json`), `backend/app/config.py`, `.env.example`, `backend/tests/test_ifood_mcp.py` | — | teste percorre a sequência obrigatória inteira via `ClienteIFood` (listAddresses → … → submitOrder → trackOrder); `submitOrder` sem consent falha; rastro registra cada tool | ⬜ |
-| 02.2 | Otimizador, acerto, prazo e Pix (C3, C4) | dev-backend | opus | high | `backend/app/match/__init__.py`, `modelos.py`, `otimizador.py`, `acerto.py`, `pix.py`, `backend/tests/test_otimizador.py`, `test_acerto_pix.py` | — | testes: restrição elimina; justiça escolhe combinação sem ninguém com nota baixa; perfil "barato" muda o vencedor; exemplo Thales/Milan da §13 (partes somam o total ao centavo); prazo(2)=10, prazo(4)=14; CRC do Pix válido e campos corretos | ⬜ |
-| 02.3 | Motor: LLM JSON, intérprete, busca, juiz (C5) | dev-backend | opus | high | `backend/app/match/llm.py`, `interprete.py`, `busca.py`, `juiz.py`, `motor.py`, `backend/tests/test_motor.py` | 02.1, 02.2 | com `LLM_PROVIDER=mock`, 3 desejos do roteiro (japonês+sorvete / hambúrguer+sorvete / econômico vegetariano) geram top 3 coerente usando só preços do demo MCP; teste com provedor HTTP falso cobre o caminho LLM | ⬜ |
-| 02.4 | Checkout com consentimento e acompanhamento (C6) | dev-mcp-ifood | opus | high | `backend/app/match/checkout.py`, `backend/tests/test_checkout.py` | 02.1, 02.2 | testes: sem consentimento não envia; total mudou → para; falha no 2º pedido → 1º enviado e status "falhou" com loja | ⬜ |
+| 02.1 | MCP de demonstração + cliente MCP com rastro (C1, C2) | dev-mcp-ifood | opus | high | `backend/app/ifood_mcp/` (novo: `__init__.py`, `cliente.py`, `demo_server.py`, `dados_demo_match.json`), `backend/app/config.py`, `.env.example`, `backend/tests/test_ifood_mcp.py` | — | teste percorre a sequência obrigatória inteira via `ClienteIFood` (listAddresses → … → submitOrder → trackOrder); `submitOrder` sem consent falha; rastro registra cada tool | ✅ |
+| 02.2 | Otimizador, acerto, prazo e Pix (C3, C4) | dev-backend | opus | high | `backend/app/match/__init__.py`, `modelos.py`, `otimizador.py`, `acerto.py`, `pix.py`, `backend/tests/test_otimizador.py`, `test_acerto_pix.py` | — | testes: restrição elimina; justiça escolhe combinação sem ninguém com nota baixa; perfil "barato" muda o vencedor; exemplo Thales/Milan da §13 (partes somam o total ao centavo); prazo(2)=10, prazo(4)=14; CRC do Pix válido e campos corretos | ✅ |
+| 02.3 | Motor: LLM JSON, intérprete, busca, juiz (C5) | dev-backend | opus | high | `backend/app/match/llm.py`, `interprete.py`, `busca.py`, `juiz.py`, `motor.py`, `backend/tests/test_motor.py` | 02.1, 02.2 | com `LLM_PROVIDER=mock`, 3 desejos do roteiro (japonês+sorvete / hambúrguer+sorvete / econômico vegetariano) geram top 3 coerente usando só preços do demo MCP; teste com provedor HTTP falso cobre o caminho LLM | 🔄 |
+| 02.4 | Checkout com consentimento e acompanhamento (C6) | dev-mcp-ifood | opus | high | `backend/app/match/checkout.py`, `backend/tests/test_checkout.py` | 02.1, 02.2 | testes: sem consentimento não envia; total mudou → para; falha no 2º pedido → 1º enviado e status "falhou" com loja | ✅ |
 | 02.5 | API da sala + estado + pagamentos (C7) | dev-backend | sonnet | high | `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/app/main.py` (só incluir o router e estender o reset), `backend/tests/test_salas.py` | 02.2, 02.3, 02.4 | teste de API faz o fluxo inteiro do "Pronto quando" com TestClient; ações sem token → 403; enviar antes de 100% pago → 409 | ⬜ |
-| 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ⬜ |
-| 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ⬜ |
-| 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ⬜ |
+| 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ✅ |
+| 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ✅ |
+| 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ✅ |
 | 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | ⬜ |
 
 Status: ⬜ a fazer · 🔄 em andamento · ✅ feito · ❌ falhou (ver registro) · ⏸️ adiado
@@ -180,6 +187,18 @@ integração (engenheiro-chefe: `./iniciar.sh --testes`, build, Playwright no fl
 
 ## Registro de execução
 (o engenheiro anota aqui ao fim de cada rodada: data/hora, tarefas concluídas, commit, problemas)
+- 17/10 ~21h40 — Rodada 1: 02.1, 02.2, 02.6, 02.8 ✅ (52 testes passam; build ok). Commits e234de8, 9a7e840, 6bdc26d,
+  5db5261, 848af5f. Problema: 1 item por pessoa no C3 → C4b (slots). Formatos do demo MCP: `searchOffers` → `results`
+  (ITEM: itemId, name, description, category, price, tags, perecivel + loja); `listAddresses` → `addresses`; entrega
+  `DEFAULT`; pagamentos `pm-demo-*`. 02.7 adiantada (só dependia da 02.6).
+
+- 17/10 ~22h — 02.7 ✅ (build ok; sem teste no navegador até a 02.5). Suposições do front que a 02.5 deve cumprir:
+  `prazo_fim` ISO com `Z`; `pagamentos[pid].status` ∈ pendente|aguardando_confirmacao|pago; organizador =
+  `participantes[0]` (melhor: campo `organizador_id`); `junto` pode ir direto a `pronto_para_enviar`; `pedidos[]` com
+  `order_id`, `loja_id`, `loja_nome`, `total`, `status` (texto ou `{code,description}`), `erro`; `nota` 0–1.
+
+- 17/10 ~22h10 — 02.4 ✅ (63 testes). Para a 02.5: `enviar_pedidos(..., ja_enviados: set)` guardar por sala;
+  `total_mudou` → montar de novo + nova confirmação; `ErroCheckout(loja_id, mensagem)` deixa carrinhos anteriores abertos.
 
 ## Fechamento
 (preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)

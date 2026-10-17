@@ -1,0 +1,170 @@
+"""Otimizador do Match: restrições duras, justiça, perfil, limite de lojas e perecível."""
+
+import json
+
+from app.match.modelos import Candidato, Combinacao, Pesos, para_dict
+from app.match.otimizador import otimizar, pesos_por_perfil
+
+
+def cand(pid, loja, item, preco, nota, eta=30, vertical="RESTAURANT", perecivel=False, viola=None):
+    return Candidato(
+        participante_id=pid, loja_id=loja, loja_nome=f"Loja {loja}", item_id=item, item_nome=item,
+        preco=preco, eta_min=eta, vertical=vertical, perecivel=perecivel, nota=nota,
+        motivo="teste", viola=viola or [],
+    )
+
+
+def item_de(comb: Combinacao, pid: str) -> str:
+    return comb.escolhas[pid].item_id
+
+
+def test_restricao_dura_elimina_candidato():
+    candidatos = {
+        "ana": [
+            cand("ana", "A", "x-bacon", 30, 0.95, viola=["vegetariano"]),
+            cand("ana", "A", "salada", 25, 0.6),
+        ],
+        "bia": [
+            cand("bia", "A", "combo-caro", 80, 0.99),
+            cand("bia", "A", "combo", 35, 0.7),
+        ],
+    }
+    combos = otimizar(candidatos, Pesos(), orcamentos={"ana": None, "bia": 40})
+    assert combos
+    for comb in combos:
+        assert item_de(comb, "ana") == "salada"
+        assert item_de(comb, "bia") == "combo"
+
+
+def test_pessoa_sem_opcao_valida_vira_aviso_sem_quebrar():
+    candidatos = {
+        "ana": [cand("ana", "A", "salada", 25, 0.8)],
+        "caio": [cand("caio", "A", "x-bacon", 30, 0.9, viola=["sem_gluten"])],
+    }
+    combos = otimizar(candidatos, Pesos())
+    assert len(combos) == 1
+    assert "caio" not in combos[0].escolhas
+    assert combos[0].componentes["pessoas_sem_opcao"] == 1
+    assert "sem opção válida para caio" in combos[0].explicacao
+    assert otimizar({"caio": candidatos["caio"]}, Pesos()) == []
+
+
+def test_justica_nunca_escolhe_quem_fica_com_nota_baixa_sem_necessidade():
+    # Mesma loja e mesmo preço: a melhor combinação dá a cada um a sua melhor opção.
+    candidatos = {
+        "ana": [cand("ana", "A", "a-otimo", 20, 1.0), cand("ana", "A", "a-ok", 20, 0.6)],
+        "bia": [cand("bia", "A", "b-ruim", 20, 0.2), cand("bia", "A", "b-ok", 20, 0.5)],
+    }
+    sem_justica = otimizar(candidatos, Pesos(alfa_justica=0.0), top=1)[0]
+    com_justica = otimizar(candidatos, Pesos(alfa_justica=0.5), top=1)[0]
+    assert sem_justica.componentes["media_nota"] == 0.75
+    assert com_justica.componentes["termo_justica"] == 0.25
+    assert com_justica.componentes["min_nota"] >= 0.5
+    assert item_de(com_justica, "bia") == "b-ok"
+
+
+def test_justica_muda_o_vencedor():
+    # A: Ana 1,0 + Bia 0,2 → média 0,60, mín 0,2. B: Ana 0,7 + Bia 0,45 → média 0,575, mín 0,45.
+    candidatos = {
+        "ana": [cand("ana", "A", "a-otimo", 20, 1.0), cand("ana", "B", "a-bom", 20, 0.7)],
+        "bia": [cand("bia", "A", "b-ruim", 20, 0.2), cand("bia", "B", "b-ok", 20, 0.45)],
+    }
+    neutros = dict(beta_custo=0.0, gama_atraso=0.0, delta_lojas=0.0, epsilon_perecivel=0.0)
+    sem = otimizar(candidatos, Pesos(alfa_justica=0.0, **neutros), max_lojas=1, top=1)[0]
+    com = otimizar(candidatos, Pesos(alfa_justica=0.5, **neutros), max_lojas=1, top=1)[0]
+    assert sem.lojas == ["A"] and sem.componentes["min_nota"] == 0.2
+    assert com.lojas == ["B"] and com.componentes["min_nota"] == 0.45
+    assert com.componentes["media_nota"] < sem.componentes["media_nota"]
+
+
+def test_perfil_barato_muda_o_vencedor():
+    candidatos = {
+        "ana": [cand("ana", "A", "premium", 60, 0.95), cand("ana", "B", "simples", 25, 0.75)],
+        "bia": [cand("bia", "A", "premium", 60, 0.95), cand("bia", "B", "simples", 25, 0.75)],
+    }
+    equilibrado = otimizar(candidatos, pesos_por_perfil(["equilibrado"]), max_lojas=1, top=1)[0]
+    barato = otimizar(candidatos, pesos_por_perfil(["barato", "barato"]), max_lojas=1, top=1)[0]
+    assert equilibrado.lojas == ["A"]
+    assert barato.lojas == ["B"]
+    assert barato.componentes["custo_total"] < equilibrado.componentes["custo_total"]
+
+
+def test_pesos_por_perfil():
+    assert pesos_por_perfil([]) == Pesos()
+    assert pesos_por_perfil(["inexistente"]) == Pesos()
+    barato = pesos_por_perfil(["barato"])
+    rapido = pesos_por_perfil(["rapido"])
+    qualidade = pesos_por_perfil(["qualidade"])
+    assert barato.beta_custo > Pesos().beta_custo
+    assert rapido.gama_atraso > Pesos().gama_atraso
+    assert qualidade.beta_custo < Pesos().beta_custo and qualidade.alfa_justica > Pesos().alfa_justica
+    misto = pesos_por_perfil(["barato", "barato", "rapido"])
+    assert barato.beta_custo > misto.beta_custo > rapido.beta_custo
+
+
+def test_max_lojas_respeitado():
+    candidatos = {
+        "ana": [cand("ana", "A", "a1", 20, 0.9), cand("ana", "D", "d1", 20, 0.5)],
+        "bia": [cand("bia", "B", "b1", 20, 0.9), cand("bia", "D", "d2", 20, 0.5)],
+        "caio": [cand("caio", "C", "c1", 20, 0.9), cand("caio", "D", "d3", 20, 0.5)],
+    }
+    for limite in (1, 2, 3):
+        combos = otimizar(candidatos, Pesos(), max_lojas=limite, top=10)
+        assert combos
+        assert all(len(c.lojas) <= limite for c in combos)
+        assert all(len(set(c.lojas)) == len(c.lojas) for c in combos)
+    assert otimizar(candidatos, Pesos(), max_lojas=1, top=10)[0].lojas == ["D"]
+
+
+def test_taxas_entram_no_custo_e_top_distintas_ordenadas():
+    candidatos = {
+        "ana": [cand("ana", "A", "a1", 20, 0.8), cand("ana", "B", "b1", 20, 0.8), cand("ana", "A", "a2", 22, 0.7)],
+    }
+    sem_taxa = otimizar(candidatos, Pesos(), top=3)
+    assert all(not c.taxa_conhecida for c in sem_taxa)
+    assert "sem taxa" in sem_taxa[0].explicacao
+
+    com_taxa = otimizar(candidatos, Pesos(), taxas={"A": 9.0, "B": 2.0}, top=3)
+    assert all(c.taxa_conhecida for c in com_taxa)
+    assert com_taxa[0].lojas == ["B"]  # mesma nota, taxa menor
+    assert com_taxa[0].componentes["custo_total"] == 22.0
+    assert [c.score for c in com_taxa] == sorted((c.score for c in com_taxa), reverse=True)
+    chaves = {tuple(sorted((p, e.item_id) for p, e in c.escolhas.items())) for c in com_taxa}
+    assert len(chaves) == len(com_taxa)
+
+
+def test_penal_perecivel_so_com_eta_muito_diferente():
+    candidatos = {
+        "ana": [cand("ana", "SUSHI", "temaki", 40, 0.9, eta=55)],
+        "bia": [cand("bia", "SORVETE", "sorvete", 15, 0.9, eta=20, perecivel=True)],
+    }
+    comb = otimizar(candidatos, Pesos())[0]
+    assert comb.componentes["penal_perecivel"] == 1.0
+    assert comb.componentes["termo_perecivel"] < 0
+    assert "perecível" in comb.explicacao
+
+    candidatos["bia"][0].eta_min = 45
+    assert otimizar(candidatos, Pesos())[0].componentes["penal_perecivel"] == 0.0
+
+    candidatos["bia"][0].eta_min = 20
+    candidatos["bia"][0].vertical = "GROCERIES"
+    assert otimizar(candidatos, Pesos())[0].componentes["penal_perecivel"] == 0.0
+
+
+def test_poda_com_muitas_pessoas_nao_explode():
+    candidatos = {
+        f"p{i}": [cand(f"p{i}", "A", f"i{i}-{j}", 10 + j, 1 - j * 0.05) for j in range(10)]
+        for i in range(6)
+    }
+    combos = otimizar(candidatos, Pesos(), top=3)
+    assert len(combos) == 3
+    assert all(c.escolhas[f"p{i}"].item_id == f"i{i}-0" for c in combos[:1] for i in range(6))
+
+
+def test_explicacao_e_para_dict_serializavel():
+    candidatos = {"ana": [cand("ana", "A", "a1", 82.4, 0.75)]}
+    comb = otimizar(candidatos, Pesos())[0]
+    assert comb.explicacao.startswith("1 loja · todos com nota ≥ 0,7 · R$ 82,40 sem taxa")
+    dados = para_dict(comb)
+    json.dumps(dados)
+    assert dados["escolhas"]["ana"]["preco"] == 82.4
