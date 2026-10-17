@@ -43,8 +43,17 @@ if ($Dev) {
 
 Push-Location frontend; npm run build; Pop-Location
 if ($LASTEXITCODE -ne 0) { throw "Falha no build do frontend" }
-Write-Host "Abrindo em http://localhost:8000  (Ctrl+C para parar)" -ForegroundColor Green
-Start-Job { Start-Sleep -Seconds 4; Start-Process "http://localhost:8000" } | Out-Null
+Write-Host "Subindo o servidor em http://localhost:8000 (na 1a vez pode levar ~30 s; Ctrl+C para parar)" -ForegroundColor Green
+$Ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+  Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
+if ($Ip) { Write-Host "Celulares na mesma rede Wi-Fi: http://${Ip}:8000 (se o Windows perguntar, permita em rede privada)" }
+# Abre o navegador só quando o servidor responder (antes abria após 4 s fixos e dava "conexão recusada")
+Start-Job {
+  for ($i = 0; $i -lt 90; $i++) {
+    try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:8000/api/saude" | Out-Null; Start-Process "http://localhost:8000"; return }
+    catch { Start-Sleep -Seconds 1 }
+  }
+} | Out-Null
 Push-Location backend
 & $Py -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 Pop-Location
