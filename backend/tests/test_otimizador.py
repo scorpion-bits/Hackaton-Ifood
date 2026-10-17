@@ -168,3 +168,72 @@ def test_explicacao_e_para_dict_serializavel():
     dados = para_dict(comb)
     json.dumps(dados)
     assert dados["escolhas"]["ana"]["preco"] == 82.4
+
+
+# ---------- C4b: vários itens por pessoa (slots) ----------
+def test_orcamento_vale_para_a_soma_dos_slots_da_pessoa():
+    candidatos = {
+        "zen": [cand("zen", "B", "smash-caro", 30, 0.9), cand("zen", "B", "smash", 22, 0.8)],
+        "zen#2": [cand("zen#2", "B", "shake", 19, 0.9)],
+    }
+    pessoa_de = {"zen": "zen", "zen#2": "zen"}
+    melhor = otimizar(candidatos, Pesos(), orcamentos={"zen": 42}, pessoa_de=pessoa_de, top=1)[0]
+    assert set(melhor.escolhas) == {"zen", "zen#2"}
+    assert item_de(melhor, "zen") == "smash"  # 30 + 19 passaria de 42; 22 + 19 cabe
+    assert sum(c.preco for c in melhor.escolhas.values()) <= 42
+    assert melhor.componentes["slots_fora"] == 0
+
+
+def test_slot_extra_fica_de_fora_quando_nao_cabe_no_orcamento():
+    candidatos = {
+        "zen": [cand("zen", "B", "smash", 30, 0.9)],
+        "zen#2": [cand("zen#2", "S", "sorvete", 19, 0.9)],
+    }
+    combos = otimizar(candidatos, Pesos(), orcamentos={"zen": 40}, pessoa_de={"zen#2": "zen"})
+    assert combos
+    melhor = combos[0]
+    assert set(melhor.escolhas) == {"zen"}  # o principal fica; o extra sai
+    assert melhor.componentes["slots_fora"] == 1
+    assert "1 item ficou de fora" in melhor.explicacao
+    assert all(sum(c.preco for c in c_.escolhas.values()) <= 40 for c_ in combos)
+
+
+def test_media_e_minimo_sao_por_pessoa():
+    candidatos = {
+        "ana": [cand("ana", "A", "a1", 10, 1.0)],
+        "ana#2": [cand("ana#2", "A", "a2", 10, 0.2)],
+        "bia": [cand("bia", "A", "b1", 10, 0.6)],
+    }
+    comb = otimizar(candidatos, Pesos(), pessoa_de={"ana#2": "ana"}, top=1)[0]
+    assert comb.componentes["media_nota"] == 0.6  # ana = (1,0 + 0,2)/2 = 0,6; bia = 0,6
+    assert comb.componentes["min_nota"] == 0.6
+    assert set(comb.escolhas) == {"ana", "ana#2", "bia"}
+
+
+def test_limite_de_lojas_tira_o_extra_e_mantem_o_principal():
+    # Milan: japonês (J) + sorvete (S); Zenon: hambúrguer (B) + sorvete (S). Com 2 lojas não cabe tudo.
+    candidatos = {
+        "milan": [cand("milan", "J", "temaki", 33, 0.9, eta=45)],
+        "milan#2": [cand("milan#2", "S", "sorvete", 19, 0.9, eta=25, perecivel=True)],
+        "zenon": [cand("zenon", "B", "smash", 30, 0.9, eta=35)],
+        "zenon#2": [cand("zenon#2", "S", "sundae", 19, 0.9, eta=25, perecivel=True)],
+    }
+    pessoa_de = {"milan#2": "milan", "zenon#2": "zenon"}
+    duas = otimizar(candidatos, Pesos(), max_lojas=2, pessoa_de=pessoa_de)
+    assert duas and all(len(c.lojas) <= 2 for c in duas)
+    assert set(duas[0].lojas) == {"J", "B"}
+    assert set(duas[0].escolhas) == {"milan", "zenon"}
+    tres = otimizar(candidatos, Pesos(), max_lojas=3, pessoa_de=pessoa_de, top=1)[0]
+    assert set(tres.escolhas) == set(candidatos)
+
+
+def test_pessoa_sem_opcao_no_conjunto_de_lojas_fica_de_fora_sem_zerar_o_resultado():
+    candidatos = {
+        "ana": [cand("ana", "A", "a1", 10, 0.9)],
+        "bia": [cand("bia", "B", "b1", 10, 0.9)],
+        "caio": [cand("caio", "C", "c1", 10, 0.9)],
+    }
+    combos = otimizar(candidatos, Pesos(), max_lojas=2, top=5)
+    assert combos and all(len(c.lojas) <= 2 for c in combos)
+    assert len(combos[0].escolhas) == 2
+    assert combos[0].componentes["pessoas_sem_opcao"] == 1

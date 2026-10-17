@@ -13,6 +13,9 @@ from pydantic import BaseModel
 from . import acoes, config, db
 from .agente import responder
 from .ifood import ErroIFood, obter_cliente
+from .ifood_mcp import resetar_demo as resetar_demo_mcp
+from .match import salas as salas_match
+from .rotas_match import router as router_match
 
 FRONT_DIST = config.RAIZ / "frontend" / "dist"
 
@@ -25,6 +28,7 @@ async def ciclo(_app: FastAPI):
 
 app = FastAPI(title="Comércio com Agentes — Hackathon iFood", lifespan=ciclo)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(router_match)
 
 
 class PedidoChat(BaseModel):
@@ -93,6 +97,8 @@ def lojas():
 @app.post("/api/demo/resetar")
 def resetar_demo():
     db.resetar_demo()
+    salas_match.limpar()  # salas do Match
+    resetar_demo_mcp()  # carrinhos e pedidos do MCP de demonstração
     return {"ok": True}
 
 

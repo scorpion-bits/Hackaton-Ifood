@@ -117,6 +117,7 @@
         {"id": "sv-fruta500", "nome": "Sorvete de frutas vermelhas sem lactose 500 ml", "descricao": "Sorbet de frutas vermelhas feito com água", "categoria": "Potes", "preco": 27.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
         {"id": "sv-pistache300", "nome": "Gelato de pistache 300 ml", "descricao": "Gelato cremoso de pistache", "categoria": "Potes", "preco": 24.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true},
         {"id": "sv-sundae", "nome": "Sundae de morango", "descricao": "Sorvete de creme com calda de morango e chantilly", "categoria": "Sobremesas", "preco": 18.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "sv-copinho", "nome": "Copinho de sorvete 1 bola", "descricao": "1 bola de sorvete de chocolate ou morango no copinho", "categoria": "Individuais", "preco": 12.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true},
         {"id": "sv-picole", "nome": "Kit 4 picolés de limão", "descricao": "Picolés de fruta à base de água", "categoria": "Picolés", "preco": 22.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true}
       ]
     },

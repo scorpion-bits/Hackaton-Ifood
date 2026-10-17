@@ -40,6 +40,8 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
       const s = await api.criarSala(nome.trim(), pix.trim());
       gravarLocal(chaveOrg(s.sala_id), s.token_organizador);
       gravarLocal(`match.nome.${s.sala_id}`, nome.trim());
+      // o organizador também é participante: guarda o id para não entrar duas vezes
+      if (s.participante_id) gravarLocal(`match.pid.${s.sala_id}`, s.participante_id);
       window.location.hash = `#/s/${s.sala_id}/org`;
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não consegui criar a sala.");

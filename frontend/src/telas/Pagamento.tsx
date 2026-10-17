@@ -16,6 +16,7 @@ const FORMA_ROTULO: Record<string, string> = {
   pix: "Pix",
   cartao_simulado: "Cartão (simulado)",
   dinheiro: "Dinheiro",
+  organizador: "Organizador cobre",
 };
 
 function PixQr({ codigo, organizadorNome }: { codigo: string; organizadorNome: string }) {
