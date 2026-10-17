@@ -168,3 +168,23 @@ N pessoas × N lojas × restrições × justiça, com explicação. (3) Pitch in
 leva para qualquer marketplace do grupo Prosus (JET na Europa) sem depender de hábito local: entra texto em qualquer
 idioma, sai cesta com pagamento local plugável". Hipótese; teste = mesma engine com cardápio simulado em ES/EN.
 Sem dado público de ganho de conversão de pedido em grupo → não citar número.
+
+## 12. Respostas da equipe (17/10 ~19h) — ajustes ao escopo
+- **2 carrinhos:** sim (mentores). **Taxa:** só no total, com carrinho → o otimizador ranqueia sem taxa, cria os
+  carrinhos só da melhor combinação (e da 2ª, se perto), lê a taxa real em `getCart` e reordena. Nunca estimar taxa.
+- **Agendamento:** funciona sobretudo em variedades (mercado), não em refeições. **Perecível** só vale para
+  RESTAURANT (sorvete/açaí); mercado e farmácia não têm essa regra.
+- **Mercado:** catálogo com preço OK. **Alérgenos:** não confiáveis → selo "pode não estar informado — confirme com
+  a loja"; restrição vira "segundo a descrição".
+- **Pagamento:** o cliente escolhe **"Pagar tudo de uma vez"** (1 confirmação na tela listando os N pedidos → N
+  `submitOrder` em sequência com o mesmo meio; na fatura aparecem N cobranças, e a tela avisa isso) ou **"Pagar
+  pedido a pedido"** (1 confirmação por pedido). Pix: provavelmente 1 código por pedido (NV).
+- **Pagamento na entrega:** fora do MVP; resposta pronta em `docs/pitch-perguntas-banca.md`.
+- **Acompanhamento:** 1 cartão por pedido (`trackOrder`), status individual; se um pedido cancelar/atrasar, o Match
+  já propõe saída só para as pessoas afetadas (outra loja para aquela parte, ou reembolsar no acerto de contas).
+- **Descoberta contextual (C) = "MVP do MVP", abortável:** sinais por camadas com peso pelo volume de dados:
+  `peso_histórico = n/(n+k)` (pouco histórico → manda a intenção da sessão e o declarado). Estrutura pronta para
+  fontes futuras (externa só com consentimento), desligadas por padrão.
+- **Histórico em grupo:** o histórico do organizador só personaliza **a parte dele**. Convidado sem login: chips de
+  preferência (1 toque) + "lembrar de mim neste aparelho" (fica no celular dele). "Entrar com iFood" opcional para
+  quem quiser personalizar — nunca obrigatório. Princípio: convidado responde em ≤ 30 s.
