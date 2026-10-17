@@ -146,3 +146,25 @@ alto) — avalia pitch e entregáveis contra os 5 critérios da banca antes da s
 **composição para grupo** (N pessoas, orçamentos e restrições diferentes, justiça), **multi-loja com custo
 explícito** e **explicação numérica** da escolha. No pitch: "o Match é uma capacidade que o Ailo poderia usar"
 (complementa, não concorre). Contexto externo (ex.: viagem via Despegar) = visão, com o caveat de consentimento.
+
+## 11. Pesquisa: internacional e concorrentes (pesquisador, 17/10; "(resumo)" = só li resumo de busca)
+**iFood fora do Brasil:** hoje só Brasil. Argentina vendida à PedidosYa (08/2018, https://infonegocios.info/y-ademas/juntos-somos-mas-pedidosya-anuncio-la-adquisicion-de-su-competidor-en-argentina-ifood);
+México encerrado em 2020 (fonte secundária); Colômbia encerrada em 11/2022 (https://www.baguete.com.br/noticias/ifood-encerra-operacao-na-colombia).
+Grupo: Prosus comprou a Just Eat Takeaway (concluído 10/2025, https://www.retaildetail.eu/news/food/acquisition-of-just-eat-takeaway-completed-the-hard-work-is-just-beginning/)
+e vai vender sua fatia na Delivery Hero para a Uber (oferta de 16/07/2026, pendente). No Brasil: Keeta (Meituan) e 99Food.
+**Recursos que já existem (fato):**
+| Quem | Recurso | Fonte |
+|---|---|---|
+| Uber Eats (EUA) | 2 lojas próximas, **uma taxa de entrega** (out/2023) | https://techcrunch.com/2023/10/11/uber-eats-now-lets-you-order-from-two-nearby-stores-at-the-same-time |
+| Uber Eats | pedido em grupo + split, **1 restaurante** (mar/2022) | https://techcrunch.com/2022/03/09/uber-eats-now-lets-you-split-the-bill |
+| DoorDash (EUA/CA) | DoubleDash: 2ª loja após checkout sem taxa extra (2021); grupo com rateio de taxas | https://about.doordash.com/en-us/news/introducing-doubledash-a-new-way-to-shop-multiple-stores-in-one-order · https://help.doordash.com/en-us/business/article/guide-to-group-orders |
+| Rappi (inclui BR) | pedido em grupo por link, criador paga (11/2023, resumo) | https://www.supervarejo.com.br/varejo/rappi-lanca-recurso-que-permite-fazer-pedidos-em-grupo |
+| Grab (SE Asiático) | grupo com split debitado na carteira de cada um (2020) | https://www.grab.com/inside-grab/stories/grabfood-delivery-group-order/ |
+| Swiggy (Índia) | MCP para agentes (Food, Instamart, Dineout), jan/2026 (resumo) | https://www.exchange4media.com/industry-briefing-news/swiggy-launches-model-context-protocol-to-enable-orders-via-chatgpt-and-other-ai-tools-151410.html |
+| iFood | testa "combinar pagamentos" (~06/2026, resumo); pedido em grupo: não achado | https://tecnoblog.net/noticias/ifood-testa-opcao-de-dividir-pagamento-com-outra-pessoa/ |
+**Consequências:** (1) "pedido em grupo" e "2 lojas com 1 taxa" **já existem lá fora** → não vender como inédito;
+a 1 taxa da Uber/DoorDash é logística interna (não alcançável pelo MCP). (2) O inédito é a **composição por IA**:
+N pessoas × N lojas × restrições × justiça, com explicação. (3) Pitch internacional: "o Match é a camada que o iFood
+leva para qualquer marketplace do grupo Prosus (JET na Europa) sem depender de hábito local: entra texto em qualquer
+idioma, sai cesta com pagamento local plugável". Hipótese; teste = mesma engine com cardápio simulado em ES/EN.
+Sem dado público de ganho de conversão de pedido em grupo → não citar número.

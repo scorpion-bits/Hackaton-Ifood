@@ -27,9 +27,9 @@
 - Resposta longa termina com: o que mudou · 🧪 como testar · 👥 o que a equipe faz. Máx. 3 perguntas por vez.
 
 ## Fase atual
-- **Etapa 01 (análise) feita; aguardando aprovação** (`/executar <ideia>`). Ideia da equipe: **"Match"** (1 ou N
-  pessoas, 1 ou mais restaurantes; §8 da análise). Pendente: regra da taxa extra. Esqueleto da Fase 0 = só referência.
-- **Plano vigente:** `docs/planos/etapa-01-analise.md`. Índice: `docs/planos/README.md`.
+- **Etapa 01b (estratégia do Match) feita; aguardando decisão** (`/executar <escopo>`). Recomendação: núcleo
+  "intenção → cesta viável", demo = Match em grupo multi-loja, organizador paga. Esqueleto da Fase 0 = só referência.
+- **Plano vigente:** `docs/planos/etapa-01b-match-estrategia.md` (antes: `etapa-01-analise.md`). Índice: `docs/planos/README.md`.
 - 👥 Agente "IBits" sendo cadastrado no Portal (escopos todos). O formulário aceita **várias** Redirect URLs:
   `http://localhost:8000/oauth/callback` (app), `http://127.0.0.1:19876/mcp/oauth/callback` e
   `http://localhost:19876/mcp/oauth/callback` (opencode). Secret só no `.env` (`IFOOD_MCP_CLIENT_ID/SECRET`).

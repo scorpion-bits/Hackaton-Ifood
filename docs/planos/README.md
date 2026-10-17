@@ -6,3 +6,4 @@ Cada etapa tem um plano em `etapa-NN-<nome>.md` (modelo: `TEMPLATE.md`). O plano
 |---|---|---|---|---|
 | 00 | Preparação (Fase 0) | esqueleto de referência, pesquisa, orquestração | — (ver `docs/historico.md`) | ✅ concluída 16/10 |
 | 01 | Análise do tema | ideias, notas, recomendação | `etapa-01-analise.md` | ✅ análise feita · ⏳ aguardando escolha da ideia |
+| 01b | [etapa-01b-match-estrategia.md](etapa-01b-match-estrategia.md) | estratégia do Match · aguardando decisão |
