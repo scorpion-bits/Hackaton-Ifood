@@ -188,3 +188,21 @@ Sem dado público de ganho de conversão de pedido em grupo → não citar núme
 - **Histórico em grupo:** o histórico do organizador só personaliza **a parte dele**. Convidado sem login: chips de
   preferência (1 toque) + "lembrar de mim neste aparelho" (fica no celular dele). "Entrar com iFood" opcional para
   quem quiser personalizar — nunca obrigatório. Princípio: convidado responde em ≤ 30 s.
+
+## 13. Pagamento separado com 1 login só ("vaquinha") — proposta, aguardando aprovação
+Pedido da equipe: só o organizador entra no iFood; quando for separado, **cada um paga a sua parte com a forma que
+escolher**; partes calculadas por pessoa somando todas as lojas; **o pedido só é enviado quando 100% foi pago**.
+- Exemplo: loja A (hambúrguer R$ 10 Thales + R$ 10 Milan), loja B (sorvete R$ 5 Milan). Thales = 10 + ½ taxa A;
+  Milan = 10 + ½ taxa A + taxa B inteira + 5. Cupom: proporcional ao valor. Taxas só depois de `getCart` (reais).
+- Estados: preferências → match pronto → **aguardando pagamentos (x/N, prazo)** → tudo pago → organizador confirma
+  → N `submitOrder` (pagos com o meio do organizador no iFood) → acompanhamento por pedido.
+- Antes de enviar: `getCart` de novo; se o total mudou, recalcula as partes e pede ok.
+- Alguém não pagou no prazo: organizador cobre · tira os itens dessa pessoa (recalcula) · cancela o Match.
+- Pedido falhou depois de pago: a parte de quem foi afetado volta no acerto (protótipo: só registro).
+- **Limite real:** nosso app não pode guardar dinheiro de terceiros (intermediação de pagamento exige instituição
+  autorizada). No produto, quem faz isso é o **iFood Pago** (citado no FY2026 da Prosus, §10) / o "combinar
+  pagamentos" que o iFood testa (§11). No protótipo:
+  1. **(Recomendado)** Pix real para a chave do organizador (QR "copia e cola" gerado por nós, valor preenchido) e
+     organizador marca "recebi"; "dinheiro em mãos" idem; cartão = **simulado com selo "demonstração"**.
+  2. Gateway real (sandbox de PSP com webhook): confirmação automática, +4–6 h, chaves e risco de rede. Não recomendado.
+  3. Só acerto depois do pedido (sem trava de 100%). Mais simples, perde a garantia.
