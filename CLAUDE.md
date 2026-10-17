@@ -27,8 +27,8 @@
 - Resposta longa termina com: o que mudou · 🧪 como testar · 👥 o que a equipe faz. Máx. 3 perguntas por vez.
 
 ## Fase atual
-- **Etapa 01 (análise) feita; aguardando a equipe escolher a ideia** (`/executar <ideia>`). Recomendação: "Racha Aí"
-  (pedido em grupo). O esqueleto da Fase 0 é **só referência**.
+- **Etapa 01 (análise) feita; aguardando aprovação** (`/executar <ideia>`). Ideia da equipe: **"Match"** (1 ou N
+  pessoas, 1 ou mais restaurantes; §8 da análise). Pendente: regra da taxa extra. Esqueleto da Fase 0 = só referência.
 - **Plano vigente:** `docs/planos/etapa-01-analise.md`. Índice: `docs/planos/README.md`.
 - 👥 Agente "IBits" sendo cadastrado no Portal (escopos todos). O formulário aceita **várias** Redirect URLs:
   `http://localhost:8000/oauth/callback` (app), `http://127.0.0.1:19876/mcp/oauth/callback` e

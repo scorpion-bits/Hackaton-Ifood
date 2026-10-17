@@ -15,7 +15,7 @@ Anotar a resposta embaixo de cada uma, com o nome de quem respondeu e a hora.
    - R:
 
 ## 🟡 Técnicas, para o MCP
-6. A taxa de entrega aparece só em `getCartDeliveryMethods`, depois de criar o carrinho? Ou dá para ver antes, na busca?
+6. A taxa de entrega aparece só em `getCartDeliveryMethods`, depois de criar o carrinho? Ou dá para ver antes, na busca? Existe filtro ou cupom de **entrega grátis**? Dá para **agendar** a entrega (para 2 pedidos chegarem juntos)?
    - R:
 7. O `getMerchant` devolve o cardápio inteiro, com descrição dos itens? Existe algum campo estruturado de restrição (vegano, sem glúten, sem lactose)?
    - R:

@@ -203,3 +203,36 @@ pagamento com cartão, voz (opcional), app nativo.
   "1 pedido, 4/5 felizes" × "2 pedidos, todos felizes, +taxa". Momento uau da demo: negociação ao vivo.
 - **Primeiros testes com acesso:** 2 carrinhos simultâneos? `getMerchant` traz cardápio completo com descrições?
   Onde e quanto varia a taxa (`getCartDeliveryMethods`)?
+
+## 8. Ideia "Match" (proposta da equipe, 17/10) — pendente de aprovação
+**O que é:** 1 pessoa ou um grupo descreve o que quer (frase livre + critério: "barato", "rápido", "saudável",
+"até R$ 40"…). A IA casa ("dá match") cada desejo com a melhor opção da região, usando os dados do usuário
+(`listAddresses` → `topMerchantTypes`, turnos) e o critério dado. Pode montar o pedido com **1 ou mais
+restaurantes**. Substitui "Racha Aí": o grupo vira um caso particular (N pessoas em vez de 1).
+
+**O que a doc confirma / não confirma (fonte: llms-full.txt):**
+- 1 carrinho = 1 restaurante → 2 restaurantes = **2 pedidos = 2 taxas, 2 pagamentos, 2 entregas**. Não dá para juntar
+  entregas pelo MCP.
+- A taxa só aparece com certeza em `getCartDeliveryMethods` (`cost`, `estimatedTime`, `availableWindows`), **depois
+  de criar o carrinho**. A busca documenta `rating`, `distance`, `deliveryTime` — taxa na busca: NÃO VERIFICADO.
+- Não há filtro de "entrega grátis" documentado. `listVouchers` pode trazer cupom de frete: NÃO VERIFICADO.
+- `availableWindows` sugere entrega agendada → dá para tentar fazer os 2 pedidos chegarem juntos: NÃO VERIFICADO.
+
+**Ponto crítico:** "sem pagar taxa extra" **não é garantido** — quem cobra é o iFood, por pedido. Opções honestas:
+1. **Só divide se a taxa extra for R$ 0** (2º restaurante com entrega grátis ou cupom). A promessa fica verdadeira,
+   mas às vezes o Match não terá como dividir.
+2. **Divide quando compensa e mostra o custo antes** ("+R$ 6,90 de taxa para todos ficarem felizes").
+3. **(Recomendado) 1 + 2:** padrão é 1 restaurante ou divisão sem taxa extra; se a única saída custa mais, o Match
+   mostra quanto e **pergunta**. Slogan honesto: "sem taxa escondida" / "só divide quando vale a pena".
+
+**Divisão IA × código:** IA entende os pedidos e o critério (regra × vontade), lê cardápios e explica a escolha;
+código pontua candidatos, soma taxas, escolhe a combinação de menor custo que atende as regras e segue a ordem
+obrigatória do checkout. `submitOrder` só depois do "ok" na tela, um por carrinho.
+
+**Riscos:** (a) 2 carrinhos simultâneos NÃO VERIFICADO — se não puder, fecha um pedido e depois o outro;
+(b) comparar taxas exige criar carrinhos (`createCart` não é idempotente; limitar a 3 candidatos);
+(c) 2 entregas em horários diferentes; (d) escopo maior que o "Racha Aí" (+3–4 h para multi-restaurante).
+
+**MVP sugerido:** tela única → frases de 1 a 4 pessoas + critério → quadro com o "match" de cada um, restaurante(s),
+taxas e total → confirmar → carrinho(s) montados e pedido(s) enviados com conta de teste. Extras: entrar pelo QR,
+entregas sincronizadas, "o de sempre".
