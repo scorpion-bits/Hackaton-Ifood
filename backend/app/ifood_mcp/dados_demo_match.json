@@ -1,0 +1,166 @@
+{
+  "_aviso": "DADOS DE DEMONSTRAÇÃO. Lojas, itens, preços e taxas são fictícios; não vêm do iFood.",
+  "usuario": {
+    "nome": "Pessoa de Demonstração",
+    "email": "demo@exemplo.invalid"
+  },
+  "enderecos": [
+    {
+      "id": "end-demo-sao-carlos",
+      "apelido": "Demonstração — São Carlos",
+      "endereco": "Endereço de demonstração, Centro, São Carlos - SP",
+      "latitude": -22.0087,
+      "longitude": -47.8909
+    }
+  ],
+  "lojas": [
+    {
+      "id": "loja-demo-japones",
+      "nome": "Kaigan Sushi (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Japonesa", "Sushi", "Comida japonesa"],
+      "rating": 4.7,
+      "distancia_km": 2.1,
+      "tempo_entrega_min": 45,
+      "taxa_entrega": 7.99,
+      "pedido_minimo": 20.0,
+      "horario": "18:00–23:30",
+      "itens": [
+        {"id": "jp-combo15", "nome": "Combo salmão 15 peças", "descricao": "5 sashimis, 4 uramakis e 6 hossomakis de salmão", "categoria": "Combos", "preco": 54.90, "tags": ["sem_lactose"]},
+        {"id": "jp-temaki", "nome": "Temaki de salmão", "descricao": "Cone de alga com arroz, salmão e cebolinha", "categoria": "Temakis", "preco": 32.90, "tags": ["sem_lactose"]},
+        {"id": "jp-hotroll", "nome": "Hot roll 10 peças", "descricao": "Enrolado empanado de salmão com cream cheese e tarê", "categoria": "Quentes", "preco": 26.90, "tags": []},
+        {"id": "jp-combo-veg", "nome": "Combo vegetariano 12 peças", "descricao": "Uramakis de pepino, manga, cenoura e shiitake", "categoria": "Combos", "preco": 38.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "jp-yakisoba", "nome": "Yakisoba de legumes", "descricao": "Macarrão oriental com legumes salteados no shoyu", "categoria": "Pratos quentes", "preco": 34.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "jp-guioza", "nome": "Guioza de legumes (6 un.)", "descricao": "Pastelzinho japonês grelhado recheado de legumes", "categoria": "Entradas", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"]},
+        {"id": "jp-sunomono", "nome": "Sunomono", "descricao": "Salada de pepino agridoce com gergelim", "categoria": "Entradas", "preco": 12.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "jp-missoshiru", "nome": "Missoshiru", "descricao": "Sopa de missô com tofu e cebolinha", "categoria": "Entradas", "preco": 9.90, "tags": ["sem_lactose"]}
+      ]
+    },
+    {
+      "id": "loja-demo-burger",
+      "nome": "Brasa Burger (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Hambúrguer", "Lanches", "Hamburgueria"],
+      "rating": 4.6,
+      "distancia_km": 1.4,
+      "tempo_entrega_min": 35,
+      "taxa_entrega": 5.99,
+      "pedido_minimo": 15.0,
+      "horario": "11:30–23:59",
+      "itens": [
+        {"id": "bg-smash", "nome": "Smash burger clássico", "descricao": "Pão brioche, carne smash 90 g, queijo prato e molho da casa", "categoria": "Hambúrgueres", "preco": 29.90, "tags": []},
+        {"id": "bg-duplo", "nome": "Duplo cheddar bacon", "descricao": "Dois smashs, cheddar cremoso e bacon crocante", "categoria": "Hambúrgueres", "preco": 38.90, "tags": []},
+        {"id": "bg-grao", "nome": "Burger de grão-de-bico", "descricao": "Hambúrguer vegetariano de grão-de-bico com queijo e salada", "categoria": "Hambúrgueres", "preco": 32.90, "tags": ["vegetariano"]},
+        {"id": "bg-vegano", "nome": "Burger vegano", "descricao": "Carne vegetal, maionese vegana, alface e tomate no pão sem leite", "categoria": "Hambúrgueres", "preco": 34.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "bg-combo", "nome": "Combo smash + batata + refri", "descricao": "Smash clássico, batata média e refrigerante lata", "categoria": "Combos", "preco": 42.90, "tags": []},
+        {"id": "bg-batata", "nome": "Batata frita média", "descricao": "Batata palito sequinha com sal", "categoria": "Acompanhamentos", "preco": 16.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "bg-onion", "nome": "Onion rings", "descricao": "Anéis de cebola empanados", "categoria": "Acompanhamentos", "preco": 18.90, "tags": ["vegetariano"]},
+        {"id": "bg-shake", "nome": "Milkshake de chocolate", "descricao": "Milkshake cremoso 400 ml", "categoria": "Bebidas", "preco": 19.90, "tags": ["vegetariano"]}
+      ]
+    },
+    {
+      "id": "loja-demo-poke",
+      "nome": "Poke Verde (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Saudável", "Poke", "Saladas"],
+      "rating": 4.8,
+      "distancia_km": 3.0,
+      "tempo_entrega_min": 30,
+      "taxa_entrega": 6.49,
+      "pedido_minimo": 20.0,
+      "horario": "11:00–22:00",
+      "itens": [
+        {"id": "pk-salmao", "nome": "Poke de salmão", "descricao": "Arroz, salmão, manga, pepino, edamame e molho ponzu", "categoria": "Pokes", "preco": 42.90, "tags": ["sem_lactose", "sem_gluten"]},
+        {"id": "pk-tofu", "nome": "Poke de tofu", "descricao": "Arroz, tofu grelhado, abacate, cenoura e gergelim", "categoria": "Pokes", "preco": 36.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "pk-caesar", "nome": "Salada caesar com frango", "descricao": "Alface americana, frango grelhado, parmesão e croutons", "categoria": "Saladas", "preco": 31.90, "tags": []},
+        {"id": "pk-quinoa", "nome": "Bowl de quinoa e legumes", "descricao": "Quinoa, legumes assados, grão-de-bico e tahine", "categoria": "Bowls", "preco": 33.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "pk-wrap", "nome": "Wrap integral de falafel", "descricao": "Falafel, homus, folhas e tomate no pão integral", "categoria": "Wraps", "preco": 27.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "pk-pf-fit", "nome": "Prato fit de frango", "descricao": "Frango grelhado, arroz integral e legumes no vapor", "categoria": "Pratos", "preco": 28.90, "tags": ["sem_lactose", "sem_gluten"]},
+        {"id": "pk-suco", "nome": "Suco verde 400 ml", "descricao": "Couve, limão, gengibre e maçã", "categoria": "Bebidas", "preco": 12.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]}
+      ]
+    },
+    {
+      "id": "loja-demo-pizza",
+      "nome": "Forno da Praça Pizzaria (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Pizza", "Pizzaria", "Italiana"],
+      "rating": 4.5,
+      "distancia_km": 2.8,
+      "tempo_entrega_min": 50,
+      "taxa_entrega": 8.99,
+      "pedido_minimo": 30.0,
+      "horario": "18:00–00:00",
+      "itens": [
+        {"id": "pz-margherita", "nome": "Pizza margherita grande", "descricao": "Molho de tomate, muçarela, tomate e manjericão — 8 fatias", "categoria": "Pizzas grandes", "preco": 59.90, "tags": ["vegetariano"]},
+        {"id": "pz-calabresa", "nome": "Pizza calabresa grande", "descricao": "Muçarela, calabresa fatiada e cebola — 8 fatias", "categoria": "Pizzas grandes", "preco": 54.90, "tags": []},
+        {"id": "pz-4queijos", "nome": "Pizza quatro queijos grande", "descricao": "Muçarela, provolone, parmesão e gorgonzola — 8 fatias", "categoria": "Pizzas grandes", "preco": 62.90, "tags": ["vegetariano"]},
+        {"id": "pz-portuguesa", "nome": "Pizza portuguesa grande", "descricao": "Presunto, ovo, cebola, ervilha e muçarela — 8 fatias", "categoria": "Pizzas grandes", "preco": 58.90, "tags": []},
+        {"id": "pz-vegana", "nome": "Pizza vegana de legumes grande", "descricao": "Molho de tomate, abobrinha, berinjela, pimentão e queijo vegetal", "categoria": "Pizzas grandes", "preco": 64.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "pz-brotinho", "nome": "Brotinho de muçarela", "descricao": "Pizza individual de muçarela — 4 fatias", "categoria": "Brotinhos", "preco": 24.90, "tags": ["vegetariano"]},
+        {"id": "pz-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de cola 2 litros", "categoria": "Bebidas", "preco": 14.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]}
+      ]
+    },
+    {
+      "id": "loja-demo-sorvete",
+      "nome": "Gelato Bom Clima (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Sorvetes", "Sobremesas", "Sorveteria"],
+      "rating": 4.9,
+      "distancia_km": 0.9,
+      "tempo_entrega_min": 25,
+      "taxa_entrega": 4.99,
+      "pedido_minimo": 15.0,
+      "horario": "12:00–23:00",
+      "itens": [
+        {"id": "sv-chocolate500", "nome": "Sorvete de chocolate belga 500 ml", "descricao": "Pote de sorvete artesanal de chocolate", "categoria": "Potes", "preco": 29.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true},
+        {"id": "sv-napolitano1l", "nome": "Sorvete napolitano 1 L", "descricao": "Chocolate, creme e morango no mesmo pote", "categoria": "Potes", "preco": 44.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "sv-fruta500", "nome": "Sorvete de frutas vermelhas sem lactose 500 ml", "descricao": "Sorbet de frutas vermelhas feito com água", "categoria": "Potes", "preco": 27.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "sv-pistache300", "nome": "Gelato de pistache 300 ml", "descricao": "Gelato cremoso de pistache", "categoria": "Potes", "preco": 24.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true},
+        {"id": "sv-sundae", "nome": "Sundae de morango", "descricao": "Sorvete de creme com calda de morango e chantilly", "categoria": "Sobremesas", "preco": 18.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "sv-picole", "nome": "Kit 4 picolés de limão", "descricao": "Picolés de fruta à base de água", "categoria": "Picolés", "preco": 22.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true}
+      ]
+    },
+    {
+      "id": "loja-demo-acai",
+      "nome": "Açaí do Campus (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Açaí", "Sobremesas", "Lanches"],
+      "rating": 4.4,
+      "distancia_km": 1.2,
+      "tempo_entrega_min": 20,
+      "taxa_entrega": 3.99,
+      "pedido_minimo": 12.0,
+      "horario": "10:00–23:00",
+      "itens": [
+        {"id": "ac-300", "nome": "Açaí 300 ml puro", "descricao": "Açaí batido sem complementos", "categoria": "Açaí", "preco": 16.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "ac-500", "nome": "Açaí 500 ml com banana e granola", "descricao": "Açaí com banana, granola e mel", "categoria": "Açaí", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"], "perecivel": true},
+        {"id": "ac-700", "nome": "Açaí 700 ml completo", "descricao": "Açaí com leite em pó, leite condensado, morango e paçoca", "categoria": "Açaí", "preco": 29.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "ac-cupuacu", "nome": "Creme de cupuaçu 500 ml", "descricao": "Cupuaçu batido com granola", "categoria": "Cremes", "preco": 23.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "ac-tigela", "nome": "Tigela de açaí fit", "descricao": "Açaí sem açúcar com frutas e sementes", "categoria": "Açaí", "preco": 26.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true}
+      ]
+    },
+    {
+      "id": "loja-demo-mercado",
+      "nome": "Mercadinho Bairro Feliz (demo)",
+      "merchantType": "GROCERIES",
+      "categorias": ["Mercado", "Supermercado", "Mercearia"],
+      "rating": 4.3,
+      "distancia_km": 1.8,
+      "tempo_entrega_min": 40,
+      "taxa_entrega": 9.90,
+      "pedido_minimo": 25.0,
+      "horario": "07:00–22:00",
+      "itens": [
+        {"id": "mc-espaguete", "nome": "Macarrão espaguete 500 g", "descricao": "Massa de sêmola, serve 4 pessoas", "categoria": "Massas", "preco": 6.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "mc-molho", "nome": "Molho de tomate tradicional 340 g", "descricao": "Molho pronto de tomate", "categoria": "Molhos", "preco": 4.49, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "mc-carne", "nome": "Carne moída 500 g", "descricao": "Patinho moído resfriado", "categoria": "Açougue", "preco": 24.90, "tags": ["sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "mc-parmesao", "nome": "Queijo parmesão ralado 50 g", "descricao": "Parmesão ralado fino", "categoria": "Frios", "preco": 8.90, "tags": ["vegetariano", "sem_gluten"]},
+        {"id": "mc-lasanha", "nome": "Lasanha à bolonhesa congelada 600 g", "descricao": "Serve 2 pessoas; pronta em 30 min no forno", "categoria": "Congelados", "preco": 22.90, "tags": [], "perecivel": true},
+        {"id": "mc-pao-alho", "nome": "Pão de alho congelado 300 g", "descricao": "6 unidades para forno ou churrasqueira", "categoria": "Congelados", "preco": 12.90, "tags": ["vegetariano"], "perecivel": true},
+        {"id": "mc-salada", "nome": "Mix de folhas higienizadas 200 g", "descricao": "Alface, rúcula e agrião prontos para servir", "categoria": "Hortifrúti", "preco": 9.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "mc-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de guaraná 2 litros", "categoria": "Bebidas", "preco": 9.99, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "mc-sorvete", "nome": "Sorvete de creme 1,5 L", "descricao": "Pote de sorvete de creme para a família", "categoria": "Congelados", "preco": 24.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true}
+      ]
+    }
+  ]
+}
