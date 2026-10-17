@@ -47,7 +47,7 @@ meio** de agentes de compra.
 | Escopos podem dar acesso a nome, e-mail, telefone, CPF, endereços salvos, **dados comportamentais**, criação de pedido | vídeo portal |
 | Fluxo provado pelo iFood: cadastrar endereço → buscar "pizza de muçarela" → adicionar ao carrinho → finalizar com **Pix** (gera código) → acompanhar status | vídeo opencode |
 | **Contas de teste:** até 10 por conta do Portal; pedido percorre todos os status mas **não vai ao restaurante**; códigos de login (e-mail/SMS/WhatsApp) são gerados no Portal, uso único | vídeo portal |
-| Validade das contas de teste: transcrição diz "16 G" → **NÃO VERIFICADO** (16 dias?) | vídeo portal |
+| Contas de teste: só depois do agente aprovado; **apagadas 15 dias após a criação**; Pix de teste pago **não é reembolsado** | [doc](https://mcp-developer.ifood.com.br/pt-BR/docs/guides/first-steps/test-account) |
 | Nomes e parâmetros das tools: documentados, mas a doc tem erros (ver linha das URLs) → confirmar com `list_tools` no primeiro acesso | docs + bom senso |
 | Dica do iFood: modelos fracos se confundem com os **muitos IDs** das tools | vídeo opencode |
 

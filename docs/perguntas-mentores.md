@@ -10,7 +10,7 @@ Anotar a resposta embaixo de cada uma, com o nome de quem respondeu e a hora.
 3. **Login por QR code:** "A documentação fala de um login por QR code. Isso funciona no hackathon ou é só o login pelo navegador?" (o login pelo navegador funciona com certeza; o de QR não deu sinal nos nossos testes)
    - R:
 4. **Contas de teste:** "As contas de teste duram quanto tempo? E como elas são novas, a parte de 'recomendados / pedidos recentes' funciona ou volta vazia?" (o vídeo fala "16 G", talvez 16 dias; a ideia do "o de sempre" depende do histórico)
-   - R:
+   - R: **validade já respondida pela doc: apagadas 15 dias após a criação.** Falta só: o histórico funciona?
 5. **Entrega:** onde e como submetemos os 6 entregáveis (repositório, PDF, formulário)? Quanto dura o pitch, e a demo precisa ser ao vivo?
    - R:
 

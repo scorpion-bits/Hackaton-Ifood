@@ -28,6 +28,10 @@ Verificado ao vivo em 17/10/2026 (sem credenciais) o que está marcado ✅.
 
 `userConsent: true` só depois da confirmação humana na tela (regra nossa e do iFood).
 
-## Contas de teste (Portal)
-Até 10 por conta do Portal; o pedido passa por todos os status mas **não vai ao restaurante**; códigos de login
-(e-mail/SMS/WhatsApp) gerados no Portal, uso único. Pagar com **Pix** (gera código; não pagar).
+## Contas de teste (Portal) — [doc](https://mcp-developer.ifood.com.br/pt-BR/docs/guides/first-steps/test-account)
+- Só aparecem **depois que o agente é aprovado** (total ou parcialmente).
+- Portal gera e-mail `@test.ifood.com.br` + telefone inválido (DDD terminado em 0); nada recebe SMS/WhatsApp.
+- Login no id.ifood normal: e-mail ou telefone de teste + código gerado no Portal ("Gerar código" → código de e-mail e
+  de telefone; uso único; "Gerar novamente" se expirar).
+- Até **10 por usuário do Portal**; **apagadas 15 dias após a criação**. Pedido não vai ao restaurante.
+- ⚠️ **Não pagar o Pix de pedido de teste: não há reembolso.**
