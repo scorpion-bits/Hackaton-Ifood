@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { api, chaveOrg, gravarLocal, lerLocal, chaveEu, type Eu } from "../api";
+import { chaveOrg, chaveUltimaSala, gravarLocal, lerLocal, chaveEu, ultimaSalaOrg, api, type Eu } from "../api";
 import BarraInferior from "../componentes/BarraInferior";
+import StatusIfood, { RecarregarDemo } from "../componentes/StatusIfood";
 
 const ABAS = ["Início", "Restaurantes", "Mercados", "Bebidas"];
 const CATS = [
@@ -13,9 +14,9 @@ const CATS = [
   ["🐶", "Pet"],
 ];
 const LOJAS = [
-  ["🍔", "Hamburgueria Demo", "Lanches", "4,8", "30-40 min", "R$ 5,00"],
-  ["🍕", "Pizzaria Demo", "Pizza", "4,6", "40-50 min", "Grátis"],
-  ["🥗", "Saladas Demo", "Saudável", "4,7", "20-30 min", "R$ 4,00"],
+  ["🍔", "Hamburgueria Demo", "Lanches"],
+  ["🍕", "Pizzaria Demo", "Pizza"],
+  ["🥗", "Saladas Demo", "Saudável"],
 ];
 
 function Desab({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -39,6 +40,7 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
     try {
       const s = await api.criarSala(nome.trim(), pix.trim());
       gravarLocal(chaveOrg(s.sala_id), s.token_organizador);
+      gravarLocal(chaveUltimaSala, s.sala_id);
       gravarLocal(`match.nome.${s.sala_id}`, nome.trim());
       // o organizador também é participante: guarda o id para não entrar duas vezes
       if (s.participante_id) gravarLocal(`match.pid.${s.sala_id}`, s.participante_id);
@@ -52,6 +54,7 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
   return (
     <section className="tela">
       <h1>Criar Match</h1>
+      <StatusIfood />
       <form className="cartao form" onSubmit={criar}>
         <label>
           Seu nome (organizador)
@@ -76,6 +79,7 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
 
 export default function Inicio() {
   const [criando, setCriando] = useState(false);
+  const salaSalva = ultimaSalaOrg();
 
   if (criando) return <CriarMatch onCancelar={() => setCriando(false)} />;
 
@@ -122,21 +126,26 @@ export default function Inicio() {
         <span className="banner-cta">Criar Match →</span>
       </button>
 
+      {salaSalva && (
+        <a className="voltar-sala" href={`#/s/${encodeURIComponent(salaSalva)}/org`}>
+          Voltar para a sua sala ›
+        </a>
+      )}
+
       <h2 className="sec">Lojas perto de você</h2>
       <div className="lojas">
-        {LOJAS.map(([e, nome, cat, nota, tempo, taxa]) => (
+        {LOJAS.map(([e, nome, cat]) => (
           <div key={nome} className="loja" aria-disabled="true">
             <span className="loja-ico">{e}</span>
             <span className="loja-info">
               <strong>{nome}</strong>
-              <small>
-                ★ {nota} · {cat} · {tempo} · {taxa}
-              </small>
+              <small>{cat} · demo</small>
             </span>
             <span className="mini-selo">DEMONSTRAÇÃO</span>
           </div>
         ))}
       </div>
+      <RecarregarDemo />
       <p className="rodape">Protótipo de hackathon · não é o app oficial do iFood</p>
       <BarraInferior atual="inicio" onIr={(a) => a === "match" && setCriando(true)} />
     </div>

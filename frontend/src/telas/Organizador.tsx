@@ -3,7 +3,8 @@ import QRCode from "qrcode";
 import { api, chaveBase, gravarLocal, lerLocal, lerToken } from "../api";
 import type { EstadoSala } from "../tipos";
 import Rastro from "../componentes/Rastro";
-import { FormDesejo, lerPid } from "./Convidado";
+import { FormDesejo, contagemRespostas, lerPid } from "./Convidado";
+import StatusIfood from "../componentes/StatusIfood";
 
 function baseInicial(): string {
   return lerLocal<string>(chaveBase) ?? window.location.origin;
@@ -23,7 +24,7 @@ export default function Organizador({
   const [copiado, setCopiado] = useState(false);
   const [rodando, setRodando] = useState(false);
   const [erro, setErro] = useState("");
-  const [editandoDesejo, setEditandoDesejo] = useState(false);
+  const [abrirDesejo, setAbrirDesejo] = useState(false);
 
   const link = `${base.replace(/\/+$/, "")}/#/s/${salaId}`;
   const ehLocal = /^https?:\/\/(localhost|127\.|\[::1\])/.test(base);
@@ -36,8 +37,7 @@ export default function Organizador({
 
   const pid = lerPid(salaId);
   const eu = sala?.participantes.find((p) => p.id === pid);
-  const respondeu = sala?.participantes.filter((p) => p.respondeu).length ?? 0;
-  const total = sala?.participantes.length ?? 0;
+  const { resp: respondeu, total } = sala ? contagemRespostas(sala, pid) : { resp: 0, total: 0 };
 
   async function copiar() {
     try {
@@ -82,6 +82,7 @@ export default function Organizador({
   return (
     <section className="tela">
       <h1>Sua sala de Match</h1>
+      <StatusIfood />
 
       <div className="cartao centro">
         <p className="suave">Peça para o pessoal escanear ou abrir o link:</p>
@@ -95,6 +96,7 @@ export default function Organizador({
             <p>Para celulares, abra pelo IP do PC na mesma rede.</p>
             <label>
               Base do link
+              <small>Use o IP do Wi-Fi do PC (ex.: 192.168.x.x). Evite 172.x (adaptador virtual).</small>
               <input
                 value={base}
                 onChange={(e) => {
@@ -110,7 +112,7 @@ export default function Organizador({
 
       <div className="cartao">
         <h2>
-          {respondeu} de {total} responderam
+          {respondeu} de {total} {total === 1 ? "convidado respondeu" : "convidados responderam"}
         </h2>
         <ul className="lista-part">
           {sala?.participantes.map((p) => (
@@ -123,21 +125,24 @@ export default function Organizador({
         </ul>
       </div>
 
-      {(!eu?.respondeu || editandoDesejo) && (
+      <button
+        type="button"
+        className="secundario"
+        aria-expanded={abrirDesejo}
+        onClick={() => setAbrirDesejo((a) => !a)}
+      >
+        {eu?.respondeu ? "Mudar meu desejo" : "Também quero pedir"} {abrirDesejo ? "▴" : "▾"}
+      </button>
+      {abrirDesejo && (
         <div>
           <h2>Seu desejo</h2>
           <FormDesejo
             salaId={salaId}
             nomeInicial={nomeOrg}
             rotuloBotao="Salvar meu desejo"
-            onFeito={() => setEditandoDesejo(false)}
+            onFeito={() => setAbrirDesejo(false)}
           />
         </div>
-      )}
-      {eu?.respondeu && !editandoDesejo && (
-        <button className="secundario" onClick={() => setEditandoDesejo(true)}>
-          Mudar meu desejo
-        </button>
       )}
 
       {erro && <p className="erro">{erro}</p>}

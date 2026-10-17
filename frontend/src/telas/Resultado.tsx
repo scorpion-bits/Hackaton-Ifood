@@ -15,6 +15,20 @@ function agruparPorPessoa(escolhas: Record<string, Candidato>): Record<string, C
   return g;
 }
 
+/** Itens iguais (mesma loja e item) da mesma pessoa viram uma linha "2× Sundae". */
+function juntarIguais(itens: Candidato[]): Candidato[] {
+  const m = new Map<string, { c: Candidato; n: number }>();
+  for (const c of itens) {
+    const k = `${c.loja_id}|${c.item_id}`;
+    const e = m.get(k);
+    if (e) {
+      e.n += 1;
+      e.c = { ...e.c, preco: Math.round((e.c.preco + c.preco) * 100) / 100 };
+    } else m.set(k, { c: { ...c }, n: 1 });
+  }
+  return [...m.values()].map(({ c, n }) => (n > 1 ? { ...c, item_nome: `${n}× ${c.item_nome}` } : c));
+}
+
 const MODOS: { id: ModoPagamento; titulo: string; texto: string }[] = [
   { id: "junto", titulo: "Pagar tudo de uma vez", texto: "Você paga o total no iFood e acerta com o pessoal depois." },
   {
@@ -83,6 +97,8 @@ export default function Resultado({
   const pids = Object.keys(grupos).filter((pid) => organizador || !meuPid || pid === meuPid);
   const totalItens = Math.round(Object.values(comb.escolhas).reduce((s, c) => s + c.preco, 0) * 100) / 100;
   const nLojas = comb.lojas.length;
+  const explicacao = comb.explicacao ?? "";
+  const avisos = [...new Set(res?.avisos ?? [])].filter((a) => !explicacao.includes(a));
 
   return (
     <section className="tela">
@@ -108,13 +124,15 @@ export default function Resultado({
         <h2>
           {nLojas} {nLojas === 1 ? "loja" : "lojas"} · itens {brl(totalItens)}
         </h2>
-        <p className="suave">
-          {comb.taxa_conhecida
-            ? "A taxa de entrega já está considerada na escolha."
-            : "Taxa de entrega: calculada ao montar o carrinho."}
-        </p>
+        {!/taxa/i.test(comb.explicacao ?? "") && !avisos.some((a) => /taxa/i.test(a)) && (
+          <p className="suave">
+            {comb.taxa_conhecida
+              ? "A taxa de entrega já está considerada na escolha."
+              : "Taxa de entrega: calculada ao montar o carrinho."}
+          </p>
+        )}
         {comb.explicacao && <p>{comb.explicacao}</p>}
-        {res?.avisos.map((a, i) => (
+        {avisos.map((a, i) => (
           <p key={i} className="aviso">
             {a}
           </p>
@@ -123,7 +141,7 @@ export default function Resultado({
 
       <div className="pessoas">
         {pids.map((pid) => (
-          <CartaoPessoa key={pid} nome={nomeDe(pid)} itens={grupos[pid]} destaque={pid === meuPid && !!meuPid} />
+          <CartaoPessoa key={pid} nome={nomeDe(pid)} itens={juntarIguais(grupos[pid])} destaque={pid === meuPid && !!meuPid} />
         ))}
       </div>
 

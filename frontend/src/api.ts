@@ -5,6 +5,7 @@ import type {
   ModoPagamento,
   ResultadoMatch,
   SalaCriada,
+  StatusIfood,
 } from "./tipos";
 
 async function chamar<T>(
@@ -61,6 +62,8 @@ export const api = {
     chamar<unknown>(`${S(id)}/enviar`, { corpo: { confirmo: true }, token }),
   atualizarPedido: (id: string, orderId: string) =>
     chamar<unknown>(`${S(id)}/pedidos/${encodeURIComponent(orderId)}/atualizar`, { metodo: "POST", corpo: {} }),
+  ifoodStatus: () => chamar<StatusIfood>("/api/ifood/status"),
+  ifoodSair: () => chamar<unknown>("/api/ifood/sair", { metodo: "POST", corpo: {} }),
   resetar: () => chamar<unknown>("/api/demo/resetar", { metodo: "POST", corpo: {} }),
 };
 
@@ -96,3 +99,34 @@ export interface Eu {
   chips: string[];
 }
 export const lerToken = (salaId: string) => lerLocal<string>(chaveOrg(salaId));
+
+export const chaveUltimaSala = "match.ultima_sala";
+
+/** Apaga todas as chaves `match.*` deste aparelho. */
+export function limparMatchLocal(): void {
+  try {
+    const ks: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("match.")) ks.push(k);
+    }
+    ks.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* ignora */
+  }
+}
+
+/** Sala do organizador mais recente salva neste aparelho (ou null). */
+export function ultimaSalaOrg(): string | null {
+  const u = lerLocal<string>(chaveUltimaSala);
+  if (u && lerLocal<string>(chaveOrg(u))) return u;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("match.org.")) return k.slice("match.org.".length);
+    }
+  } catch {
+    /* ignora */
+  }
+  return null;
+}

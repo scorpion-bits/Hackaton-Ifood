@@ -94,6 +94,7 @@ export interface Participante {
 export interface EstadoSala {
   estado: EstadoSalaNome;
   demonstracao: boolean;
+  conta_teste?: boolean;
   participantes: Participante[];
   resultado?: ResultadoMatch;
   carrinhos?: Carrinho[];
@@ -116,4 +117,12 @@ export interface Desejo {
   texto: string;
   orcamento_max?: number | null;
   chips: string[];
+}
+
+// C9: GET /api/ifood/status
+export interface StatusIfood {
+  modo: "demo" | "real";
+  conectado: boolean;
+  expira_em?: string;
+  conta?: string;
 }

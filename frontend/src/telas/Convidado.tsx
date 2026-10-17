@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api, chaveEu, gravarLocal, lerLocal, type Eu } from "../api";
+import { api, apagarLocal, chaveEu, gravarLocal, lerLocal, type Eu } from "../api";
 import type { EstadoSala } from "../tipos";
 
 export const CHIPS = [
@@ -15,6 +15,13 @@ export const CHIPS = [
 
 export const chavePid = (salaId: string) => `match.pid.${salaId}`;
 export const lerPid = (salaId: string) => lerLocal<string>(chavePid(salaId));
+
+/** Convidados = todos, menos o organizador que ainda não respondeu. `pidOrg` desconhecido: o 1º da lista é o organizador. */
+export function contagemRespostas(sala: EstadoSala, pidOrg?: string | null): { resp: number; total: number } {
+  const orgId = pidOrg ?? sala.participantes[0]?.id;
+  const lista = sala.participantes.filter((p) => p.respondeu || p.id !== orgId);
+  return { resp: lista.filter((p) => p.respondeu).length, total: lista.length };
+}
 
 /** Formulário curto (nome, desejo, orçamento, chips). Usado pelo convidado e pelo organizador. */
 export function FormDesejo({
@@ -85,13 +92,11 @@ export function FormDesejo({
       <label>
         Orçamento (R$, opcional)
         <input
-          type="number"
+          type="text"
           inputMode="decimal"
-          min="0"
-          step="0.01"
           value={orcamento}
           onChange={(e) => setOrcamento(e.target.value)}
-          placeholder="Ex.: 35"
+          placeholder="Ex.: 45,50"
         />
       </label>
       <div className="grupo-chips" role="group" aria-label="Preferências">
@@ -125,8 +130,22 @@ export default function Convidado({ salaId, sala }: { salaId: string; sala: Esta
     return !!pid && !!sala?.participantes.find((p) => p.id === pid)?.respondeu;
   });
   const [editando, setEditando] = useState(false);
+  const [, setTick] = useState(0);
   const pid = lerPid(salaId);
-  const respondeu = enviado || !!sala?.participantes.find((p) => p.id === pid)?.respondeu;
+  const meuNome = sala?.participantes.find((p) => p.id === pid)?.nome;
+
+  function naoSou() {
+    apagarLocal(chavePid(salaId));
+    setEnviado(false);
+    setEditando(false);
+    setTick((t) => t + 1);
+  }
+  const botaoNaoSou = pid ? (
+    <button type="button" className="link-btn centro-btn" onClick={naoSou}>
+      Não sou {meuNome ?? "essa pessoa"}
+    </button>
+  ) : null;
+  const respondeu = !!pid && (enviado || !!sala?.participantes.find((p) => p.id === pid)?.respondeu);
 
   if (!respondeu || editando) {
     return (
@@ -141,25 +160,27 @@ export default function Convidado({ salaId, sala }: { salaId: string; sala: Esta
             setEditando(false);
           }}
         />
+        {botaoNaoSou}
       </section>
     );
   }
 
-  const resp = sala?.participantes.filter((p) => p.respondeu).length ?? 0;
+  const cont = sala ? contagemRespostas(sala) : null;
   return (
     <section className="tela">
       <div className="cartao centro">
         <div className="grande">✅</div>
         <h1>Pronto!</h1>
         <p>Aguarde o organizador rodar o Match.</p>
-        {sala && (
+        {cont && (
           <p className="suave">
-            {resp} de {sala.participantes.length} responderam
+            {cont.resp} de {cont.total} responderam
           </p>
         )}
         <button className="secundario" onClick={() => setEditando(true)}>
           Mudar meu pedido
         </button>
+        {botaoNaoSou}
       </div>
     </section>
   );
