@@ -10,6 +10,7 @@ from app.config import carregar
 from app.ifood_mcp import abrir_cliente, resetar_demo
 from app.ifood_mcp.demo_server import ARQUIVO_DADOS
 from app.match import interprete, juiz, llm
+from app.match import motor as motor_mod
 from app.match.busca import buscar, buscar_detalhado, ler_endereco
 from app.match.interprete import interpretar, interpretar_fallback
 from app.match.modelos import Candidato, Desejo, Intencao
@@ -89,6 +90,10 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     assert {c["tool"] for c in r["rastro"][1:]} <= {"searchOffers", "getMerchant", "browseOffers"}
     assert all(c["ok"] for c in r["rastro"])
     assert r["endereco"]["id"] == "end-demo-sao-carlos"
+    # relevância: o roteiro não ganha aviso de "opção aproximada" nem de restrição sem confirmação
+    assert not any("Não achei" in a or "Nenhum item confirma" in a for a in r["avisos"])
+    assert len(r["avisos"]) == 2
+    assert not any(e["motivo"].startswith("Opção aproximada") for c in combos for e in c["escolhas"].values())
     json.dumps(r)
 
 
@@ -106,6 +111,53 @@ async def test_nada_cabe_vira_aviso_e_lista_vazia():
     assert r["combinacoes"] == []
     assert any("Nenhuma combinação coube" in a for a in r["avisos"])
     assert any("Não achei pizza até R$ 5 para Ana" in a for a in r["avisos"])
+
+
+async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada():
+    # Milan acha o que quer; a feijoada da Ana não existe nos cardápios do demo
+    r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
+                      Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    aviso = next(a for a in r["avisos"] if a.startswith("Não achei feijoada completa para Ana"))
+    assert "a opção mais próxima é " in aviso and aviso.endswith("Quer mudar o pedido?")
+    assert "R$" not in aviso  # o orçamento não entra no nome do que foi pedido
+    assert r["combinacoes"]  # a pessoa que achou o que queria segue
+    escolhas = r["combinacoes"][0]["escolhas"]
+    assert escolhas["ana"]["motivo"].startswith("Opção aproximada: ") and len(escolhas["ana"]["motivo"]) <= 90
+    assert f"{escolhas['ana']['item_nome']} ({escolhas['ana']['loja_nome']})" in aviso
+    assert not escolhas["milan"]["motivo"].startswith("Opção aproximada")
+    assert not any("Nada do que foi pedido" in a for a in r["avisos"])
+
+
+async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso():
+    r = await _rodar([Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    assert r["combinacoes"] == []
+    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
+    assert any("Nada do que foi pedido está nos cardápios" in a for a in r["avisos"])
+    # pizza sem glúten: as pizzas violam a restrição e o resto não tem nada a ver com o pedido
+    r = await _rodar([Desejo("ana", "Ana", "pizza", None, ["sem_gluten"])])
+    assert r["combinacoes"] == []
+    assert any(a.startswith("Não achei pizza sem glúten para Ana;") for a in r["avisos"])
+
+
+async def test_restricao_sem_tag_que_confirme_avisa_sem_eliminar(monkeypatch):
+    original = motor_mod.buscar_detalhado
+
+    async def sem_tags(cliente, intencao, endereco):  # como uma loja que não informa nenhuma tag
+        candidatos, detalhes = await original(cliente, intencao, endereco)
+        return candidatos, {k: {**v, "tags": []} for k, v in detalhes.items()}
+
+    with monkeypatch.context() as m:
+        m.setattr(motor_mod, "buscar_detalhado", sem_tags)
+        r = await _rodar([Desejo("ana", "Ana", "hambúrguer", None, ["vegetariano"])])
+        assert "Nenhum item confirma 'vegetariano' — confirme com a loja." in r["avisos"]
+        assert r["combinacoes"] and not any("Não achei" in a for a in r["avisos"])  # o item segue na lista
+        # com mais de uma pessoa, o aviso diz de quem é
+        r = await _rodar([Desejo("ana", "Ana", "smash burger", None, ["sem_gluten"]),
+                          Desejo("milan", "Milan", "japonês, até R$ 45")])
+        assert "Nenhum item confirma 'sem glúten' para Ana — confirme com a loja." in r["avisos"]
+    # com tag confirmando (vegetariano no demo) não há aviso
+    r = await _rodar([Desejo("ana", "Ana", "hambúrguer", None, ["vegetariano"])])
+    assert not any("Nenhum item confirma" in a for a in r["avisos"])
 
 
 # ---------- intérprete (fallback) ----------

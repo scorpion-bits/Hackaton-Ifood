@@ -61,15 +61,84 @@ def _valor_texto(valor: float) -> str:
     return texto
 
 
+_EMAIL = re.compile(r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(\.[a-z0-9-]+)+")
+_UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+_CPF_PONTUADO = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
+_CNPJ_PONTUADO = re.compile(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}")
+_SO_TELEFONE = re.compile(r"\+?[\d\s().-]+")
+
+
+def _cpf_valido(digitos: str) -> bool:
+    if len(digitos) != 11 or not digitos.isdigit() or len(set(digitos)) == 1:
+        return False
+    for tamanho in (9, 10):
+        soma = sum(int(d) * peso for d, peso in zip(digitos[:tamanho], range(tamanho + 1, 1, -1)))
+        if int(digitos[tamanho]) != (soma * 10 % 11) % 10:
+            return False
+    return True
+
+
+def _telefone(nacional: str) -> tuple[str, str]:
+    """`nacional` = DDD + número (10 ou 11 dígitos). Devolve ("+55…", "telefone")."""
+    if len(nacional) not in (10, 11) or not 11 <= int(nacional[:2]) <= 99 \
+            or (len(nacional) == 11 and nacional[2] != "9"):
+        raise ValueError("Telefone da chave Pix inválido: use DDD + número, ex. (16) 99999-0000.")
+    return "+55" + nacional, "telefone"
+
+
+def normalizar_chave_pix(chave: str) -> tuple[str, str]:
+    """Deixa a chave no formato do BR Code. Devolve (chave normalizada, tipo).
+
+    Tipos: "email" (minúsculas, sem espaços) · "cpf"/"cnpj" (só dígitos) · "telefone" (+55DDDNÚMERO) ·
+    "aleatoria" (UUID em minúsculas). 11 dígitos sem pontuação: CPF se o dígito verificador fecha; senão, se parece
+    celular (3º dígito 9), telefone. Formato irreconhecível → ValueError legível.
+    """
+    bruta = (chave or "").strip()
+    if not bruta:
+        raise ValueError("Informe a chave Pix do organizador.")
+    if not bruta.isascii():
+        raise ValueError("Chave Pix com caractere inválido (acento ou símbolo).")
+    if "@" in bruta:
+        email = "".join(bruta.split()).lower()
+        if not _EMAIL.fullmatch(email):
+            raise ValueError("E-mail da chave Pix inválido.")
+        if len(email) > 77:
+            raise ValueError("Chave Pix longa demais (máx. 77 caracteres).")
+        return email, "email"
+    if _UUID.fullmatch(bruta.lower()):
+        return bruta.lower(), "aleatoria"
+    if _CPF_PONTUADO.fullmatch(bruta) or _CNPJ_PONTUADO.fullmatch(bruta):
+        digitos = re.sub(r"\D", "", bruta)
+        if len(digitos) == 11 and not _cpf_valido(digitos):
+            raise ValueError("CPF da chave Pix inválido (confira os dígitos).")
+        return digitos, "cpf" if len(digitos) == 11 else "cnpj"
+    if not _SO_TELEFONE.fullmatch(bruta):
+        raise ValueError("Chave Pix irreconhecível: use e-mail, CPF, CNPJ, telefone com DDD ou chave aleatória.")
+    digitos = re.sub(r"\D", "", bruta)
+    if bruta.startswith("+"):
+        if not digitos.startswith("55"):
+            raise ValueError("Telefone da chave Pix: só números do Brasil (+55).")
+        return _telefone(digitos[2:])
+    if "(" in bruta:  # "(16) 99999-0000" é telefone mesmo com 11 dígitos
+        return _telefone(digitos)
+    if len(digitos) == 14:
+        return digitos, "cnpj"
+    if len(digitos) == 11:
+        if _cpf_valido(digitos):
+            return digitos, "cpf"
+        if digitos[2] == "9":
+            return _telefone(digitos)
+        raise ValueError("CPF da chave Pix inválido (confira os dígitos).")
+    if len(digitos) in (12, 13) and digitos.startswith("55"):
+        return _telefone(digitos[2:])
+    if len(digitos) == 10:
+        return _telefone(digitos)
+    raise ValueError("Chave Pix irreconhecível: use e-mail, CPF, CNPJ, telefone com DDD ou chave aleatória.")
+
+
 def gerar_pix_copia_e_cola(chave: str, nome: str, cidade: str, valor: float, txid: str = "***") -> str:
     """Gera o código "copia e cola" de um Pix estático com valor preenchido."""
-    chave = (chave or "").strip()
-    if not chave:
-        raise ValueError("Informe a chave Pix do organizador.")
-    if not chave.isascii():
-        raise ValueError("Chave Pix com caractere inválido (acento ou símbolo).")
-    if len(chave) > 77:
-        raise ValueError("Chave Pix longa demais (máx. 77 caracteres).")
+    chave, _tipo = normalizar_chave_pix(chave)
     txid = (txid or "***").strip()
     if txid != "***" and not re.fullmatch(rf"[A-Za-z0-9]{{1,{MAX_TXID}}}", txid):
         raise ValueError("Identificador (txid) do Pix: só letras e números, até 25.")
