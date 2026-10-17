@@ -1,0 +1,23 @@
+# segredos
+.env
+
+# python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/dados/
+
+# node
+node_modules/
+frontend/dist/
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# o PDF do pitch (pitch/pitch.pdf) É versionado de propósito
+
+# claude code local
+.claude/settings.local.json
+.claude/worktrees/

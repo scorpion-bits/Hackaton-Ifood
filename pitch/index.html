@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pitch — Hackathon iFood × SEMCOMP 29</title>
+  <!-- Reveal.js local (node_modules): funciona sem internet. Abra este arquivo direto no navegador. -->
+  <link rel="stylesheet" href="node_modules/reveal.js/dist/reset.css">
+  <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
+  <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/white.css">
+  <style>
+    :root { --r-main-font-size: 34px; --r-heading-color: #1d1d1f; --r-link-color: #d61f2c; }
+    .reveal h1, .reveal h2 { text-transform: none; letter-spacing: -0.01em; }
+    .reveal .marca { color: #d61f2c; }
+    .reveal .preencher { background: #fff4d6; color: #6b4e00; padding: 0 .3em; border-radius: 4px; }
+    .reveal .pequeno { font-size: .6em; color: #6b6b70; }
+    .reveal .fluxo { display: flex; justify-content: center; align-items: center; gap: .4em; flex-wrap: wrap; }
+    .reveal .fluxo span { border: 2px solid #d61f2c; border-radius: 12px; padding: .3em .6em; font-size: .7em; }
+    .reveal .fluxo b { color: #6b6b70; }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+  <section>
+    <h1><span class="preencher">[Nome do produto]</span></h1>
+    <p>Comércio com agentes no iFood: <span class="preencher">[frase de 1 linha]</span></p>
+    <p class="pequeno">Hackathon iFood × SEMCOMP 29 · ONOVOLAB · 17–18/10/2026</p>
+  </section>
+
+  <section>
+    <h2>O problema</h2>
+    <p><span class="preencher">[Quem sofre, com qual dor, quanto custa — com fonte]</span></p>
+    <p class="pequeno">Preencher depois do enunciado oficial (17/10, 12h30).</p>
+  </section>
+
+  <section>
+    <h2>A solução</h2>
+    <p><span class="preencher">[O que o agente faz, em uma frase]</span></p>
+    <ul>
+      <li>Lado <span class="marca">vendedor</span>: <span class="preencher">[...]</span></li>
+      <li>Lado <span class="marca">comprador</span>: <span class="preencher">[...]</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Demo ao vivo</h2>
+    <p><span class="preencher">[Roteiro de 2 minutos e o "momento uau"]</span></p>
+    <p class="pequeno">Plano B: vídeo gravado em pitch/video/ (se a internet cair).</p>
+  </section>
+
+  <section>
+    <h2>Como funciona</h2>
+    <div class="fluxo">
+      <span>Pessoa</span><b>→</b><span>Agente (LLM)</span><b>→</b><span>Servidor MCP</span><b>→</b><span>APIs do iFood</span>
+    </div>
+    <p class="pequeno">O mesmo servidor MCP atende o nosso app e qualquer cliente MCP (Claude Desktop, outros agentes).</p>
+  </section>
+
+  <section>
+    <h2>Agente confiável</h2>
+    <ul>
+      <li>Explica <strong>por que</strong> fez cada escolha</li>
+      <li>Respeita limites: preço, estoque, orçamento, teto de desconto</li>
+      <li>Nada com dinheiro sem <strong>confirmação humana</strong></li>
+      <li>Dado simulado sempre com selo <em>demonstração</em></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Impacto</h2>
+    <p><span class="preencher">[Valor para lojista, cliente e iFood — números com fonte]</span></p>
+  </section>
+
+  <section>
+    <h2>Equipe</h2>
+    <ul>
+      <li>Thales Miguel Hajes — pitch, front, testes</li>
+      <li>Milan — IA, back, design</li>
+      <li>Zenon — testes, apoio ao pitch</li>
+      <li>Antonio — testes</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Próximos passos</h2>
+    <p><span class="preencher">[O que faríamos com mais 30 dias]</span></p>
+    <p class="marca">Obrigado!</p>
+  </section>
+
+</div></div>
+<script src="node_modules/reveal.js/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({ hash: true, width: 1280, height: 720, pdfSeparateFragments: false });
+</script>
+</body>
+</html>
