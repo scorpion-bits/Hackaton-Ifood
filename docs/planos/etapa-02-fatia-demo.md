@@ -160,11 +160,11 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 | 02.3 | Motor: LLM JSON, intérprete, busca, juiz (C5) | dev-backend | opus | high | `backend/app/match/llm.py`, `interprete.py`, `busca.py`, `juiz.py`, `motor.py`, `backend/tests/test_motor.py` | 02.1, 02.2 | com `LLM_PROVIDER=mock`, 3 desejos do roteiro (japonês+sorvete / hambúrguer+sorvete / econômico vegetariano) geram top 3 coerente usando só preços do demo MCP; teste com provedor HTTP falso cobre o caminho LLM | ✅ |
 | 02.4 | Checkout com consentimento e acompanhamento (C6) | dev-mcp-ifood | opus | high | `backend/app/match/checkout.py`, `backend/tests/test_checkout.py` | 02.1, 02.2 | testes: sem consentimento não envia; total mudou → para; falha no 2º pedido → 1º enviado e status "falhou" com loja | ✅ |
 | 02.3b | Ajustar cenário da demo: até 3 lojas (com custo explícito), sorvetes juntos na mesma sorveteria, orçamentos do roteiro | dev-backend | sonnet | high | `backend/app/match/motor.py`, `backend/app/ifood_mcp/dados_demo_match.json`, `backend/tests/test_motor.py`, `docs/roteiro-demo.md` | 02.3 | os 3 desejos do roteiro dão top 1 com os 2 sorvetes da mesma sorveteria, ≤ 3 lojas, dentro dos orçamentos; testes passam | ✅ |
-| 02.5 | API da sala + estado + pagamentos (C7) | dev-backend | sonnet | high | `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/app/main.py` (só incluir o router e estender o reset), `backend/tests/test_salas.py` | 02.2, 02.3, 02.4 | teste de API faz o fluxo inteiro do "Pronto quando" com TestClient; ações sem token → 403; enviar antes de 100% pago → 409 | ⬜ |
+| 02.5 | API da sala + estado + pagamentos (C7) | dev-backend | sonnet | high | `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/app/main.py` (só incluir o router e estender o reset), `backend/tests/test_salas.py` | 02.2, 02.3, 02.4 | teste de API faz o fluxo inteiro do "Pronto quando" com TestClient; ações sem token → 403; enviar antes de 100% pago → 409 | ✅ |
 | 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ✅ |
 | 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ✅ |
 | 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ✅ |
-| 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | ⬜ |
+| 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | 🔄 |
 
 Status: ⬜ a fazer · 🔄 em andamento · ✅ feito · ❌ falhou (ver registro) · ⏸️ adiado
 
@@ -207,6 +207,9 @@ integração (engenheiro-chefe: `./iniciar.sh --testes`, build, Playwright no fl
 
 - 17/10 ~23h — 02.3b ✅: roteiro (Zenon até R$ 50) → Milan guioza (Kaigan) + sundae, Zenon smash + sundae (mesma
   sorveteria Gelato), Antonio sunomono (Kaigan); 3 lojas, R$ 103,50 sem taxa; taxas demo 7,99/5,99/4,99.
+
+- 17/10 ~23h20 — 02.5 ✅ (95 testes, curl no fluxo inteiro). Commit 4d855a0. Ajustes no front (id do organizador,
+  rótulo "organizador cobre"). Rodar sem combinação → 409 com avisos e sala segue em `coletando`. 02.9 (QA) disparada.
 
 ## Fechamento
 (preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)
