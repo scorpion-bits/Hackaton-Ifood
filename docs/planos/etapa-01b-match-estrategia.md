@@ -123,3 +123,26 @@ alto) — avalia pitch e entregáveis contra os 5 critérios da banca antes da s
 | 03h–08h 🤖 | multi-loja real (ou sequencial), mediação, acerto de contas, testes | cenário sorvete+hambúrguer coerente |
 | 08h–10h30 | polimento, vídeo plano B, entregáveis 1–6, `jurado` | congelamento 10h30 |
 | 10h30–12h30 👥 | ensaio no PC do Thales, submissão | enviado |
+
+## 10. Pesquisa: Large Commerce Model e IA do iFood (pesquisador, 17/10)
+**Confirmado (fonte primária):**
+- 10/10/2025: iFood + Prosus anunciam o LCM, modelo proprietário (base Qwen 32B + RL) para busca, recomendação e
+  jornada de compra ("personal shopper que explica a sugestão"). Sinais: cliques, buscas, compras, cancelamentos,
+  avaliações; 14 anos de histórico; base global de transações da Prosus. Também sustenta o **Ailo**.
+  https://institucional.ifood.com.br/inovacao/ifood-anuncia-large-commerce-model/
+- **Ailo** (assistente de pedidos no WhatsApp e no app, 10/10/2025): https://institucional.ifood.com.br/inovacao/ailo-assistente-de-ia-pedidos/
+- **Compr.AI** (compra de mercado pelo WhatsApp): https://institucional.ifood.com.br/inovacao/compr-ai-compra-de-mercado-pelo-whatsapp/
+- 20/03/2026: LCM = 90% das interações de IA generativa do iFood (notificações, home, categorias).
+  https://institucional.ifood.com.br/releases/ifood-12-milhoes-pedidos/
+- 29/06/2026 (Prosus FY2026): sinergias iFood / iFood Pago / Despegar "powered by the LCM"; 21% da receita B2C da
+  Despegar no Brasil vem de clientes iFood. https://www.prosus.com/~/media/Files/P/prosus-corp-v2/results-reports-and-events-archive/annual-report/2026/fy2026-media-release.pdf
+- OLX, Decolar, Sympla: citadas como empresas do grupo que **poderiam** usar o LCM.
+**Não encontrado:** dados de OLX/Decolar/Sympla no treino; parceiro externo ao grupo Prosus. Números de ganho
+(66%, 4x, 60x) são do iFood, sem metodologia → citar "segundo o iFood".
+**NV:** Ailo "agêntico" com One-Click Buy (16/07/2026), só imprensa.
+
+**Consequência para o Match:** o iFood **já tem** assistente conversacional de pedido (Ailo) e de mercado (Compr.AI).
+"IA que pede comida por chat" não é original. O diferencial do Match tem de ser o que eles não mostram publicamente:
+**composição para grupo** (N pessoas, orçamentos e restrições diferentes, justiça), **multi-loja com custo
+explícito** e **explicação numérica** da escolha. No pitch: "o Match é uma capacidade que o Ailo poderia usar"
+(complementa, não concorre). Contexto externo (ex.: viagem via Despegar) = visão, com o caveat de consentimento.
