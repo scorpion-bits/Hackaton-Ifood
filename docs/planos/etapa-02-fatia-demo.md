@@ -128,7 +128,8 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 ### C8. Frontend — rotas por hash (`#/`, `#/s/{id}`, `#/s/{id}/org`), polling de 2 s em `GET /api/salas/{id}`
 - `frontend/src/tipos.ts` espelha C3/C7. `api.ts` ganha funções das rotas C7. Token do organizador e
   "lembrar de mim" (nome + chips) em `localStorage` com try/catch.
-- **Visual "dentro do app do iFood"** (pedido da equipe, 17/10): a tela **Início** imita a home do app — topo com
+- **Visual "dentro do app do iFood"** (pedido da equipe, 17/10; referência com fontes: `docs/design-ifood.md` — tokens, ordem
+  da home, fonte Inter no lugar da proprietária): a tela **Início** imita a home do app — topo com
   endereço, abas Início/Restaurantes/Mercados/Bebidas, chips (Ordenar · Pra retirar · Entrega grátis), círculos de
   categorias, banner, "Últimas lojas" e barra inferior (Início · Busca · **Match** · Pedidos · Perfil). O Match entra
   como **banner de destaque** ("Pedir em grupo? Dê um Match") + **aba central na barra inferior**. Paleta vermelha

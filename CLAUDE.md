@@ -74,4 +74,4 @@
 
 ## Docs
 - `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`
-  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/checklist-entrega.md`. Horários: `docs/planos/README.md` (o `plano-horas.md` é antigo).
+  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/design-ifood.md` (visual do app), `docs/checklist-entrega.md`. Horários: `docs/planos/README.md` (o `plano-horas.md` é antigo).
