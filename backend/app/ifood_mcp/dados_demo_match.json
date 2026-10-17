@@ -151,11 +151,11 @@
       "pedido_minimo": 25.0,
       "horario": "07:00–22:00",
       "itens": [
-        {"id": "mc-espaguete", "nome": "Macarrão espaguete 500 g", "descricao": "Massa de sêmola, serve 4 pessoas", "categoria": "Massas", "preco": 6.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
+        {"id": "mc-espaguete", "nome": "Macarrão espaguete 500 g", "descricao": "Massa de sêmola para o jantar; serve 4 pessoas", "categoria": "Massas", "preco": 6.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
         {"id": "mc-molho", "nome": "Molho de tomate tradicional 340 g", "descricao": "Molho pronto de tomate", "categoria": "Molhos", "preco": 4.49, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
         {"id": "mc-carne", "nome": "Carne moída 500 g", "descricao": "Patinho moído resfriado", "categoria": "Açougue", "preco": 24.90, "tags": ["sem_lactose", "sem_gluten"], "perecivel": true},
         {"id": "mc-parmesao", "nome": "Queijo parmesão ralado 50 g", "descricao": "Parmesão ralado fino", "categoria": "Frios", "preco": 8.90, "tags": ["vegetariano", "sem_gluten"]},
-        {"id": "mc-lasanha", "nome": "Lasanha à bolonhesa congelada 600 g", "descricao": "Serve 2 pessoas; pronta em 30 min no forno", "categoria": "Congelados", "preco": 22.90, "tags": [], "perecivel": true},
+        {"id": "mc-lasanha", "nome": "Lasanha à bolonhesa congelada 600 g", "descricao": "Jantar prático: serve 2 pessoas; pronta em 30 min no forno", "categoria": "Congelados", "preco": 22.90, "tags": [], "perecivel": true},
         {"id": "mc-pao-alho", "nome": "Pão de alho congelado 300 g", "descricao": "6 unidades para forno ou churrasqueira", "categoria": "Congelados", "preco": 12.90, "tags": ["vegetariano"], "perecivel": true},
         {"id": "mc-salada", "nome": "Mix de folhas higienizadas 200 g", "descricao": "Alface, rúcula e agrião prontos para servir", "categoria": "Hortifrúti", "preco": 9.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
         {"id": "mc-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de guaraná 2 litros", "categoria": "Bebidas", "preco": 9.99, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},

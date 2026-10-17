@@ -33,6 +33,10 @@ class Config:
     ifood_client_id: str
     ifood_client_secret: str
     db_path: Path
+    # MCP do consumidor do iFood (Match): "demo" = servidor de demonstração em processo; "real" = etapa 03.
+    ifood_mcp_modo: str = "demo"
+    ifood_mcp_client_id: str = ""
+    ifood_mcp_client_secret: str = ""
 
 
 def carregar() -> Config:
@@ -65,4 +69,7 @@ def carregar() -> Config:
         ifood_client_id=os.getenv("IFOOD_CLIENT_ID", ""),
         ifood_client_secret=os.getenv("IFOOD_CLIENT_SECRET", ""),
         db_path=Path(db) if db else BACKEND / "dados" / "app.db",
+        ifood_mcp_modo=os.getenv("IFOOD_MCP_MODO", "demo").strip().lower() or "demo",
+        ifood_mcp_client_id=os.getenv("IFOOD_MCP_CLIENT_ID", ""),
+        ifood_mcp_client_secret=os.getenv("IFOOD_MCP_CLIENT_SECRET", ""),
     )
