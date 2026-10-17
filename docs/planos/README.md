@@ -5,4 +5,4 @@ Cada etapa tem um plano em `etapa-NN-<nome>.md` (modelo: `TEMPLATE.md`). O plano
 | Nº | Etapa | Objetivo | Plano | Status |
 |---|---|---|---|---|
 | 00 | Preparação (Fase 0) | esqueleto de referência, pesquisa, orquestração | — (ver `docs/historico.md`) | ✅ concluída 16/10 |
-| 01 | Análise do tema | ideias, notas, recomendação | `etapa-01-analise.md` | ⏳ aguardando enunciado (17/10 12h30) |
+| 01 | Análise do tema | ideias, notas, recomendação | `etapa-01-analise.md` | ✅ análise feita · ⏳ aguardando escolha da ideia |

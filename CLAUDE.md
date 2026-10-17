@@ -1,9 +1,14 @@
 # CLAUDE.md — memória operacional (só estado vigente; máx. 250 linhas — o hook arquiva o excesso)
 
 ## Evento
-- Hackathon iFood × SEMCOMP 29, ONOVOLAB (São Carlos). 17/10 12h30 → 18/10 18h00 (BRT). Prêmio R$ 7 mil.
-- Tema: comércio com agentes, nos DOIS lados (vender e comprar). Enunciado oficial: **pendente (abertura 17/10 12h30)**.
-- Prazo de entrega e formato do pitch: **pendente**. ICMC fala em 27h — confirmar.
+- Hackathon SEMCOMP × iFood "Vendendo com Agentes", São Carlos. Prêmios R$ 4.000 / 2.000 / 1.000.
+- **Desafio oficial:** agente de IA que opera o **MCP do iFood (consumidor)** para fazer pedidos — da escolha do
+  restaurante ao fechamento do carrinho. Resumo técnico: `docs/mcp-ifood.md`.
+- **Horários:** dev sáb 17/10 13h → **dom 18/10 12h30 (submissão)**; pitches dom 13h–16h; resultado 17h.
+- **Critérios (5 pilares):** Visão & Originalidade · Arquitetura & Engenharia (uso correto do MCP) · Design &
+  Experiência · Impacto · Comunicação & Pitch.
+- **6 entregáveis:** proposta de negócio · desenho de solução · racional de UX · interface visual · doc técnico ·
+  **feedback sobre o MCP** (anotar em `docs/feedback-mcp.md` durante todo o evento).
 - Objetivo: 1º lugar (na última ficamos em 2º por 1 ponto com o AgroBits).
 
 ## Equipe
@@ -22,10 +27,11 @@
 - Resposta longa termina com: o que mudou · 🧪 como testar · 👥 o que a equipe faz. Máx. 3 perguntas por vez.
 
 ## Fase atual
-- **Fase 0 concluída.** O esqueleto é **só referência** (decisão da equipe em 16/10): reaproveitar o que servir à ideia aprovada.
-- **Aguardando o tema** (17/10 12h30). A equipe vai usar `/tema <enunciado>` → análise da Fase 4 e PARAR.
-
-- **Plano vigente:** nenhum ainda (o `/tema` cria `docs/planos/etapa-01-analise.md`). Índice: `docs/planos/README.md`.
+- **Etapa 01 (análise) feita; aguardando a equipe escolher a ideia** (`/executar <ideia>`). Recomendação: "Racha Aí"
+  (pedido em grupo). O esqueleto da Fase 0 é **só referência**.
+- **Plano vigente:** `docs/planos/etapa-01-analise.md`. Índice: `docs/planos/README.md`.
+- 👥 Acesso ao MCP: criar conta e agente no Portal (escopos todos, redirect `http://localhost:8000/oauth/callback`),
+  esperar a homologação, guardar o client secret só no `.env`.
 
 ## Orquestração (detalhes em docs/orquestracao.md)
 - O chat principal é o **engenheiro-chefe (Opus)**: escreve o plano de cada etapa em `docs/planos/etapa-NN-*.md`
@@ -58,8 +64,9 @@
 ## Pendências conhecidas
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
-- Caminhos NÃO VERIFICADOS do iFood: ver `docs/ifood-apis.md` §3 (prefixos `/merchant/v1.0`, `/catalog/v2.0`).
-- Não há API pública do iFood para o consumidor: lado comprador real depende do que o iFood liberar no evento.
+- Credenciais do MCP ainda não existem (homologação pendente). Nomes das tools vêm da doc → confirmar com `list_tools`.
+- O esqueleto usa a Merchant API (lojista), que não é o foco: será trocado pelo cliente MCP do consumidor.
 
 ## Docs
-- `docs/ifood-apis.md` (fontes + status), `docs/mcp.md`, `docs/decisions.md`, `docs/plano-horas.md`, `docs/checklist-entrega.md`.
+- `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`
+  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/plano-horas.md`, `docs/checklist-entrega.md`.

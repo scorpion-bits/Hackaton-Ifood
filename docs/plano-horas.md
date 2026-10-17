@@ -1,5 +1,7 @@
 # Plano de horas — 17/10 12h30 → 18/10 18h00 (~29h30)
 
+> ⚠️ **Desatualizado (17/10):** a submissão é **dom 12h30** (não 18h). Plano por horas vigente em `docs/planos/etapa-01-analise.md` §6; este arquivo será reescrito no `/executar`.
+
 > 👥 Confirmar na abertura: prazo de entrega, formato do pitch (tempo, vídeo?) e critérios.
 > O ICMC fala em 27h; se a entrega for antes das 18h, puxe tudo proporcionalmente.
 > Equipe: **Thales** (pitch, front, testes) · **Milan** (IA, back, design) · **Zenon** (testes, pitch) · **Antonio** (testes).
