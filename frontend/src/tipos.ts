@@ -109,6 +109,7 @@ export interface SalaCriada {
   sala_id: string;
   token_organizador: string;
   link_convite: string;
+  participante_id?: string;
 }
 
 export interface Desejo {
