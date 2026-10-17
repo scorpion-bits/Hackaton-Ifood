@@ -19,7 +19,8 @@ fi
 PY="$RAIZ/backend/.venv/bin/python"
 "$PY" -m pip install -q -r backend/requirements.txt
 
-[ -d frontend/node_modules ] || (cd frontend && npm install --no-fund --no-audit)
+# sempre: instala dependências novas depois de um git pull
+(cd frontend && npm install --no-fund --no-audit --silent)
 
 case "${1:-}" in
   --testes)

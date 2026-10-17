@@ -199,12 +199,13 @@ def test_modo_junto_vai_direto_para_pronto_e_envia(c):
 
 def test_organizador_com_desejo_nasce_pago(c):
     s = Sala(c)
-    # o organizador "entra" com o próprio nome e recebe o id que já tinha (sem duplicar)
-    pid_org = c.post(s.url("/participantes"), json={"nome": "thales"}).json()["participante_id"]
-    assert pid_org == s.estado()["organizador_id"]
+    # o id do organizador vem da criação da sala; um convidado com o mesmo nome NÃO vira o organizador
+    pid_org = s.estado()["organizador_id"]
+    impostor = c.post(s.url("/participantes"), json={"nome": "thales"}).json()["participante_id"]
+    assert impostor != pid_org
     c.put(s.url(f"/participantes/{pid_org}/desejo"), json={"texto": "pizza até R$ 40", "chips": []})
     s.convidar({"Milan": DESEJOS["Milan"]})
-    assert len(s.estado()["participantes"]) == 2
+    assert len(s.estado()["participantes"]) == 3
     assert s.rodar().status_code == 200
     assert s.escolher("separado").status_code == 200
     estado = s.estado()

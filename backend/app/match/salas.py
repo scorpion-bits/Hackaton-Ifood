@@ -91,7 +91,7 @@ def criar(organizador_nome: str, chave_pix: str | None, demonstracao: bool) -> d
         "id": sala_id,
         "token": secrets.token_urlsafe(24),
         "organizador_id": organizador_id,
-        "organizador_reivindicado": False,  # vira True quando o front do organizador pede para "entrar"
+        "organizador_reivindicado": True,  # o id do organizador já volta no POST /api/salas; ninguém o "reivindica" pelo nome
         "chave_pix": chave_pix or None,
         "demonstracao": demonstracao,
         "estado": COLETANDO,

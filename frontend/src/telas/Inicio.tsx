@@ -84,6 +84,7 @@ export default function Inicio() {
       <header className="home-topo">
         <div>
           <small>Entregar em</small>
+          <br />
           <strong>Demonstração — São Carlos ▾</strong>
         </div>
       </header>
