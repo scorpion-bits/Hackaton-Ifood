@@ -8,11 +8,12 @@ fallback determinístico.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import re
 
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
-from .busca import buscar_detalhado, ler_endereco
+from .busca import CONFIRMA, buscar_detalhado, ler_endereco
 from .interprete import CONSULTA_RESTRICAO, interpretar
 from .juiz import ROTULO_RESTRICAO, avaliar
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
@@ -21,6 +22,9 @@ from .otimizador import otimizar, pesos_por_perfil
 MAX_LOJAS = 3  # cada loja a mais = +1 pedido, +1 taxa, +1 entrega (o δ do otimizador penaliza; os avisos deixam o custo explícito)
 TOP = 3
 NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só fica se não houver nada melhor
+NOTA_RELEVANTE = 0.5  # se o melhor item do slot fica abaixo disso, o pedido não está no cardápio: vira "opção aproximada"
+PREFIXO_APROXIMADA = "Opção aproximada: "
+MAX_MOTIVO = 90
 
 
 def _reais(valor: float) -> str:
@@ -43,6 +47,31 @@ def _o_que(intencao: Intencao) -> str:
     base = _rotulo(intencao) or "nada"
     restricoes = " ".join(ROTULO_RESTRICAO.get(r, r) for r in intencao.restricoes)
     return f"{base} {restricoes}".strip()
+
+
+def _pediu(desejo: Desejo, intencao: Intencao) -> str:
+    """O que a pessoa pediu, para o aviso "Não achei X" (cai na frase dela se o slot só tem restrição)."""
+    def sem_orcamento(texto: str) -> str:
+        texto = re.sub(r"[,;]?\s*\b(até|ate|por|no máximo|max(imo)?)\b\s*(r\$)?\s*\d[\d.,]*\s*(reais)?\s*$", "", texto,
+                       flags=re.IGNORECASE)
+        return " ".join(texto.split()).strip(" ,;.")
+
+    if _rotulo(intencao):
+        return sem_orcamento(_o_que(intencao))
+    texto = sem_orcamento(desejo.texto or "")
+    return texto[:40] if texto else _o_que(intencao)
+
+
+def _marcar_aproximada(candidatos: list[Candidato]) -> list[Candidato]:
+    """Cópias dos candidatos com o motivo começando por "Opção aproximada:" (o front destaca)."""
+    marcados = []
+    for c in candidatos:
+        if c.motivo.startswith(PREFIXO_APROXIMADA):
+            marcados.append(c)
+            continue
+        motivo = (PREFIXO_APROXIMADA + c.motivo).strip()[:MAX_MOTIVO]
+        marcados.append(dataclasses.replace(c, motivo=motivo))
+    return marcados
 
 
 def _validos(intencao: Intencao, candidatos: list[Candidato]) -> list[Candidato]:
@@ -135,16 +164,52 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     candidatos = {i.participante_id: _sem_irrelevantes(lista) for (_, i), lista in zip(slots, julgados)}
     validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
 
+    # relevância: o melhor item do slot precisa passar de NOTA_RELEVANTE; senão é "opção aproximada" (e avisa)
+    fracos = [(d, i) for d, i in slots
+              if validos[i.participante_id] and max(c.nota for c in validos[i.participante_id]) < NOTA_RELEVANTE]
     for desejo, intencao in slots:
-        if not validos[intencao.participante_id]:
+        slot = intencao.participante_id
+        if not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
             avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
+    for desejo, intencao in fracos:
+        slot = intencao.participante_id
+        proximo = max(validos[slot], key=lambda c: (c.nota, -c.preco))
+        avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}; a opção mais próxima é "
+                      f"{proximo.item_nome} ({proximo.loja_nome}). Quer mudar o pedido?")
+        candidatos[slot] = _marcar_aproximada(candidatos[slot])
+        validos[slot] = _validos(intencao, candidatos[slot])
+
+    # restrição explícita que nenhum item do slot confirma por tag: não elimina, só avisa
+    avisados: set[tuple[str, str]] = set()
+    for (desejo, intencao), (_, detalhes) in zip(slots, buscas):
+        slot, pid = intencao.participante_id, desejo.participante_id
+        for r in intencao.restricoes:
+            if not validos[slot] or (pid, r) in avisados:
+                continue
+            confirma = CONFIRMA.get(r, {r})
+            if any(set(detalhes.get((c.loja_id, c.item_id), {}).get("tags", [])) & confirma for c in validos[slot]):
+                continue
+            avisados.add((pid, r))
+            quem = f" para {desejo.nome}" if len(nomes) > 1 else ""
+            avisos.append(f"Nenhum item confirma '{ROTULO_RESTRICAO.get(r, r)}'{quem} — confirme com a loja.")
+
+    ids_fracos = {i.participante_id for _, i in fracos}
+    nada_relevante = bool(fracos) and not any(
+        validos[i.participante_id] and i.participante_id not in ids_fracos for _, i in slots)
 
     orcamentos = {d.participante_id: lista[0].orcamento_max for d, lista in zip(desejos, interpretacoes)}
     pesos = pesos_por_perfil([lista[0].perfil for lista in interpretacoes])
-    combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos, pessoa_de=pessoa_de)
+    if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
+        combos = []
+        avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
+    else:
+        combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,
+                          pessoa_de=pessoa_de)
 
-    if not combos:
+    if nada_relevante:
+        pass  # já avisado acima
+    elif not combos:
         avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
                       "Tente aumentar o orçamento ou tirar uma restrição.")
     else:
