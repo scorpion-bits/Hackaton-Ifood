@@ -2,7 +2,8 @@
 
 O motor e o checkout do Match só falam com o iFood por aqui. O modo vem de `IFOOD_MCP_MODO`:
 - "demo": servidor de demonstração em processo (`demo_server.py`), sem rede nem credencial;
-- "real": MCP remoto com OAuth — fica para a etapa 03.
+- "real": MCP oficial `https://consumer-mcp.ifood.com.br/marketplace` (Streamable HTTP) com o token do OAuth
+  (`oauth.py`): `Authorization: Bearer`, 401 → renova 1 vez e reabre; sem login → `ErroMCP` legível.
 """
 
 from __future__ import annotations
@@ -11,14 +12,20 @@ import json
 import re
 import time
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import asdict, dataclass
 from typing import Any
 
+import httpx2
 from mcp import Client
+from mcp.client.streamable_http import streamable_http_client
 
 from ..config import Config
+from . import oauth
 from .demo_server import criar_servidor_demo
+
+URL_MCP_REAL = oauth.RECURSO_MCP
+MSG_401 = "O iFood recusou o acesso (401) mesmo depois de renovar o login. Conecte o iFood de novo."
 
 # Argumentos que nunca entram no resumo do rastro (localização e dados pessoais).
 CHAVES_SENSIVEIS = {
@@ -76,10 +83,11 @@ def _mensagem_legivel(texto: str) -> str:
 class ClienteIFood:
     """Envolve uma sessão MCP aberta e registra cada chamada em `rastro`."""
 
-    def __init__(self, sessao: Client, modo: str):
+    def __init__(self, sessao: Client, modo: str, sinal_http: dict | None = None):
         self._sessao = sessao
         self.modo = modo
         self.rastro: list[ChamadaRastro] = []
+        self._sinal_http = sinal_http  # modo real: último status HTTP visto (para explicar um 401)
 
     @property
     def demonstracao(self) -> bool:
@@ -92,8 +100,12 @@ class ClienteIFood:
         try:
             resultado = await self._sessao.call_tool(tool, args)
         except Exception as e:  # falha de transporte/protocolo
-            self._registrar(tool, resumo, inicio, ok=False, erro=f"Falha ao chamar {tool}: {e}")
-            raise ErroMCP(f"Falha ao chamar {tool}: {e}") from e
+            if self._sinal_http and self._sinal_http.get("401"):
+                msg = f"Falha ao chamar {tool}: o iFood recusou o login (401). Conecte o iFood de novo."
+            else:
+                msg = f"Falha ao chamar {tool}: {e}"
+            self._registrar(tool, resumo, inicio, ok=False, erro=msg)
+            raise ErroMCP(msg) from e
 
         if resultado.is_error:
             msg = _mensagem_legivel(_texto_do_resultado(resultado)) or f"A tool {tool} devolveu erro sem mensagem."
@@ -110,6 +122,26 @@ class ClienteIFood:
         self._registrar(tool, resumo, inicio, ok=True)
         return dados
 
+    async def listar_tools(self) -> list[dict]:
+        """Todas as tools do servidor (segue a paginação): nome, descrição, input/output schema, anotações."""
+        tools: list[dict] = []
+        cursor: str | None = None
+        for _ in range(50):
+            pagina = await self._sessao.list_tools(cursor=cursor)
+            for t in pagina.tools:
+                tools.append({
+                    "name": t.name,
+                    "title": t.title,
+                    "description": t.description,
+                    "input_schema": t.input_schema,
+                    "output_schema": t.output_schema,
+                    "annotations": t.annotations.model_dump(exclude_none=True) if t.annotations else None,
+                })
+            cursor = pagina.next_cursor
+            if not cursor:
+                break
+        return tools
+
     def rastro_como_dicts(self) -> list[dict]:
         return [asdict(c) for c in self.rastro]
 
@@ -118,12 +150,74 @@ class ClienteIFood:
         self.rastro.append(ChamadaRastro(tool=tool, resumo=resumo, ms=ms, ok=ok, erro=erro))
 
 
+def _desembrulhar(erro: BaseException) -> BaseException:
+    while isinstance(erro, BaseExceptionGroup) and len(erro.exceptions) == 1:
+        erro = erro.exceptions[0]
+    return erro
+
+
+async def _token_ou_erro(cfg: Config, forcar_renovacao: bool = False) -> str:
+    try:
+        return await oauth.token_valido(cfg, forcar_renovacao=forcar_renovacao)
+    except oauth.ErroOAuth as e:  # mensagens já legíveis e sem segredo
+        raise ErroMCP(str(e)) from None
+
+
+def _http_real(token: str, sinal: dict) -> httpx2.AsyncClient:
+    """Cliente HTTP do transporte MCP com o Bearer; um gancho anota se o iFood respondeu 401."""
+
+    async def anotar(resposta: httpx2.Response) -> None:
+        sinal["status"] = resposta.status_code
+        if resposta.status_code == 401:
+            sinal["401"] = True
+
+    return httpx2.AsyncClient(
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=httpx2.Timeout(30.0, read=120.0),
+        event_hooks={"response": [anotar]},
+        transport=_transporte_real,
+    )
+
+
+# Transporte HTTP opcional do modo real (os testes trocam por um falso).
+_transporte_real: httpx2.AsyncBaseTransport | None = None
+
+
+async def _conectar_real(cfg: Config, pilha: AsyncExitStack) -> ClienteIFood:
+    """Abre a sessão MCP real; se o iFood responder 401, renova o token 1 vez e tenta de novo."""
+    token = await _token_ou_erro(cfg)
+    for tentativa in range(2):
+        sinal: dict = {}
+        tentativa_pilha = AsyncExitStack()
+        try:
+            http = await tentativa_pilha.enter_async_context(_http_real(token, sinal))
+            sessao = await tentativa_pilha.enter_async_context(
+                Client(streamable_http_client(URL_MCP_REAL, http_client=http)))
+        except Exception as bruto:
+            try:
+                await tentativa_pilha.aclose()
+            except Exception:
+                pass
+            if sinal.get("401"):
+                if tentativa == 0:
+                    token = await _token_ou_erro(cfg, forcar_renovacao=True)
+                    continue
+                raise ErroMCP(MSG_401) from None
+            e = _desembrulhar(bruto)
+            raise ErroMCP(f"Não consegui conectar ao MCP do iFood ({type(e).__name__}): {e}") from None
+        await pilha.enter_async_context(tentativa_pilha)
+        return ClienteIFood(sessao, "real", sinal_http=sinal)
+    raise ErroMCP(MSG_401)
+
+
 @asynccontextmanager
 async def abrir_cliente(cfg: Config) -> AsyncIterator[ClienteIFood]:
-    """Abre o cliente MCP no modo da configuração (`demo` em processo; `real` na etapa 03)."""
+    """Abre o cliente MCP no modo da configuração (`demo` em processo; `real` no MCP oficial com OAuth)."""
     modo = getattr(cfg, "ifood_mcp_modo", "demo") or "demo"
     if modo == "real":
-        raise NotImplementedError("etapa 03")
+        async with AsyncExitStack() as pilha:
+            yield await _conectar_real(cfg, pilha)
+        return
     if modo != "demo":
         raise ValueError(f"IFOOD_MCP_MODO inválido: {modo!r}. Use 'demo' ou 'real'.")
     async with Client(criar_servidor_demo()) as sessao:

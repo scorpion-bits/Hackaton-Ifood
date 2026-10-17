@@ -58,8 +58,8 @@ qualquer campo com `token`. Imprime um resumo (nº de tools, nomes que diferem d
 | ID | Tarefa | Agente | Modelo | Esforço | Arquivos (só estes) | Depende de | Pronto quando | Status |
 |---|---|---|---|---|---|---|---|---|
 | 03.1 | OAuth + cliente MCP real + diagnóstico (C9, C10) | dev-mcp-ifood | opus | high | `backend/app/ifood_mcp/oauth.py`, `cliente.py`, `diagnostico.py`, `backend/app/rotas_oauth.py`, `backend/app/main.py` (só incluir router), `backend/app/config.py` (`ifood_mcp_redirect`), `.gitignore`, `.env.example`, `backend/tests/test_oauth.py` | — | testes com HTTP falso: PKCE S256 correto, state inválido → 400, troca/refresh, token nunca aparece em resposta/log, 401 → refresh 1×; `IFOOD_MCP_MODO=demo` inalterado; diagnóstico sanitiza (teste com payload falso cheio de dados pessoais) | 🔄 |
-| 03.2 | Front: "Conectar iFood", selo real × demonstração + polimento do QA | dev-frontend | sonnet | medium | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `Resultado.tsx`, `frontend/src/componentes/Selo.tsx`, `frontend/src/componentes/StatusIfood.tsx` (novo), `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/estilo.css`, `frontend/src/App.tsx` | C9 (contrato) | build ok; no modo real o organizador vê "Conectar iFood"/"Conectado"; selo "iFood real · conta de teste"; itens do QA abaixo resolvidos | 🔄 |
-| 03.3 | Robustez do motor e do Pix (QA 02.9 #2, #7) | dev-backend | sonnet | high | `backend/app/match/motor.py`, `backend/app/match/pix.py`, `backend/tests/test_motor.py`, `backend/tests/test_acerto_pix.py` | — | pedido fora do cardápio ("feijoada") gera aviso "Não achei X; a opção mais próxima é Y" ou 409 se nota < 0,5 para todos; chave Pix normalizada (CPF/CNPJ só dígitos, telefone +55…, e-mail minúsculo, aleatória intacta) com testes | 🔄 |
+| 03.2 | Front: "Conectar iFood", selo real × demonstração + polimento do QA | dev-frontend | sonnet | medium | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `Resultado.tsx`, `frontend/src/componentes/Selo.tsx`, `frontend/src/componentes/StatusIfood.tsx` (novo), `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/estilo.css`, `frontend/src/App.tsx` | C9 (contrato) | build ok; no modo real o organizador vê "Conectar iFood"/"Conectado"; selo "iFood real · conta de teste"; itens do QA abaixo resolvidos | ✅ |
+| 03.3 | Robustez do motor e do Pix (QA 02.9 #2, #7) | dev-backend | sonnet | high | `backend/app/match/motor.py`, `backend/app/match/pix.py`, `backend/tests/test_motor.py`, `backend/tests/test_acerto_pix.py` | — | pedido fora do cardápio ("feijoada") gera aviso "Não achei X; a opção mais próxima é Y" ou 409 se nota < 0,5 para todos; chave Pix normalizada (CPF/CNPJ só dígitos, telefone +55…, e-mail minúsculo, aleatória intacta) com testes | ✅ |
 | 03.4 | 👥 Rodar login + diagnóstico no PC e dar push das amostras | equipe | — | — | `docs/mcp-real/*.json` | 03.1 | `docs/mcp-real/tools.json` e amostras no git; responder "2 carrinhos abertos?" | ⬜ |
 | 03.5 | Adaptar busca e checkout ao formato real + feedback do MCP | dev-mcp-ifood | opus | high | `backend/app/match/busca.py`, `backend/app/match/checkout.py`, `backend/tests/test_formato_real.py` (fixtures = amostras sanitizadas), `docs/feedback-mcp.md`, `docs/mcp-ifood.md` | 03.4 | testes com as amostras reais passam; Match roda no PC com dados reais até o `getCart`; diferenças doc × real registradas | ⬜ |
 | 03.6 | Revisão da etapa | qa-testador | opus | high | (só leitura) | 03.1–03.5 | nada "bloqueia a demo"; modo demo intacto; nenhum dado pessoal nas amostras/commits | ⬜ |
@@ -93,6 +93,15 @@ honestidade (aviso de "não achei"). 03.5 opus/high: mapear formato real sem que
 
 ## Registro de execução
 (o engenheiro anota aqui ao fim de cada rodada: data/hora, tarefas concluídas, commit, problemas)
+- 18/10 ~00h30 — 03.2 ✅ (ce2f12d: Conectar iFood, selo real, Recarregar demo, "Não sou fulano", orçamento com
+  vírgula, 2×) · 03.3 ✅ (75ae96d + cadee7a: aviso "opção aproximada" com limiar 0,5; Pix normalizado). 122 testes.
+  **03.1 ainda em andamento** quando a equipe pediu `/clear`: arquivos parciais commitados como wip
+  (`ifood_mcp/oauth.py`, `config.py` com `ifood_mcp_redirect`/`ifood_mcp_scope`). **Ao retomar:** conferir se
+  existem `ifood_mcp/oauth.py`, `ifood_mcp/diagnostico.py`, `rotas_oauth.py`, `tests/test_oauth.py` e se `main.py`
+  inclui o router; rodar os testes. Completo → marcar 03.1 ✅ e passar a 03.4 (👥). Incompleto → redisparar a 03.1
+  (mesmo prompt do contrato C9/C10) dizendo para **continuar** a partir dos arquivos existentes.
+- Pendências menores: front pode destacar `motivo` que começa com "Opção aproximada:"; juiz sugere bebida como
+  "opção mais próxima" em empate (ex.: pizza sem glúten → refrigerante) — ajustar `juiz.py` na etapa 04.
 
 ## Fechamento
 (preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)
