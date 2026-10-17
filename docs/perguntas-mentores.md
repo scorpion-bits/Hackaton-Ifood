@@ -3,13 +3,13 @@
 Anotar a resposta embaixo de cada uma, com o nome de quem respondeu e a hora.
 
 ## 🔴 Desbloqueiam agora
-1. **Homologação:** quanto tempo leva a aprovação do agente no Portal? Quem aprova, e dá para acelerar se avisarmos alguém?
+1. **Aprovação do agente:** "Criamos nosso agente no Portal. Quanto tempo demora para ele ser aprovado? Tem alguém para quem a gente possa avisar?" (sem aprovação não recebemos o client ID/secret e ficamos parados)
    - R:
 2. **Carrinhos:** um mesmo usuário pode ter **dois carrinhos abertos ao mesmo tempo**, de restaurantes diferentes? E dá para enviar dois pedidos seguidos?
    - R:
-3. **Login:** o fluxo "Pending Action" (QR code / device code) que aparece na doc funciona para os nossos agentes? Ele não aparece nos metadados do `id.ifood.com.br`.
+3. **Login por QR code:** "A documentação fala de um login por QR code. Isso funciona no hackathon ou é só o login pelo navegador?" (o login pelo navegador funciona com certeza; o de QR não deu sinal nos nossos testes)
    - R:
-4. **Contas de teste:** quanto tempo valem? O vídeo fala "16 G" (16 dias?). Elas têm histórico de pedidos, para testar `getRecommendations` e os dados de comportamento?
+4. **Contas de teste:** "As contas de teste duram quanto tempo? E como elas são novas, a parte de 'recomendados / pedidos recentes' funciona ou volta vazia?" (o vídeo fala "16 G", talvez 16 dias; a ideia do "o de sempre" depende do histórico)
    - R:
 5. **Entrega:** onde e como submetemos os 6 entregáveis (repositório, PDF, formulário)? Quanto dura o pitch, e a demo precisa ser ao vivo?
    - R:
