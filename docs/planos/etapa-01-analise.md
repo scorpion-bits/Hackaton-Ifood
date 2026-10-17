@@ -186,3 +186,20 @@ pagamento com cartão, voz (opcional), app nativo.
    onde se submete? (c) quanto tempo leva a homologação do agente?
 3. Alguém consegue uma chave de IA paga (Claude/OpenAI)? O próprio iFood avisa que modelo fraco se perde nos IDs. Se
    não, usamos Gemini gratuito e compensamos com mais lógica determinística.
+
+## 7. Discussão da equipe (17/10) — pendente de aprovação
+- **IA × algoritmo (Milan):** o algoritmo faz conta e regra (filtro, soma, rateio, orçamento, ordem do checkout); a IA
+  faz o que é texto livre ou ambíguo (desejo vago → `query`, ler descrição do cardápio, separar regra de vontade,
+  mediar o grupo, recuperar de erro). Teste: "dá para escrever um `if`?" → código. Ideia C descartada (só conta).
+- **Medo de "mais um chatbot":** formato proposto **"Mesa"** — várias pessoas, 1 frase cada via QR (sem login delas;
+  só o organizador entra no iFood), quadro visual ao vivo (cartões, ✓ por restrição, rateio), agente que só pede o
+  "ok"; memória do grupo ("o de sempre") como extra.
+- **Limite de 1 restaurante por pedido (confirmado na doc):** (a) achar UM restaurante — a IA lê cardápios para
+  achar os generalistas; (b) extra: dividir em 2 pedidos mostrando o custo (+taxa, horários diferentes) — **NÃO
+  VERIFICADO** se o MCP permite 2 carrinhos abertos ao mesmo tempo; (c) negociar antes de dividir.
+- **Pedidos discrepantes:** IA separa **regra** (alergia, restrição, orçamento) de **vontade** (sabor) → algoritmo
+  pontua restaurantes (regras obrigatórias; justiça: ninguém sem opção) → se nenhum atende todos, a IA **media**:
+  pergunta só a quem trava ("Bia, topa poke em vez de sushi? todos economizam R$ X") → se ninguém ceder, mostra
+  "1 pedido, 4/5 felizes" × "2 pedidos, todos felizes, +taxa". Momento uau da demo: negociação ao vivo.
+- **Primeiros testes com acesso:** 2 carrinhos simultâneos? `getMerchant` traz cardápio completo com descrições?
+  Onde e quanto varia a taxa (`getCartDeliveryMethods`)?
