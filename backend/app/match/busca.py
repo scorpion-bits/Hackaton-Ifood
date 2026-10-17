@@ -206,7 +206,7 @@ def _candidato(item: dict, intencao: Intencao) -> Candidato:
 
 
 def _diversificar(itens: list[tuple[Candidato, dict]]) -> list[tuple[Candidato, dict]]:
-    """≤ 8 por slot, alternando lojas (para o otimizador ter como juntar pessoas em até 2 lojas).
+    """≤ 8 por slot, alternando lojas (para o otimizador ter como juntar pessoas em até 3 lojas).
 
     Quem não viola restrição vem antes; dentro de cada loja mantém a ordem da tool.
     """

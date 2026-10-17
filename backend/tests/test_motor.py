@@ -17,10 +17,10 @@ from app.match.motor import rodar_match
 
 ROTEIRO = [
     Desejo("milan", "Milan", "japonês e um sorvete, até R$ 45"),
-    Desejo("zenon", "Zenon", "hambúrguer e sorvete, até R$ 40"),
+    Desejo("zenon", "Zenon", "hambúrguer e sorvete, até R$ 50"),
     Desejo("antonio", "Antonio", "algo barato e vegetariano, até R$ 25", None, ["vegetariano"]),
 ]
-ORCAMENTOS = {"milan": 45.0, "zenon": 40.0, "antonio": 25.0}
+ORCAMENTOS = {"milan": 45.0, "zenon": 50.0, "antonio": 25.0}
 
 
 @pytest.fixture(autouse=True)
@@ -60,7 +60,7 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
             assert not esc["viola"]
 
     melhor = combos[0]
-    assert len(melhor["lojas"]) <= 2
+    assert len(melhor["lojas"]) <= 3
     gasto: dict[str, float] = {}
     for slot, esc in melhor["escolhas"].items():
         gasto[slot.split("#")[0]] = gasto.get(slot.split("#")[0], 0.0) + esc["preco"]
@@ -69,6 +69,12 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
         assert total <= ORCAMENTOS[pid] + 1e-9
     antonio = [e for s, e in melhor["escolhas"].items() if s.split("#")[0] == "antonio"]
     assert antonio and all("vegetariano" in demo[(e["loja_id"], e["item_id"])]["tags"] for e in antonio)
+    # "momento uau": os sorvetes de Milan e Zenon vêm da MESMA sorveteria; os pratos principais, de lojas diferentes
+    esc = melhor["escolhas"]
+    assert set(esc) == {"milan", "milan#2", "zenon", "zenon#2", "antonio"}
+    assert esc["milan#2"]["loja_id"] == esc["zenon#2"]["loja_id"] == "loja-demo-sorvete"
+    assert esc["milan"]["loja_id"] == "loja-demo-japones" and esc["zenon"]["loja_id"] == "loja-demo-burger"
+    assert set(melhor["lojas"]) == {"loja-demo-japones", "loja-demo-burger", "loja-demo-sorvete"}
     assert [c["score"] for c in combos] == sorted((c["score"] for c in combos), reverse=True)
 
     # intenções por slot (C4b) e pessoas
@@ -76,8 +82,8 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     assert slots == ["milan", "milan#2", "zenon", "zenon#2", "antonio"]
     assert {p["participante_id"]: p["slots"] for p in r["pessoas"]}["milan"] == ["milan", "milan#2"]
     # avisos legíveis sobre o que ficou de fora e sobre lojas/taxas
-    assert any("Sorvete de Milan" in a for a in r["avisos"])
-    assert any("2 lojas = 2 pedidos" in a for a in r["avisos"])
+    assert not any("ficou de fora" in a for a in r["avisos"])  # ninguém perdeu item
+    assert any("3 lojas = 3 pedidos, 3 taxas de entrega e 3 entregas" in a for a in r["avisos"])
     # rastro: listAddresses primeiro, depois as buscas; endereço do demo
     assert r["rastro"][0]["tool"] == "listAddresses"
     assert {c["tool"] for c in r["rastro"][1:]} <= {"searchOffers", "getMerchant", "browseOffers"}
