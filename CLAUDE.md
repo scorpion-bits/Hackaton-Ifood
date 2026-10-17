@@ -31,7 +31,7 @@
   convidados entram por link/QR sem login; só o organizador usa o iFood. Pagamento "junto" ou "separado" (vaquinha:
   Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
   2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
-- **Plano vigente:** `docs/planos/etapa-02-fatia-demo.md`. Etapas 02–05: `docs/planos/README.md`.
+- **Plano vigente:** `docs/planos/etapa-03-mcp-real.md` (02 concluída: Match ponta a ponta em demonstração). Etapas 02–05: `docs/planos/README.md`.
 - ✅ Agente "IBits" **aprovado** (17/10). Portal: https://mcp-developer.ifood.com.br/pt-BR ("Faça login"). 3 contas de teste
   (`unique-`, `safe-`, `fair-thales@test.ifood.com.br`, expiram em ~16 dias; OTP no portal). Redirect URLs: `http://localhost:8000/oauth/callback` (app),
   `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).
@@ -52,15 +52,16 @@
   (topo, com data e motivo; arquivar, nunca apagar) e voltar a ~180 linhas. Um hook avisa automaticamente.
 
 ## Estado do código
-- `backend/app/main.py` — FastAPI: `/api/saude`, `/api/chat`, `/api/acoes[/{id}/confirmar|recusar]`, `/api/lojas`, `/api/demo/resetar`; serve `frontend/dist`.
-- `backend/app/agente/` — laço do agente (`laco.py`) + provedores (`provedores.py`: mock, OpenAI-compatível [groq/gemini/ollama/openai], anthropic). Lado `vendedor` ou `comprador` filtra ferramentas pelo prefixo.
-- `backend/app/mcp_server.py` — servidor MCP (SDK `mcp` 2.x, `MCPServer`). Ferramentas `vendedor_*`, `comprador_*`, `consultar_acao`. `propor_*` só cria ação pendente.
-- `backend/app/acoes.py` — ações pendentes; `EXECUTORES` mapeia tipo → chamada no cliente iFood.
-- `backend/app/ifood/` — interface única; `mock.py` (SQLite, dados de `dados_demo.json`), `real.py` (token + leitura; escrita = `NaoSuportado`).
-- `backend/mcp_stdio.py` — servidor MCP sozinho (stdio; `--http` em :8001/mcp).
-- `frontend/src/App.tsx` — chat mobile first, abas Cliente/Lojista, cartões de confirmação, selo DEMONSTRAÇÃO, "Recarregar demo".
-- `pitch/` — Reveal.js local; `npm run pdf` gera `pitch/pitch.pdf` (versionado).
-- Testes: `backend/tests` (13, pytest). Typecheck: `cd frontend && npm run typecheck`.
+- `backend/app/match/` — Match: `motor.py` (intérprete → busca MCP → juiz → otimizador; até 3 lojas), `llm.py`
+  (provedor do `.env`, fallback offline), `otimizador.py` (pontuação §4 da 01b, vários itens por pessoa = slots `pid#k`),
+  `acerto.py` (partes em centavos, prazo 10+2/pessoa), `pix.py` (BR Code), `checkout.py` (sequência MCP, consentimento),
+  `salas.py` (estado em SQLite). Campos das tools só em `busca.py` e `checkout.py`.
+- `backend/app/rotas_match.py` — API da sala (`/api/salas...`, contrato C7 da etapa 02). `main.py` serve `frontend/dist`.
+- `backend/app/ifood_mcp/` — `cliente.py` (`abrir_cliente(cfg)`, rastro), `demo_server.py` + `dados_demo_match.json`
+  (MCP de demonstração, 7 lojas fictícias). Modo real: etapa 03.
+- `frontend/src/` — home estilo iFood (`telas/Inicio.tsx`), `Organizador`, `Convidado`, `Resultado`, `Pagamento`, `Pedidos`.
+- Esqueleto antigo (`agente/`, `mcp_server.py`, `ifood/`, `acoes.py`) segue no repo só como referência; remover depois da 03.
+- `pitch/` — slides do Match; `docs/roteiro-demo.md`. Testes: `./iniciar.sh --testes` (95).
 
 ## Como rodar
 - Linux: `./iniciar.sh` (app em :8000) · `--dev` · `--testes`.
