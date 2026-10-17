@@ -30,8 +30,18 @@ Formato: data · decisão · por quê · quem aprovou · como reverter.
 6. **Frontend compilado servido pelo próprio FastAPI em :8000.** Um processo, uma URL na demo.
    Aprovação: operacional (Claude).
 
+7. **Ideia: "Match" — composição de pedido por IA para 1 ou N pessoas, 1 ou mais lojas** (17/10 ~19h45).
+   Escopo: §7 + §12 + §13 opção 1 de `docs/planos/etapa-01b-match-estrategia.md`. Demo = grupo multi-loja.
+   Pagamento: só o organizador entra no iFood; "junto" (1 confirmação, N cobranças) ou "separado" (vaquinha: cada um
+   paga a sua parte por Pix real para a chave do organizador, cartão simulado com selo ou dinheiro; o pedido só sai
+   com 100% pago). Prazo: 10 min + 2 min por pessoa acima de 2. Descoberta contextual = extra abortável.
+   Por quê: maior nota em originalidade e demo; o iFood já tem chat de pedido (Ailo), então o diferencial é a
+   composição para grupo com números explicados. Aprovação: equipe. Reverter: o motor serve também 1 pessoa (modo individual).
+
+8. **O Match é cliente MCP com servidor de demonstração local** (mesmos nomes de tools da doc, dados com selo);
+   o modo real troca só o transporte (etapa 03). Por quê: desenvolver sem credencial e ter plano B sem internet.
+   Aprovação: operacional (Claude). Agente `jurado` criado (aprovado pela equipe).
+
 ## Pendentes (👥 decisão humana na abertura)
 
-- Problema, público, ideia e escopo do MVP → depois do enunciado oficial (Fase 4 do plano).
-- Nome do produto.
 - Provedor de IA da demo (Groq × Gemini × Ollama) depois de testar com a internet do evento.

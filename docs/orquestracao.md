@@ -45,6 +45,7 @@ escrito lá. Se mudar a estratégia/escopo no meio, o engenheiro **para e pede a
 | Só rodar testes e relatar | `qa-testador` | haiku | low |
 | Pesquisa com fontes | `pesquisador` | sonnet | medium |
 | Texto do pitch, roteiro da demo | `pitch-demo` | opus | medium |
+| Nota da banca simulada (pitch e entregáveis) | `jurado` | opus | high |
 | Bug difícil / intermitente | dev da área | opus | xhigh |
 
 Regra: começar pelo mais barato que dá conta; se a tarefa falhar ou voltar fraca, subir um nível e anotar no plano.

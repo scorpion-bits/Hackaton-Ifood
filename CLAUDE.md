@@ -27,18 +27,21 @@
 - Resposta longa termina com: o que mudou · 🧪 como testar · 👥 o que a equipe faz. Máx. 3 perguntas por vez.
 
 ## Fase atual
-- **Etapa 01b (estratégia do Match) feita; aguardando decisão** (`/executar <escopo>`). Recomendação: núcleo
-  "intenção → cesta viável", demo = Match em grupo multi-loja, organizador paga. Esqueleto da Fase 0 = só referência.
-- **Plano vigente:** `docs/planos/etapa-01b-match-estrategia.md` (antes: `etapa-01-analise.md`). Índice: `docs/planos/README.md`.
-- 👥 Agente "IBits" sendo cadastrado no Portal (escopos todos). O formulário aceita **várias** Redirect URLs:
-  `http://localhost:8000/oauth/callback` (app), `http://127.0.0.1:19876/mcp/oauth/callback` e
-  `http://localhost:19876/mcp/oauth/callback` (opencode). Secret só no `.env` (`IFOOD_MCP_CLIENT_ID/SECRET`).
+- **Ideia aprovada: "Match"** — IA compõe o pedido de 1 ou N pessoas (1 ou mais lojas) a partir de frases livres;
+  convidados entram por link/QR sem login; só o organizador usa o iFood. Pagamento "junto" ou "separado" (vaquinha:
+  Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
+  2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
+- **Plano vigente:** `docs/planos/etapa-02-fatia-demo.md`. Etapas 02–05: `docs/planos/README.md`.
+- 👥 Agente "IBits" aguardando aprovação no Portal. Redirect URLs: `http://localhost:8000/oauth/callback` (app),
+  `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).
+  Secret só no `.env` (`IFOOD_MCP_CLIENT_ID/SECRET`). Nunca pagar Pix de pedido de teste.
+- Respostas para a banca: `docs/pitch-perguntas-banca.md`.
 
 ## Orquestração (detalhes em docs/orquestracao.md)
 - O chat principal é o **engenheiro-chefe (Opus)**: escreve o plano de cada etapa em `docs/planos/etapa-NN-*.md`
   (modelo `TEMPLATE.md`), delega aos subagentes de `.claude/agents/`, integra, testa, commita.
 - Cada tarefa do plano tem agente, **modelo e esforço**; ao delegar, passe exatamente esses `model` e `effort` ao Agent tool.
-- Subagentes: `arquiteto`, `dev-backend`, `dev-mcp-ifood`, `dev-frontend`, `qa-testador`, `pitch-demo`, `pesquisador`.
+- Subagentes: `arquiteto`, `dev-backend`, `dev-mcp-ifood`, `dev-frontend`, `qa-testador`, `pitch-demo`, `pesquisador`, `jurado`.
 - Comandos: `/tema` → `/executar` → `/continuar` (repetir) · `/status`. Reserva: `docs/prompt-abertura.md`.
 - Tudo que precisa sobreviver a um `/clear` vai para o plano vigente ou para este arquivo.
 - Tarefas paralelas só com arquivos separados; subagente não faz commit.
@@ -66,8 +69,8 @@
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
 - Credenciais do MCP ainda não existem (homologação pendente). Nomes das tools vêm da doc → confirmar com `list_tools`.
-- O esqueleto usa a Merchant API (lojista), que não é o foco: será trocado pelo cliente MCP do consumidor.
+- O domínio antigo do esqueleto (lojas/vendedor/comprador, Merchant API) não é usado pelo Match; remover só depois da etapa 03.
 
 ## Docs
 - `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`
-  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/plano-horas.md`, `docs/checklist-entrega.md`.
+  (Merchant API, fora do foco), `docs/mcp.md` (como fazer servidor MCP), `docs/decisions.md`, `docs/checklist-entrega.md`. Horários: `docs/planos/README.md` (o `plano-horas.md` é antigo).
