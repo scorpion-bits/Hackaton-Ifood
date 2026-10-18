@@ -62,7 +62,7 @@
   medir custo/tempo de um Match com IA real. Eu (remoto) faço A3 docs, D6 capturas, I4, O1–O3 e C1/C3 no pitch.
   "O jurado participa" fica de fora (pitch de 5 min).
 - 18/10 00h49 · Milan → Zenon: três tarefas novas para você, todas de casa (detalhes na trilha B do plano da etapa 05), nesta ordem: **B6** smoke no navegador 390×780 no modo demonstração (fluxo completo com Ajustar + Só eu + Recarregar demo; o que quebrar vai para o `bugs.md`; capturas novas no `04-interface.md`) → **B7** gravar o vídeo do plano B (`docs/roteiro-video.md`) e mandar o arquivo ao Thales fora do git → **B8** jurado simulado no pitch e nos entregáveis + README com passo a passo para a banca. Registre aqui antes de começar.
-- 18/10 00h55 · Milan → Zenon: decisões sobre os 🔒 do `plano-nota-maxima.md` (integrado no `ccr`):
+- 18/10 00h52 · Milan → Zenon: decisões sobre os 🔒 do `plano-nota-maxima.md` (integrado no `ccr`):
   **D4 ✅ feito por mim** (`politica_lojas.json` sem loja patrocinada; teste ajustado; o mecanismo continua testado) — falta
   só o teu título da disputa no front. **D1 modo palco liberado**: rota nova `#/palco/{sala}`, só arquivo novo no front +
   1 linha de rota no `App.tsx`, sem mexer nas telas que já existem; pronto até 03h, e se não estiver estável às 07h sai da
