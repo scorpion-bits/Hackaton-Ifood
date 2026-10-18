@@ -1,4 +1,4 @@
-"""Ajustar com o IBits (contrato C14): uma frase do organizador → mudanças nos desejos do grupo.
+"""Ajustar com o Match (contrato C14): uma frase do organizador → mudanças nos desejos do grupo.
 
 "troca o sorvete do Milan por açaí" → `Mudanca(milan, "japonês e um açaí, até R$ 45", None,
 "Milan: açaí no lugar do sorvete")`. A rota aplica as mudanças e roda o Match de novo.
@@ -537,7 +537,7 @@ def interpretar_fallback(texto: str, participantes: list[dict]) -> list[Mudanca]
 
 
 # ---------- caminho LLM ----------
-SISTEMA = """Você é o IBits e ajusta um pedido em grupo do iFood depois que o Match já mostrou o resultado.
+SISTEMA = """Você é o Match e ajusta um pedido em grupo do iFood depois que o resultado já foi mostrado.
 O organizador escreve, em português, o que quer mudar. Você recebe os participantes (id, nome, se é o organizador,
 o desejo atual e o orçamento). Devolva só as pessoas que a frase muda:
 {"mudancas":[{"participante_id":"<id da lista>","novo_texto":"desejo completo já ajustado","novo_orcamento":null,

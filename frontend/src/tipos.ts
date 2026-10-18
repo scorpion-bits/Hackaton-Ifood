@@ -161,7 +161,7 @@ export interface Participante {
   respondeu: boolean;
 }
 
-/** C14: o que o IBits entendeu de um ajuste, por pessoa. */
+/** C14: o que o Match entendeu de um ajuste, por pessoa. */
 export interface Entendido {
   participante_id: string;
   nome: string;
@@ -195,7 +195,7 @@ export interface EstadoSala {
   pagamentos?: Record<string, Pagamento>;
   prazo_fim?: string;
   pedidos?: Record<string, unknown>[];
-  /** C14 (opcional): ajustes já feitos com o IBits, do mais antigo ao mais novo. */
+  /** C14 (opcional): ajustes já feitos com o Match, do mais antigo ao mais novo. */
   ajustes?: AjusteSala[];
   /** Bug 21 (opcional): avisos gravados ao montar os carrinhos (ex.: loja que o iFood recusou e saiu do pedido). */
   avisos?: string[];

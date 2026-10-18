@@ -46,7 +46,7 @@ ROTULO_ESTADO = {
     ENVIADO: "com os pedidos já enviados",
 }
 MAX_PARTICIPANTES = 6  # limite do otimizador (C4)
-MAX_AJUSTES = 10  # histórico do "Ajustar com o IBits" guardado na sala
+MAX_AJUSTES = 10  # histórico do "Ajustar com o Match" guardado na sala
 
 _trava = threading.RLock()
 
@@ -113,7 +113,7 @@ def criar(organizador_nome: str, chave_pix: str | None, demonstracao: bool) -> d
         "rastro": [],
         "avisos": [],
         "ultimo_erro_envio": None,
-        "ajustes": [],  # "Ajustar com o IBits" (C14): [{texto, entendido, em}], os últimos MAX_AJUSTES
+        "ajustes": [],  # "Ajustar com o Match" (C14): [{texto, entendido, em}], os últimos MAX_AJUSTES
     }
     with _trava, db.conectar() as con:
         _garantir(con)

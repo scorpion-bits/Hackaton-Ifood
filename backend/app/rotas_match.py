@@ -413,7 +413,7 @@ async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
 
 @router.post("/salas/{sala_id}/ajustar")
 async def ajustar(sala_id: str, corpo: CorpoAjuste, x_organizador: str | None = Header(default=None)):
-    """"Ajustar com o IBits" (C14): frase do organizador → mudanças nos desejos → Match de novo.
+    """"Ajustar com o Match" (C14): frase do organizador → mudanças nos desejos → Match de novo.
 
     Transação: os desejos novos só são gravados junto com o resultado novo. Se o Match não achar combinação (ou o
     iFood falhar), a sala continua com os desejos e o resultado anteriores."""
