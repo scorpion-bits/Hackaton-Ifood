@@ -77,8 +77,9 @@
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
-- **Sem retorno do Thales:** fazer o A1 do `docs/plano-nota-maxima.md` (CI no GitHub: pytest + build a cada push,
-  selo no README) → **Sonnet**.
+- **01h50:** A3, A6 (CI) e bugs 12–20 ✅. Esperando o Thales: **P5** (IA com reserva) e **P6** (carrinho real com Cartão de
+  Teste, sem enviar). Com o P6 ok → P7: `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**.
+  Zenon: B9 (Z1) até 05h → integrar e smoke (qa-testador, Sonnet). Depois: PR `ccr` → `main`.
 - **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
   `leilao.py`, `ajuste.py`), comparar com a linha de base do registro de 00h41 → **Sonnet**; depois I3 (custo/tempo).
 - **Quando chegar o P4 (amostras de carrinho com sucesso):** ajuste fino do `checkout.py` → **Opus**.
