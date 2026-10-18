@@ -126,12 +126,14 @@ export function marcarLeilaoVisto(salaId: string, sig = "1"): void {
   }
 }
 
-/** "Milan: açaí no lugar do sorvete · Antonio: mais barato". */
+const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** "Milan: açaí no lugar do sorvete · Antonio: mais barato". O back já manda o resumo começando pelo nome (C14). */
 export function textoEntendido(e: Entendido[] | string | undefined): string {
   if (!e) return "";
   if (typeof e === "string") return e.trim();
   return e
-    .map((x) => (x.nome ? `${x.nome}: ${x.resumo}` : x.resumo))
+    .map((x) => (x.nome && !semAcento(x.resumo ?? "").startsWith(semAcento(x.nome)) ? `${x.nome}: ${x.resumo}` : x.resumo))
     .filter(Boolean)
     .join(" · ");
 }
