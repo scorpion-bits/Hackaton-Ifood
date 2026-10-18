@@ -46,16 +46,24 @@ def test_sinal_de_compra_ou_so_arroz_e_feijao_nao_viram_marmita(texto):
     assert all(i.consultas != CONSULTAS_MARMITA for i in _ler(texto))
 
 
-@pytest.mark.parametrize("texto", ["uma marmita", "um PF com bife e ovo", "prato executivo de frango",
-                                   "marmitex", "arroz, feijão, bife e batata frita", "comida caseira"])
-def test_frases_de_refeicao_viram_um_item_so(texto):
+@pytest.mark.parametrize("texto,consultas", [
+    ("uma marmita", CONSULTAS_MARMITA),
+    ("marmitex", CONSULTAS_MARMITA),
+    ("comida caseira", CONSULTAS_MARMITA),
+    # T18: a proteína vai na 1ª consulta, com o nome que a pessoa usou (PF → "prato feito")
+    ("um PF com bife e ovo", ["prato feito bife", "prato feito", "marmita"]),
+    ("prato executivo de frango", ["executivo frango", "executivo", "marmita"]),
+    ("arroz, feijão, bife e batata frita", ["marmita bife", "marmita", "prato feito"]),
+    ("arroz, feijão, frango grelhado e salada", ["marmita frango grelhado", "marmita", "prato feito"]),
+])
+def test_frases_de_refeicao_viram_um_item_so(texto, consultas):
     [prato] = _ler(texto)
-    assert prato.verticais == ["RESTAURANT"] and prato.consultas == CONSULTAS_MARMITA
+    assert prato.verticais == ["RESTAURANT"] and prato.consultas == consultas
 
 
-def test_marmita_e_coca_sao_dois_itens_e_a_proteina_vale_como_vontade():
+def test_marmita_e_coca_sao_dois_itens_e_a_proteina_vai_na_busca():
     marmita, coca = _ler("marmita de frango e uma coca")
-    assert marmita.consultas == CONSULTAS_MARMITA and "frango" in marmita.vontades
+    assert marmita.consultas == ["marmita frango", "marmita", "prato feito"] and "frango" in marmita.vontades
     assert "refrigerante" in coca.consultas
 
 
@@ -128,6 +136,14 @@ async def test_so_eu_marmita_no_demo_sai_da_loja_de_comida_caseira():
     [escolha] = melhor["escolhas"].values()
     assert escolha["loja_id"] == "loja-demo-caseira"
     assert escolha["item_id"] in {"cc-marmitex-frango", "cc-pf-bife", "cc-executivo-parmegiana"}
+
+
+async def test_marmita_de_frango_no_demo_acha_o_marmitex_de_frango():
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        r = await rodar_match(cfg, cli, [Desejo("ana", "Ana", "marmita de frango")])
+    [escolha] = r["combinacoes"][0]["escolhas"].values()
+    assert escolha["item_id"] in {"cc-marmitex-frango", "cc-executivo-parmegiana"}  # os 2 de frango do demo
 
 
 async def test_compras_de_mercado_no_demo_nao_vao_para_a_marmita():

@@ -476,6 +476,28 @@ def pede_refeicao(texto_norm: str, ignorar_compra: bool = False) -> bool:
     return ignorar_compra or (any(contem(texto_norm, t) for t in _JUNTO_DO_ARROZ) and not compra)
 
 
+# proteína do prato feito vai na 1ª consulta (T18): "marmita de frango" busca "marmita frango" antes de "marmita"
+_PROTEINAS = ["frango grelhado", "carne assada", "frango", "bife", "carne", "peixe", "filé", "linguiça", "costela",
+              "parmegiana", "strogonoff", "estrogonofe", "omelete", "ovo"]
+
+
+def _consultas_da_marmita(texto_norm: str, gatilhos: list[str]) -> list[str]:
+    """Consultas do prato feito: o nome que a pessoa usou (PF → "prato feito", executivo, senão "marmita") com a
+    proteína citada primeiro; depois os outros nomes. Sem proteína, as 3 consultas de sempre."""
+    citados = {normalizar(g).strip() for g in gatilhos}
+    base = "prato feito" if citados & {"pf", "prato feito"} else (
+        "executivo" if citados & {"executivo", "prato executivo"} else "marmita")
+    nomes = [base] + [c for c in _CAT_MARMITA["consultas"] if c != base]
+    achadas = []
+    for proteina in _PROTEINAS:
+        m = re.search(rf"\b{re.escape(normalizar(proteina))}(?:e?s)?\b", texto_norm)
+        if m:
+            achadas.append((m.start(), -len(proteina), proteina))
+    if not achadas:
+        return _CAT_MARMITA["consultas"]
+    return [f"{base} {min(achadas)[2]}", *nomes[:2]]
+
+
 def _parte_da_refeicao(parte: str) -> list[str]:
     """Gatilhos que fazem a parte ser pedaço do prato feito ("bife acebolado", "guarnição"); [] se é outro item
     ("pizza de frango", "uma coca", "detergente")."""
@@ -616,6 +638,8 @@ def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) ->
             base = cat["consultas"]
             if cat["nome"] == "bebida" and pede_refrigerante(gatilhos):
                 base = ["refrigerante", *base]
+            if cat["nome"] == "marmita":
+                base = _consultas_da_marmita(" ".join(slot["textos"]), gatilhos)
             # gatilho mais específico que a categoria (ex.: "temaki") vira a 1ª consulta
             especifico = [] if cat.get("so_consultas") else [
                 g for g in gatilhos if normalizar(g) not in {normalizar(b) for b in base}][:1]
