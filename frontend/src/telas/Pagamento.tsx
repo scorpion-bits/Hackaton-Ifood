@@ -358,6 +358,13 @@ function CartaoLoja({ c }: { c: Carrinho }) {
           <dd>{brl(c.total)}</dd>
         </div>
       </dl>
+      {c.pagamento && (
+        <p className="loja-pagamento">
+          <span>Pagamento</span>
+          <b>{c.pagamento.nome}</b>
+          {c.pagamento.offline && <em className="loja-pagamento-selo">na entrega · nada é cobrado pelo app</em>}
+        </p>
+      )}
     </article>
   );
 }

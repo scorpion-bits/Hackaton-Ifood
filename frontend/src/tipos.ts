@@ -130,6 +130,8 @@ export interface Carrinho {
   desconto: number;
   total: number;
   eta_min: number | null;
+  /** Forma de pagamento escolhida no carrinho (C16). No modo real é sempre uma forma sem cobrança online. */
+  pagamento?: { id?: string; nome: string; tipo?: string; offline: boolean };
 }
 
 export type EstadoSalaNome =
