@@ -182,5 +182,9 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
   Limitação conhecida (mock): pedido sem categoria conhecida ("coxinha", "feijoada") não gera consulta própria —
   com IA real o intérprete gera a consulta; avaliar na T13.
 
+- 17/10 ~23h20 — `match/fix-consulta-livre` ✅ (303 testes): sem IA, item fora das categorias vira consulta pelo texto.
+  **Para a T8:** quando a consulta livre não trouxer nada, `busca.py` deve cair em `browseOffers` para voltar o aviso
+  "a opção mais próxima é X" (hoje sai só "Não achei X").
+
 ## Fechamento
 (preenchido ao concluir)
