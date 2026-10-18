@@ -1,6 +1,6 @@
 // FIXTURE SÓ PARA DESENVOLVIMENTO (npm run dev, rota #/leilao-exemplo). Segue o contrato C11.
 // Lojas e itens fictícios do demo; nada aqui vem do iFood.
-import type { Candidato, ChamadaRastro, Combinacao, EstadoSala, Leilao, LojaLeilao } from "../../tipos";
+import type { Candidato, ChamadaRastro, Combinacao, EstadoSala, Leilao, LojaLeilao, ResultadoMatch } from "../../tipos";
 
 const KAIGAN = { id: "loja-demo-japones", nome: "Kaigan Sushi (demo)", vertical: "RESTAURANT" };
 const GELATO = { id: "loja-demo-sorvete", nome: "Gelato Bom Clima (demo)", vertical: "RESTAURANT" };
@@ -159,14 +159,90 @@ export const salaExemplo: EstadoSala = {
   rastro,
 };
 
-/** Responde /api/salas/exemplo/escolher sem backend (só em dev). */
+// ---- C14: ajuste simulado (só dev). "troca o sorvete da Carla por açaí" -> Gelato sai, Açaí Tropical entra. ----
+const ACAI = { id: "loja-demo-acai", nome: "Açaí Tropical (demo)", vertical: "RESTAURANT" };
+
+export const leilaoAjustado: Leilao = {
+  llm: false,
+  demonstracao: true,
+  medicoes: { ms_total: 2100 },
+  lojas: [
+    lojaL(KAIGAN, { atende: 2, afinidade: 91, fala: "Mantenho o japonês da Ana e do Bruno, R$ 93,80.", vencedora: true }),
+    lojaL(ACAI, { atende: 1, afinidade: 90, avaliacao: 4.8, eta_min: 40, fala: "Açaí sem lactose para a Carla, R$ 24,90.", vencedora: true }),
+    lojaL(GELATO, { passou: true, fala: "Sem açaí por aqui. Passo.", fonte_fala: "modelo" }),
+    lojaL(BRASA, { atende: 3, afinidade: 58, eta_min: 30, fala: "Atendo todo mundo com hambúrguer.", fonte_fala: "modelo" }),
+  ],
+  falas: [
+    { quem: "ibits", tipo: "abertura", texto: "Pedido refeito: a Carla quer açaí no lugar do sorvete. Quem topa?" },
+    { quem: GELATO.id, tipo: "passe", texto: "Sem açaí por aqui. Passo." },
+    { quem: ACAI.id, tipo: "lance", texto: "Açaí sem lactose para a Carla, R$ 24,90.", preco: 24.9, afinidade: 90 },
+    { quem: KAIGAN.id, tipo: "lance", texto: "Mantenho o japonês da Ana e do Bruno, R$ 93,80.", preco: 93.8, afinidade: 91 },
+    {
+      quem: "ibits",
+      tipo: "fechamento",
+      texto: "Rodada fechada: Kaigan + Açaí Tropical, 91% de afinidade.",
+      vencedoras: [KAIGAN.id, ACAI.id],
+    },
+  ],
+  vencedoras: [KAIGAN.id, ACAI.id],
+};
+
+export const resultadoAjustado: ResultadoMatch = {
+  ...salaExemplo.resultado!,
+  combinacoes: [
+    {
+      ...combinacoes[0],
+      escolhas: {
+        ...combinacoes[0].escolhas,
+        "p3#1": cand("p3", ACAI, "Açaí 500 ml sem lactose", 24.9, 0.9, "Açaí, como pediu, sem lactose", 40),
+      },
+      lojas: [KAIGAN.id, ACAI.id],
+      explicacao: "Kaigan para Ana e Bruno; açaí sem lactose para Carla, como você pediu no ajuste.",
+      afinidade: 91,
+    },
+    ...combinacoes.slice(1),
+  ],
+  leilao: leilaoAjustado,
+};
+
+export const salaAjustada: EstadoSala = {
+  ...salaExemplo,
+  resultado: resultadoAjustado,
+  ajustes: [{ texto: "troca o sorvete da Carla por açaí", entendido: "Carla: açaí no lugar do sorvete", em: "2026-10-18T10:00:00Z" }],
+};
+
+function resposta(status: number, corpo: unknown): Response {
+  return new Response(JSON.stringify(corpo), { status, headers: { "Content-Type": "application/json" } });
+}
+
+/** Responde /api/salas/exemplo/{escolher,ajustar} sem backend (só em dev). Frases com "erro" -> 422, com "fora" -> 409. */
 export function instalarApiFalsa(): () => void {
   const original = window.fetch;
   window.fetch = async (entrada, opc) => {
     const url = typeof entrada === "string" ? entrada : entrada instanceof URL ? entrada.href : entrada.url;
     if (url.includes("/api/salas/exemplo/escolher")) {
       console.info("[exemplo] escolher", opc?.body);
-      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return resposta(200, { ok: true });
+    }
+    if (url.includes("/api/salas/exemplo/ajustar")) {
+      let texto = "";
+      try {
+        texto = String(JSON.parse(String(opc?.body ?? "{}")).texto ?? "");
+      } catch {
+        /* corpo inválido */
+      }
+      console.info("[exemplo] ajustar", texto);
+      await new Promise((r) => setTimeout(r, 1300));
+      if (/erro/i.test(texto)) {
+        return resposta(422, { detail: "Não entendi esse ajuste. Tente algo como: troca o sorvete da Carla por açaí." });
+      }
+      if (/fora/i.test(texto)) {
+        return resposta(409, { detail: "Não achei combinação com esse ajuste. Mantive o pedido anterior." });
+      }
+      return resposta(200, {
+        entendido: [{ participante_id: "p3", nome: "Carla", resumo: "açaí no lugar do sorvete" }],
+        resultado: resultadoAjustado,
+      });
     }
     return original(entrada, opc);
   };

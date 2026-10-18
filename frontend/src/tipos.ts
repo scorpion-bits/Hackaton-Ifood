@@ -154,6 +154,26 @@ export interface Participante {
   respondeu: boolean;
 }
 
+/** C14: o que o IBits entendeu de um ajuste, por pessoa. */
+export interface Entendido {
+  participante_id: string;
+  nome: string;
+  resumo: string;
+}
+
+/** C14: POST /api/salas/{id}/ajustar -> 200. */
+export interface RespostaAjuste {
+  entendido: Entendido[];
+  resultado: ResultadoMatch;
+}
+
+/** C14: histórico em GET /api/salas/{id}. `entendido` pode vir como lista ou como texto. */
+export interface AjusteSala {
+  texto: string;
+  entendido?: Entendido[] | string;
+  em?: string;
+}
+
 export interface EstadoSala {
   estado: EstadoSalaNome;
   demonstracao: boolean;
@@ -166,6 +186,8 @@ export interface EstadoSala {
   pagamentos?: Record<string, Pagamento>;
   prazo_fim?: string;
   pedidos?: Record<string, unknown>[];
+  /** C14 (opcional): ajustes já feitos com o IBits, do mais antigo ao mais novo. */
+  ajustes?: AjusteSala[];
   rastro: ChamadaRastro[];
 }
 

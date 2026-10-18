@@ -27,6 +27,8 @@ export default function EhUmMatch({
   textoPrimario,
   onPrimario,
   onContinuar,
+  ocupado = false,
+  erro = "",
 }: {
   afinidade: number;
   pessoas: PessoaMatch[];
@@ -36,6 +38,9 @@ export default function EhUmMatch({
   textoPrimario: string;
   onPrimario: () => void;
   onContinuar: () => void;
+  /** Ação do botão principal em andamento (ex.: montando o carrinho). */
+  ocupado?: boolean;
+  erro?: string;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
   const raiz = useRef<HTMLDivElement>(null);
@@ -111,10 +116,15 @@ export default function EhUmMatch({
         <p className="ld-msub">{subtitulo}</p>
       </div>
       <div className="ld-mfoot">
-        <button ref={ref} type="button" className="ld-btn-branco" onClick={onPrimario}>
-          {textoPrimario}
+        {erro && (
+          <p className="ld-merro" role="alert">
+            {erro}
+          </p>
+        )}
+        <button ref={ref} type="button" className="ld-btn-branco" onClick={onPrimario} disabled={ocupado}>
+          {ocupado ? "Montando o pedido…" : textoPrimario}
         </button>
-        <button type="button" className="ld-btn-claro" onClick={onContinuar}>
+        <button type="button" className="ld-btn-claro" onClick={onContinuar} disabled={ocupado}>
           Seguir deslizando
         </button>
       </div>
