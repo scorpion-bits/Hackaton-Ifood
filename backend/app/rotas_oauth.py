@@ -18,7 +18,7 @@ from dataclasses import replace
 from urllib.parse import quote
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from . import config
 from .ifood_mcp import oauth
@@ -56,7 +56,12 @@ ERROS_DO_PROVEDOR = {
 
 
 def _voltar_com_erro(mensagem: str) -> RedirectResponse:
-    return RedirectResponse(f"{DESTINO_OK}?erro={quote(mensagem[:300])}", status_code=302)
+    return RedirectResponse(f"{DESTINO_OK}?erro={quote(oauth.sem_segredos(mensagem)[:300])}", status_code=302)
+
+
+def _falha_inesperada(e: BaseException) -> str:
+    """Nada de traceback nem texto cru da exceção (pode ter o code/token): só o tipo e o que fazer."""
+    return f"Não consegui concluir o login do iFood ({type(e).__name__}). Clique em Conectar iFood de novo."
 
 
 def _pagina(titulo: str, mensagem: str, status: int) -> HTMLResponse:
@@ -92,6 +97,9 @@ def login():
         return RedirectResponse(oauth.url_login(cfg), status_code=302)
     except oauth.ErroOAuth as e:
         return _voltar_com_erro(str(e))
+    except Exception as e:
+        logging.getLogger(__name__).warning("Falha ao montar o login do iFood: %s", type(e).__name__)
+        return _voltar_com_erro(_falha_inesperada(e))
 
 
 @router.get("/oauth/callback")
@@ -109,6 +117,9 @@ async def callback(code: str | None = None, state: str | None = None,
         return _pagina("Login do iFood não confirmado", str(e), 400)
     except oauth.ErroOAuth as e:
         return _voltar_com_erro(str(e))
+    except Exception as e:  # erro inesperado na troca: mensagem legível, sem traceback para a pessoa
+        logging.getLogger(__name__).warning("Falha inesperada no callback do iFood: %s", type(e).__name__)
+        return _voltar_com_erro(_falha_inesperada(e))
     await _descobrir_conta(cfg)
     return RedirectResponse(DESTINO_OK, status_code=302)
 
@@ -121,5 +132,8 @@ def status_ifood():
 @router.post("/api/ifood/sair")
 async def sair_ifood():
     cfg = config.carregar()
-    await oauth.sair(cfg)
+    try:
+        await oauth.sair(cfg)
+    except oauth.ErroOAuth as e:  # ex.: arquivo de login preso no Windows
+        return JSONResponse({"detail": str(e)}, status_code=409)
     return oauth.status(cfg)
