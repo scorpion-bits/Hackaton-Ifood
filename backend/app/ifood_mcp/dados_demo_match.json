@@ -217,6 +217,23 @@
         {"id": "pt-shampoo", "nome": "Shampoo para cães 500 ml", "descricao": "Pelos claros e escuros", "categoria": "Higiene pet", "preco": 24.9, "tags": []},
         {"id": "pt-mordedor", "nome": "Brinquedo mordedor para cachorro", "descricao": "Borracha resistente", "categoria": "Brinquedos", "preco": 14.9, "tags": []}
       ]
+    },
+    {
+      "id": "loja-demo-caseira",
+      "nome": "Tempero de Casa (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Brasileira", "Marmitas", "Comida caseira"],
+      "rating": 4.6,
+      "distancia_km": 1.6,
+      "tempo_entrega_min": 30,
+      "taxa_entrega": 4.99,
+      "pedido_minimo": 15.0,
+      "horario": "10:30–22:00",
+      "itens": [
+        {"id": "cc-marmitex-frango", "nome": "Marmitex de frango grelhado", "descricao": "Arroz, feijão, salada, farofa e frango grelhado", "categoria": "Marmitas", "preco": 22.9, "tags": []},
+        {"id": "cc-pf-bife", "nome": "Prato feito de bife acebolado", "descricao": "Arroz, feijão, salada, purê e bife acebolado", "categoria": "Pratos feitos", "preco": 26.9, "tags": []},
+        {"id": "cc-executivo-parmegiana", "nome": "Executivo de frango à parmegiana", "descricao": "Arroz, feijão, purê e salada", "categoria": "Executivos", "preco": 32.9, "tags": []}
+      ]
     }
   ]
 }

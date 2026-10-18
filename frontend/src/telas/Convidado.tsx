@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { api, apagarLocal, chaveEu, gravarLocal, lerLocal, type Eu } from "../api";
 import type { EstadoSala } from "../tipos";
 import Icone from "../componentes/Icone";
@@ -8,6 +8,52 @@ export const PREFERENCIAS = ["barato", "rápido", "leve", "apimentado"];
 export const RESTRICOES = ["vegetariano", "vegano", "sem lactose", "sem glúten"];
 export const CHIPS = [...PREFERENCIAS, ...RESTRICOES];
 const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+// "Onde pedir?" (T16): opcional; vai nos chips como `onde:X` e o IBits busca só naquele tipo de loja.
+// Sem escolha = "IBits decide". Não fica lembrado no aparelho: vale só para este pedido.
+export const ONDE_PEDIR: [string, string | null][] = [
+  ["IBits decide", null],
+  ["Restaurante", "onde:RESTAURANT"],
+  ["Mercado", "onde:GROCERIES"],
+  ["Farmácia", "onde:DRUGSTORE"],
+  ["Pet shop", "onde:PETSTORE"],
+];
+const ehOnde = (c: string) => c.startsWith("onde:");
+export const semOnde = (chips: string[]) => chips.filter((c) => !ehOnde(c));
+
+/** Fileira de escolha única com a mesma aparência dos chips de Preferência/Restrição. */
+export function OndePedir({
+  chips,
+  setChips,
+  id,
+}: {
+  chips: string[];
+  setChips: Dispatch<SetStateAction<string[]>>;
+  id: string;
+}) {
+  const atual = chips.find(ehOnde) ?? null;
+  return (
+    <div className="chgrupo">
+      <span className="chrotulo" id={id}>
+        Onde pedir?
+      </span>
+      <div className="grupo-chips" role="radiogroup" aria-labelledby={id}>
+        {ONDE_PEDIR.map(([rotulo, valor]) => (
+          <button
+            key={rotulo}
+            type="button"
+            role="radio"
+            aria-checked={atual === valor}
+            className={`chip ${atual === valor ? "on" : ""}`}
+            onClick={() => setChips((l) => (valor ? [...semOnde(l), valor] : semOnde(l)))}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export const chavePid = (salaId: string) => `match.pid.${salaId}`;
 export const lerPid = (salaId: string) => lerLocal<string>(chavePid(salaId));
@@ -52,7 +98,7 @@ export function FormDesejo({
   const [nome, setNome] = useState(nomeInicial ?? eu?.nome ?? "");
   const [texto, setTexto] = useState("");
   const [orcamento, setOrcamento] = useState("");
-  const [chips, setChips] = useState<string[]>(eu?.chips ?? []);
+  const [chips, setChips] = useState<string[]>(semOnde(eu?.chips ?? []));
   const [lembrar, setLembrar] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
@@ -77,7 +123,7 @@ export function FormDesejo({
         orcamento_max: Number.isFinite(valor) && valor > 0 ? valor : null,
         chips,
       });
-      if (lembrar) gravarLocal(chaveEu, { nome: nome.trim(), chips });
+      if (lembrar) gravarLocal(chaveEu, { nome: nome.trim(), chips: semOnde(chips) });
       onFeito();
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não consegui enviar.");
@@ -162,6 +208,7 @@ export function FormDesejo({
             />
           </span>
         </div>
+        <OndePedir chips={chips} setChips={setChips} id={`ch-onde-${salaId}`} />
         {grupo("Preferência", PREFERENCIAS)}
         {grupo("Restrição", RESTRICOES)}
       </article>
