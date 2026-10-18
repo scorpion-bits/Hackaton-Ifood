@@ -41,6 +41,9 @@ class Config:
     ifood_mcp_redirect: str = "http://localhost:8000/oauth/callback"
     ifood_mcp_scope: str = ""
     ifood_mcp_permitir_envio: bool = False  # modo real: `submitOrder` desligado por padrão (conta de teste)
+    # Endereço mockado "lat,lng" (vazio = desligado): só entra quando a conta não tem endereço salvo. Existe porque o
+    # `createAddress` do MCP real falha sempre com ADR-2001 nas contas de teste (bug 6 do docs/testes/bugs.md).
+    ifood_mcp_endereco_mock: str = ""
     # Leilão de agentes por loja no Match (MATCH_LEILAO=off volta ao motor sem leilão).
     match_leilao: bool = True
 
@@ -81,5 +84,6 @@ def carregar() -> Config:
         ifood_mcp_redirect=os.getenv("IFOOD_MCP_REDIRECT", "").strip() or "http://localhost:8000/oauth/callback",
         ifood_mcp_scope=" ".join(os.getenv("IFOOD_MCP_SCOPE", "").replace(",", " ").split()),
         ifood_mcp_permitir_envio=os.getenv("IFOOD_MCP_PERMITIR_ENVIO", "").strip().lower() in ("1", "true", "sim"),
+        ifood_mcp_endereco_mock=os.getenv("IFOOD_MCP_ENDERECO_MOCK", "").strip(),
         match_leilao=os.getenv("MATCH_LEILAO", "on").strip().lower() not in ("off", "0", "false", "nao", "não"),
     )
