@@ -395,13 +395,16 @@ def _diversificar(itens: list[tuple[Candidato, dict]]) -> list[tuple[Candidato, 
 
 
 async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: dict,
-                           fechadas: dict[str, list[str]] | None = None
+                           fechadas: dict[str, list[str]] | None = None,
+                           acima: dict[str, float] | None = None,
                            ) -> tuple[list[Candidato], dict[tuple[str, str], dict]]:
     """Candidatos do slot + detalhes de cada um (descrição, categoria, tags…) para o juiz.
-    `fechadas` (bug 32): recebe, por slot, as lojas que tinham o item mas vieram `isOpen: false`."""
+    `fechadas` (bug 32): recebe, por slot, as lojas que tinham o item mas vieram `isOpen: false`.
+    `acima`: recebe, por slot, o menor preço do que a busca achou mas passou do orçamento da pessoa."""
     geo = {k: endereco.get(k) for k in ("latitude", "longitude") if endereco.get(k) is not None}
     coletados: dict[tuple[str, str], tuple[Candidato, dict]] = {}
     lojas_fechadas: list[str] = []
+    mais_barato_acima: list[float] = []
 
     def anotar_fechada(r: dict) -> None:
         loja = _ler_loja(r)
@@ -409,6 +412,10 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: 
             lojas_fechadas.append(loja["nome"])
 
     def guardar(item: dict | None) -> None:
+        if item and intencao.orcamento_max is not None and item["preco"] > intencao.orcamento_max + 1e-9 \
+                and _aceita(item, Intencao(intencao.participante_id, verticais=intencao.verticais)) \
+                and _bate_consulta(item, intencao):  # só o que é o pedido (não a água do cardápio da pizzaria)
+            mais_barato_acima.append(item["preco"])
         if item and _aceita(item, intencao):
             chave = (item["loja_id"], item["item_id"])
             if chave not in coletados:
@@ -463,7 +470,8 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: 
     # No varejo (A′F5) não explora: um produto qualquer do mercado não é "opção aproximada" de "areia".
     varejo = bool(intencao.verticais) and TIPO_PADRAO_REAL not in intencao.verticais and not any(
         normalizar(c).strip() == "mercado" for c in intencao.consultas)
-    if bons() == 0 and not varejo:
+    # achou o pedido, só que acima do orçamento: explorar daria um item qualquer barato (ex.: água por "pizza até 5")
+    if bons() == 0 and not varejo and not mais_barato_acima:
         args: dict[str, Any] = {"resultKind": "ITEM", "pageSize": LIMITE_BUSCA, **geo}
         if intencao.verticais:
             args["merchantType"] = intencao.verticais[0]
@@ -479,6 +487,8 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: 
 
     if fechadas is not None and lojas_fechadas:
         fechadas[intencao.participante_id] = lojas_fechadas
+    if acima is not None and mais_barato_acima:
+        acima[intencao.participante_id] = min(mais_barato_acima)
     selecionados = _diversificar(list(coletados.values()))
     candidatos = [c for c, _ in selecionados]
     detalhes = {(c.loja_id, c.item_id): item for c, item in selecionados}

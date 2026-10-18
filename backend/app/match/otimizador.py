@@ -177,13 +177,20 @@ def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], tet
     principal = slots[0]
     varios = len(com_opcao) > 1
     listas = [([None] + validos[s]) if varios else validos[s] for s in com_opcao]
+    # slots com as mesmas opções = o mesmo pedido repetido ("2 cocas"): aí o mesmo item vale para os dois
+    opcoes_do_slot = {s: frozenset((c.loja_id, c.item_id, tuple(c.cobre)) for c in validos[s]) for s in com_opcao}
     opcoes: list[_OpcaoPessoa] = []
     for combo in itertools.product(*listas):
         escolhidos = tuple(c for c in combo if c is not None)
         if not escolhidos:
             continue
         if len({(c.loja_id, c.item_id) for c in escolhidos}) < len(escolhidos):
-            continue  # o mesmo item não vale por dois slots
+            slots_do_item: dict[tuple[str, str], set[frozenset]] = {}
+            for s, c in zip(com_opcao, combo):
+                if c is not None:
+                    slots_do_item.setdefault((c.loja_id, c.item_id), set()).add(opcoes_do_slot[s])
+            if any(len(conjuntos) > 1 for conjuntos in slots_do_item.values()):
+                continue  # o mesmo item não vale por dois slots de pedidos diferentes
         # combo (A′F3): os slots que ele cobre não levam outro item (nada de "lanche + combo com lanche")
         cobertos = {s for c in escolhidos for s in c.cobre}
         if any(c is not None and s in cobertos for s, c in zip(com_opcao, combo)):

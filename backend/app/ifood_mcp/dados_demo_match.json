@@ -33,7 +33,9 @@
         {"id": "jp-yakisoba", "nome": "Yakisoba de legumes", "descricao": "Macarrão oriental com legumes salteados no shoyu", "categoria": "Pratos quentes", "preco": 34.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
         {"id": "jp-guioza", "nome": "Guioza de legumes (6 un.)", "descricao": "Pastelzinho japonês grelhado recheado de legumes", "categoria": "Entradas", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"]},
         {"id": "jp-sunomono", "nome": "Sunomono", "descricao": "Salada de pepino agridoce com gergelim", "categoria": "Entradas", "preco": 12.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
-        {"id": "jp-missoshiru", "nome": "Missoshiru", "descricao": "Sopa de missô com tofu e cebolinha", "categoria": "Entradas", "preco": 9.90, "tags": ["sem_lactose"]}
+        {"id": "jp-missoshiru", "nome": "Missoshiru", "descricao": "Sopa de missô com tofu e cebolinha", "categoria": "Entradas", "preco": 9.90, "tags": ["sem_lactose"]},
+        {"id": "jp-cerveja", "nome": "Cerveja long neck 355 ml", "descricao": "Pilsen gelada", "categoria": "Bebidas", "preco": 12.9, "tags": []},
+        {"id": "jp-cha", "nome": "Chá gelado de limão 300 ml", "descricao": "Chá preto com limão", "categoria": "Bebidas", "preco": 8.9, "tags": []}
       ]
     },
     {
@@ -97,7 +99,8 @@
         {"id": "pz-portuguesa", "nome": "Pizza portuguesa grande", "descricao": "Presunto, ovo, cebola, ervilha e muçarela — 8 fatias", "categoria": "Pizzas grandes", "preco": 58.90, "tags": []},
         {"id": "pz-vegana", "nome": "Pizza vegana de legumes grande", "descricao": "Molho de tomate, abobrinha, berinjela, pimentão e queijo vegetal", "categoria": "Pizzas grandes", "preco": 64.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
         {"id": "pz-brotinho", "nome": "Brotinho de muçarela", "descricao": "Pizza individual de muçarela — 4 fatias", "categoria": "Brotinhos", "preco": 24.90, "tags": ["vegetariano"]},
-        {"id": "pz-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de cola 2 litros", "categoria": "Bebidas", "preco": 14.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]}
+        {"id": "pz-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de cola 2 litros", "categoria": "Bebidas", "preco": 14.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "pz-agua", "nome": "Água mineral sem gás 500 ml", "descricao": "Garrafa", "categoria": "Bebidas", "preco": 4.9, "tags": []}
       ]
     },
     {
@@ -137,7 +140,8 @@
         {"id": "ac-500", "nome": "Açaí 500 ml com banana e granola", "descricao": "Açaí com banana, granola e mel", "categoria": "Açaí", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"], "perecivel": true},
         {"id": "ac-700", "nome": "Açaí 700 ml completo", "descricao": "Açaí com leite em pó, leite condensado, morango e paçoca", "categoria": "Açaí", "preco": 29.90, "tags": ["vegetariano"], "perecivel": true},
         {"id": "ac-cupuacu", "nome": "Creme de cupuaçu 500 ml", "descricao": "Cupuaçu batido com granola", "categoria": "Cremes", "preco": 23.90, "tags": ["vegetariano"], "perecivel": true},
-        {"id": "ac-tigela", "nome": "Tigela de açaí fit", "descricao": "Açaí sem açúcar com frutas e sementes", "categoria": "Açaí", "preco": 26.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true}
+        {"id": "ac-tigela", "nome": "Tigela de açaí fit", "descricao": "Açaí sem açúcar com frutas e sementes", "categoria": "Açaí", "preco": 26.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "ac-agua", "nome": "Água mineral sem gás 500 ml", "descricao": "Garrafa", "categoria": "Bebidas", "preco": 4.5, "tags": []}
       ]
     },
     {

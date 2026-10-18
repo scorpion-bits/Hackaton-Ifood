@@ -50,6 +50,10 @@ CASOS: list[Caso] = [
     Caso("mercado", [("Ana", {"texto": "preciso fazer compras: arroz, feijão e detergente"})], ["loja-demo-mercado"],
          {"mc-arroz", "mc-feijao", "mc-detergente"}),
     Caso("fora do cardápio", [("Ana", {"texto": "lagosta com champanhe"})], sem_resultado=True),
+    Caso("2 pizzas e 2 cocas", [("Ana", {"texto": "2 pizzas e 2 cocas"})], ["loja-demo-pizza"], {"pz-refri"}),
+    Caso("x-salada com fritas", [("Ana", {"texto": "quero um x-salada com fritas"})], ["loja-demo-burger"]),
+    Caso("açaí e água", [("Ana", {"texto": "um açaí e uma água"})], ["loja-demo-acai"], {"ac-agua"}),
+    Caso("orçamento curto", [("Ana", {"texto": "pizza, até R$ 5"})], sem_resultado=True),
     Caso("roteiro do grupo", [
         ("Milan", {"texto": "japonês e um sorvete, até R$ 45", "orcamento_max": 45}),
         ("Zenon", {"texto": "hambúrguer e sorvete, até R$ 50", "orcamento_max": 50}),
@@ -147,7 +151,7 @@ def _rodar_caso(cliente, caso: Caso, real: bool) -> Linha:
         linha.avisos = [str(corpo.get("detail", ""))]
         if not caso.sem_resultado:
             linha.falhas.append(f"/rodar {resp.status_code}: {str(corpo.get('detail', ''))[:120]}")
-        elif "aumentar o orçamento" in linha.avisos[0]:
+        elif "aumentar o orçamento" in linha.avisos[0] and "orçamento" not in caso.nome:
             linha.falhas.append("pedido fora do cardápio sugere aumentar o orçamento")
         return linha
     linha.chamadas_mcp = len(corpo.get("rastro") or [])

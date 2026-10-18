@@ -92,8 +92,9 @@ CATEGORIAS: list[dict] = [
     {"nome": "batata", "gatilhos": ["batata", "fritas", "batata frita"],
      "consultas": ["batata frita"], "vontades": ["batata", "fritas"], "vertical": "RESTAURANT"},
     {"nome": "bebida", "gatilhos": [*REFRIGERANTES, "suco", "bebida", "água", "chá gelado", "limonada", "energético",
-                                     "cerveja", "chopp"],
-     "consultas": ["bebida"], "vontades": ["refrigerante", "suco", "bebida"], "vertical": "RESTAURANT"},
+                                     "cerveja", "chopp", "café", "caldo de cana", "vitamina", "milk shake"],
+     # vontades = só o que a pessoa citou (vem dos gatilhos): "coca" não faz suco verde virar "o que ela pediu"
+     "consultas": ["bebida"], "vontades": ["bebida"], "vertical": "RESTAURANT"},
     {"nome": "massa", "gatilhos": ["massa", "macarrão", "lasanha", "espaguete", "nhoque", "italiana"],
      "consultas": ["massa"], "vontades": ["massa", "macarrão", "lasanha", "espaguete"], "vertical": "RESTAURANT"},
     # ---- varejo (A′F5, etapa 05): "Só eu" além de restaurante. Uma parte da frase = 1 produto; a consulta é o
@@ -221,14 +222,22 @@ def detectar_perfil(texto_norm: str, chips: list[str] | None = None) -> str:
     return "equilibrado"
 
 
-def _categorias_do_trecho(trecho: str) -> list[tuple[dict, list[str]]]:
-    """Categorias citadas no trecho (ordem de prioridade) com os gatilhos encontrados."""
+def categorias_do_trecho(trecho: str) -> list[tuple[dict, list[str]]]:
+    """Categorias citadas no trecho (ordem de prioridade) com os gatilhos encontrados. Gatilho que é só parte de um
+    gatilho maior de outra categoria não conta ("x-salada" é hambúrguer, não salada)."""
     achadas = []
     for cat in CATEGORIAS:
         gatilhos = [g for g in cat["gatilhos"] if contem(trecho, g)]
         if gatilhos:
             achadas.append((cat, gatilhos))
-    return achadas
+    longos = [(cat["nome"], normalizar(g)) for cat, gs in achadas for g in gs]
+    filtradas = []
+    for cat, gs in achadas:
+        proprios = [g for g in gs if not any(nome != cat["nome"] and len(maior) > len(normalizar(g))
+                                             and contem(maior, g) for nome, maior in longos)]
+        if proprios:
+            filtradas.append((cat, proprios))
+    return filtradas
 
 
 def _palavras_livres(trecho: str) -> list[str]:
@@ -243,6 +252,9 @@ def _palavras_livres(trecho: str) -> list[str]:
             ignorar.update(normalizar(t).split())
     ignorar.update({"barato", "rapido", "qualidade", "equilibrado"})
     return [p for p in re.findall(r"[a-z]+", trecho) if len(p) >= 4 and p not in ignorar]
+
+_categorias_do_trecho = categorias_do_trecho  # nome antigo (ajuste.py usa)
+
 
 # ---------- consulta livre (item sem categoria conhecida: "coxinha", "feijoada completa") ----------
 MAX_PALAVRAS_CONSULTA = 4
@@ -342,7 +354,7 @@ def _quantidades(texto: str) -> list[tuple[int, str, str]]:
         if q < 2 or palavra in _NAO_ITEM or palavra in PALAVRAS_VAZIAS:
             continue
         antes = re.split(r",|;|\+|\be\b|\bcom\b|\bou\b", norm[:m.start()])[-1]
-        if _categorias_do_trecho(antes):  # "pizza 4 queijos": o número descreve o prato, não é quantidade
+        if categorias_do_trecho(antes):  # "pizza 4 queijos": o número descreve o prato, não é quantidade
             continue
         trecho = texto[m.start():m.end()] if mesmo_tamanho else m.group(0)
         achadas.append((q, palavra, trecho))
@@ -430,7 +442,7 @@ def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) ->
         if contexto and _so_contexto(parte):  # "preciso fazer compras:" diz onde, não o quê
             slots.append({"cats": [], "textos": [parte], "livres": [], "contexto": True})
             continue
-        cats = _categorias_do_trecho(parte)
+        cats = categorias_do_trecho(parte)
         varejo = [(c, g) for c, g in cats if c.get("varejo")]
         comida = [(c, g) for c, g in cats if not c.get("varejo")]
         if comida:  # "hambúrguer sem cebola": a cebola descreve o prato, não é compra de mercado

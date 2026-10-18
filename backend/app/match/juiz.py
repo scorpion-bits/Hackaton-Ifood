@@ -13,7 +13,7 @@ import re
 
 from ..config import Config
 from .busca import CONFIRMA
-from .interprete import CONSULTA_RESTRICAO, PALAVRAS_BEBIDA, normalizar
+from .interprete import CONSULTA_RESTRICAO, PALAVRAS_BEBIDA, categorias_do_trecho, normalizar
 from .llm import completar_json
 from .modelos import Candidato, Desejo, Intencao
 
@@ -22,6 +22,7 @@ AVISO_RESTRICAO = "pode não estar informado — confirme com a loja"
 ROTULO_RESTRICAO = {"vegetariano": "vegetariano", "vegano": "vegano", "sem_lactose": "sem lactose",
                     "sem_gluten": "sem glúten"}
 BEBIDAS = {"bebida", "bebidas", "refrigerante", "refri", "suco", "agua", "cha", "cafe"}
+GENERICOS = {"bebida", "bebidas"}  # termo que só diz a categoria: sozinho não é "o que a pessoa pediu"
 
 
 def _palavras(texto_norm: str) -> list[str]:
@@ -99,6 +100,15 @@ def acertos(intencao: Intencao, candidato: Candidato, detalhe: dict) -> list[str
     return [orig for norm, orig in _termos(intencao).items() if _bate(norm, texto_item, palavras_item)]
 
 
+def _pedido_livre_composto(intencao: Intencao) -> bool:
+    """Prato fora do dicionário com 2+ palavras ("pão de queijo"): a consulta é o próprio texto da pessoa."""
+    if not intencao.consultas or intencao.verticais != ["RESTAURANT"]:
+        return False
+    frase = normalizar(intencao.consultas[0]).strip()
+    palavras = [p for p in _palavras(frase) if p not in {"de", "da", "do", "com"}]
+    return len(palavras) >= 2 and not categorias_do_trecho(frase)
+
+
 def nota_fallback(intencao: Intencao, candidato: Candidato, detalhe: dict,
                   todos: list[Candidato], ha_acertos: bool = False) -> tuple[float, str]:
     """Nota por sobreposição de palavras. `ha_acertos`: algum candidato do slot cita o pedido; aí quem não cita
@@ -111,7 +121,11 @@ def nota_fallback(intencao: Intencao, candidato: Candidato, detalhe: dict,
 
     achados = acertos(intencao, candidato, detalhe)
     if termos:
-        if achados:
+        if achados and all(normalizar(a).strip() in GENERICOS for a in achados):
+            # só bate "bebida": é uma bebida, mas não a que a pessoa citou (suco verde para quem pediu coca)
+            nota = 0.45
+            partes.append("É bebida, mas não a que foi pedida")
+        elif achados:
             nota = 0.55 + 0.35 * min(1.0, len(achados) / 2)
             partes.append("Combina com o pedido: " + ", ".join(achados[:2]))
         elif any(_bate(norm, texto_loja, palavras_loja) for norm in termos):
@@ -131,6 +145,15 @@ def nota_fallback(intencao: Intencao, candidato: Candidato, detalhe: dict,
                                           detalhe.get("categoria", "")]))
         if nucleo and _bate(nucleo, texto_item, _palavras(texto_item)):
             nota += 0.1
+
+    if achados and _pedido_livre_composto(intencao):
+        # "pão de queijo", "caldo de cana": bater só "queijo" não é o prato pedido → opção aproximada (com aviso)
+        frase = normalizar(intencao.consultas[0]).strip()
+        texto_item = normalizar(" ".join([candidato.item_nome, detalhe.get("descricao", ""),
+                                          detalhe.get("categoria", "")]))
+        if not _bate(frase, texto_item, _palavras(texto_item)):
+            nota = min(nota, 0.45)
+            partes = ["Parecido, mas não é " + intencao.consultas[0]]
 
     confirmadas = [r for r in intencao.restricoes if set(tags) & CONFIRMA.get(r, {r})]
     nota += 0.05 * len(confirmadas) - 0.05 * (len(intencao.restricoes) - len(confirmadas))

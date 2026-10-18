@@ -151,7 +151,7 @@ async def test_busca_sorvete_acha_a_sorveteria_sem_acento_e_maiuscula():
     nomes = [l["name"] for l in lojas["results"]]
     assert "Gelato Bom Clima (demo)" in nomes
     assert itens["results"] and all(i["merchantName"] == "Açaí do Campus (demo)" for i in itens["results"])
-    assert all(i["perecivel"] for i in itens["results"])
+    assert all(i["perecivel"] for i in itens["results"] if "Açaí" in i["name"])  # a loja também vende água
 
 
 async def test_busca_acha_itens_do_roteiro():

@@ -116,7 +116,8 @@ async def test_acai_e_sorvete_nao_sao_cortados_com_folga_de_lojas_e_aviso_diz_o_
 async def test_pessoa_sem_opcao_vira_aviso_legivel():
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
                       Desejo("ana", "Ana", "algo vegano, até R$ 5")])
-    assert "Não achei nada vegano até R$ 5 para Ana." in r["avisos"]
+    # diz também quanto custa o mais barato que a busca achou (acima do orçamento)
+    assert any(a.startswith("Não achei nada vegano até R$ 5 para Ana: o mais barato custa R$ ") for a in r["avisos"])
     assert r["combinacoes"]
     assert set(r["combinacoes"][0]["escolhas"]) == {"milan"}
     assert "sem opção válida para Ana" in r["combinacoes"][0]["explicacao"]
@@ -643,3 +644,28 @@ async def test_loja_fechada_diz_que_esta_fechada_e_nao_pede_mais_orcamento():
     assert any("Drogaria Bem Estar (demo)" in a and "fechadas agora" in a for a in r["avisos"])
     assert "Tente de novo quando as lojas abrirem." in r["avisos"]
     assert not any("orçamento" in a for a in r["avisos"])
+
+
+# ---------- rodada exploratória do agente do Zenon (18/10 ~04h) ----------
+@pytest.mark.parametrize("texto, loja, itens", [
+    ("2 pizzas e 2 cocas", "loja-demo-pizza", ["pz-refri", "pz-refri"]),       # o mesmo pedido repetido vale 2×
+    ("quero um x-salada com fritas", "loja-demo-burger", ["bg-batata"]),        # "x-salada" não vira salada
+    ("um açaí e uma água", "loja-demo-acai", ["ac-agua"]),
+    ("sushi e uma cerveja", "loja-demo-japones", ["jp-cerveja"]),
+])
+async def test_frases_da_rodada_exploratoria(texto, loja, itens):
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == [loja]
+    ids = [e["item_id"] for e in melhor["escolhas"].values()]
+    for item in itens:
+        assert ids.count(item) >= itens.count(item)
+
+
+async def test_nada_achado_nao_culpa_o_orcamento_e_pao_de_queijo_nao_vira_hamburguer():
+    r = await _rodar([Desejo("ana", "Ana", "vinho e gelo")])
+    assert r["combinacoes"] == [] and not any("orçamento" in a for a in r["avisos"])
+    r = await _rodar([Desejo("ana", "Ana", "um pão de queijo")])
+    assert not r["combinacoes"] or "Smash" not in str(r["combinacoes"][0]["escolhas"])
+    assert any("Não achei pão de queijo" in a for a in r["avisos"])
+

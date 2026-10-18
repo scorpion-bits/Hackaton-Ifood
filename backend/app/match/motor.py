@@ -15,7 +15,8 @@ import re
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
-from .interprete import CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite
+from .interprete import (CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite,
+                         normalizar)
 from .juiz import ROTULO_RESTRICAO, acertos, avaliar, bebida_sem_pedir, nota_fallback
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
@@ -150,7 +151,12 @@ def _montar_combos(slots: list[tuple[Desejo, Intencao]], candidatos: dict[str, l
             det = detalhes.get(chave, {})
             if not (_RE_COMBO.search(c.item_nome) or _RE_COMBO.search(str(det.get("categoria", "")))):
                 continue
-            atende = [i for i in intencoes if acertos(i, c, det)]
+            atende, pedidos = [], set()
+            for i in intencoes:  # "2 cocas" são o mesmo pedido: um combo com 1 refri não atende os dois
+                pedido = tuple(normalizar(x) for x in i.consultas)
+                if pedido not in pedidos and acertos(i, c, det):
+                    pedidos.add(pedido)
+                    atende.append(i)
             if len(atende) < 2:
                 continue
             notas = [x.nota for i in atende for x in candidatos.get(i.participante_id, [])
@@ -349,8 +355,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
 
     buscas = []
     fechadas: dict[str, list[str]] = {}  # slot → lojas que tinham o item, mas estão fechadas agora (bug 32)
+    acima: dict[str, float] = {}  # slot → menor preço achado acima do orçamento da pessoa
     for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
-        buscas.append(await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas))
+        buscas.append(await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas, acima=acima))
     if not any(cands for cands, _ in buscas) and _ifood_fora(cliente):
         # bug 31: todas as buscas deram erro do iFood — não é o pedido nem o orçamento da pessoa
         avisos[:] = [a for a in avisos if "endereço de teste" in a or "endereços no iFood" in a] + [MSG_IFOOD_FORA]
@@ -383,7 +390,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
                           "fechadas agora.")
         elif not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
-            avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
+            preco = f": o mais barato custa {_reais(acima[slot])}" if slot in acima else ""
+            avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}{preco}.")
     if sem_coordenadas and any(not cands for cands, _ in buscas):
         avisos.append("O endereço do iFood veio sem coordenadas (latitude/longitude): a busca pode ter deixado "
                       "lojas de fora. Confirme o local no app do iFood.")
@@ -397,7 +405,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         validos[slot] = _validos(intencao, candidatos[slot])
         if not validos[slot]:  # só sobrou bebida para quem pediu comida: não sugere nada
             descartados.append((desejo, intencao))
-            avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}. Quer mudar o pedido?")
+            teto = (f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max and slot in acima else "")
+            preco = f": o mais barato custa {_reais(acima[slot])}" if slot in acima else ""
+            avisos.append(f"Não achei {_pediu(desejo, intencao)}{teto} para {desejo.nome}{preco}. Quer mudar o pedido?")
     fracos = [f for f in fracos if f not in descartados]
     aviso_aproximada: dict[str, tuple[str, str]] = {}  # slot -> (texto provisório, "Não achei X para Y"), bug 24
     for desejo, intencao in fracos:
@@ -451,7 +461,11 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         # a pergunta vai uma vez só, no fim; sem combinação, "a opção mais próxima" contradiz o aviso final (bug 14)
         avisos[:] = [a.removesuffix(" Quer mudar o pedido?").split("; a opção mais próxima é")[0].rstrip(".") + "."
                      for a in avisos]
-        avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
+        if any(i.participante_id in acima for _, i in descartados):  # existe, mas passa do orçamento
+            avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
+                          "Tente aumentar o orçamento ou tirar uma restrição.")
+        else:
+            avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
     else:
         combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,
                           pessoa_de=pessoa_de, taxas=taxas)
@@ -460,6 +474,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         pass  # já avisado acima
     elif not combos and any(fechadas.get(i.participante_id) and not validos[i.participante_id] for _, i in slots):
         avisos.append("Tente de novo quando as lojas abrirem.")  # bug 32: não é o orçamento
+    elif not combos and not acima and not any(candidatos.get(i.participante_id) for _, i in slots):
+        # nada achado em loja nenhuma (ex.: "vinho e gelo" sem adega perto): não é o orçamento
+        avisos.append("Nada do que foi pedido está nas lojas abertas perto de você. Quer mudar o pedido?")
     elif not combos:
         avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
                       "Tente aumentar o orçamento ou tirar uma restrição.")

@@ -10,4 +10,4 @@ def test_bateria_demo_passa_e_grava_relatorio(tmp_path, monkeypatch):
     assert bateria.main(["--sem-ia"]) == 0
     relatorio = next(tmp_path.glob("demo-*.md")).read_text(encoding="utf-8")
     assert "**Invariantes:** ✅ todos ok" in relatorio
-    assert "Partes da vaquinha = total dos carrinhos (ao centavo): 10/10 (100%)" in relatorio
+    assert "Partes da vaquinha = total dos carrinhos (ao centavo): 13/13 (100%)" in relatorio
