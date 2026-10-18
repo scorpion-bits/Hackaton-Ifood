@@ -3,6 +3,7 @@ import type {
   EstadoSala,
   FormaPagamento,
   ModoPagamento,
+  RespostaAjuste,
   ResultadoMatch,
   SalaCriada,
   StatusIfood,
@@ -57,6 +58,9 @@ export const api = {
     }),
   rodar: (id: string, token: string) =>
     chamar<ResultadoMatch>(`${S(id)}/rodar`, { metodo: "POST", corpo: {}, token }),
+  /** C14: 422 = não entendeu, 409 = sem combinação ou fora de hora (a sala mantém o resultado anterior). */
+  ajustar: (id: string, token: string, texto: string) =>
+    chamar<RespostaAjuste>(`${S(id)}/ajustar`, { corpo: { texto }, token }),
   escolher: (id: string, token: string, combinacao: number, modo_pagamento: ModoPagamento) =>
     chamar<unknown>(`${S(id)}/escolher`, { corpo: { combinacao, modo_pagamento }, token }),
   pagar: (id: string, pid: string, forma: FormaPagamento) =>

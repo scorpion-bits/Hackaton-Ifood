@@ -1,12 +1,13 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import type { Candidato, Combinacao, EstadoSala } from "../tipos";
 import { brl } from "../componentes/CartaoPessoa";
 import EhUmMatch from "../componentes/leilao/EhUmMatch";
-import { IconeCoracao, IconeX, Rosto, corPessoa, emojiLoja, gradienteLoja } from "../componentes/leilao/visual";
+import { IconeCoracao, IconeFaisca, IconeX, Rosto, corPessoa, emojiLoja, gradienteLoja } from "../componentes/leilao/visual";
 import {
   afinidadeDe,
   agruparPorPessoa,
   felizesDe,
+  chaveItem,
   juntarIguais,
   lojasDa,
   mediasPorPessoa,
@@ -32,11 +33,14 @@ function Linhas({
   sala,
   pids,
   mostrarSem,
+  antes,
 }: {
   c: Combinacao;
   sala: EstadoSala;
   pids: string[];
   mostrarSem: boolean;
+  /** Itens que a opção tinha antes do ajuste (chave `chaveItem`); o que não está aqui é "Novo". */
+  antes: Set<string> | null;
 }) {
   const grupos = agruparPorPessoa(c.escolhas);
   const nomeDe = (pid: string) => sala.participantes.find((p) => p.id === pid)?.nome ?? "Convidado";
@@ -59,11 +63,16 @@ function Linhas({
               ]
             : [];
         }
-        return juntarIguais(itens).map((i: Candidato, k) => (
-          <li key={`${pid}-${i.item_id}-${k}`}>
+        return juntarIguais(itens).map((i: Candidato, k) => {
+          const novo = !!antes && !antes.has(chaveItem(pid, i));
+          return (
+          <li key={`${pid}-${i.item_id}-${k}`} className={novo ? "novo" : undefined}>
             <Rosto nome={nomeDe(pid)} cor={corDe(pid)} classe="ld-face-p" />
             <div>
-              <b>{nomeDe(pid)}</b>
+              <b>
+                {nomeDe(pid)}
+                {novo && <span className="ld-novo">Novo</span>}
+              </b>
               <span className="it">
                 {i.item_nome} · {i.loja_nome.replace(/\s*\(demo\)\s*$/i, "")}
               </span>
@@ -74,7 +83,8 @@ function Linhas({
             </div>
             <strong>{brl(i.preco)}</strong>
           </li>
-        ));
+          );
+        });
       })}
     </ul>
   );
@@ -88,6 +98,8 @@ function Cartao({
   mostrarSem,
   totalPessoas,
   rotulo,
+  antes,
+  atualizado,
 }: {
   c: Combinacao;
   sala: EstadoSala;
@@ -96,6 +108,8 @@ function Cartao({
   mostrarSem: boolean;
   totalPessoas: number;
   rotulo: string;
+  antes: Set<string> | null;
+  atualizado: boolean;
 }) {
   const lojas = lojasDa(c);
   const n = lojas.length;
@@ -116,6 +130,11 @@ function Cartao({
           <IconeCoracao tamanho={14} /> {afin}% afinidade
         </span>
         <span className={`ld-bdg ${n > 1 ? "dois" : "um"}`}>{n > 1 ? `${n} pedidos` : "1 pedido"}</span>
+        {atualizado && (
+          <span className="ld-bdg ld-atualizado">
+            <IconeFaisca tamanho={14} /> Atualizado
+          </span>
+        )}
       </div>
       <div className="ld-cbody">
         <p className="ld-legenda">Quanto os pratos combinam com o que cada um pediu, segundo a IA.</p>
@@ -126,7 +145,7 @@ function Cartao({
           </span>
           {eta !== null && <span>até {eta} min</span>}
         </div>
-        <Linhas c={c} sala={sala} pids={pids} mostrarSem={mostrarSem} />
+        <Linhas c={c} sala={sala} pids={pids} mostrarSem={mostrarSem} antes={antes} />
         <p className={`ld-note ${n > 1 ? "warn" : "ok"}`}>
           {n > 1 ? `Dividido em ${n} pedidos: ${n} entregas.` : "Um pedido só: uma entrega."} A taxa de cada entrega
           aparece no carrinho antes do seu ok.
@@ -163,6 +182,15 @@ export default function Deck({
   meuPid,
   onEscolher,
   onVerLeilao,
+  rodape,
+  ocupado = false,
+  atualizado = false,
+  faixa,
+  onFecharFaixa,
+  anteriores,
+  textoPrimario = "Escolher como pagar",
+  fechando = false,
+  erroFechar = "",
 }: {
   sala: EstadoSala;
   combinacoes: Combinacao[];
@@ -171,6 +199,22 @@ export default function Deck({
   meuPid: string | null;
   onEscolher: (idx: number) => void;
   onVerLeilao?: () => void;
+  /** C14: bloco abaixo do cartão (só o organizador recebe: "Ajustar com o IBits"). */
+  rodape?: ReactNode;
+  /** C14: um ajuste está sendo refeito; o match fica travado até terminar. */
+  ocupado?: boolean;
+  /** C14: destaque "Atualizado" no 1º cartão logo depois de um ajuste. */
+  atualizado?: boolean;
+  /** C14: faixa no topo (convidado: "O organizador ajustou o pedido"). */
+  faixa?: string;
+  onFecharFaixa?: () => void;
+  /** C14: opções de antes do ajuste, para marcar os itens novos. */
+  anteriores?: Combinacao[];
+  /** Texto do botão principal do "É um Match!" (sala de 1 pessoa: "Fechar meu pedido"). */
+  textoPrimario?: string;
+  /** O botão principal já está montando o pedido (sala de 1 pessoa). */
+  fechando?: boolean;
+  erroFechar?: string;
 }) {
   const lista = combinacoes.slice(0, 3);
   const n = lista.length;
@@ -182,12 +226,19 @@ export default function Deck({
   const sim = useRef<HTMLSpanElement>(null);
   const nao = useRef<HTMLSpanElement>(null);
 
-  const podeMatch = organizador;
+  const podeMatch = organizador && !ocupado;
   const podeProxima = n > 1;
   const c = lista[Math.min(idx, n - 1)];
   const pidsTodos = pessoasDoGrupo(sala, c);
   // Convidado vê só a própria parte (se não sabemos quem é, mostra tudo em leitura).
   const pids = pidsTodos.filter((pid) => organizador || !meuPid || pid === meuPid);
+  const antes = anteriores?.[Math.min(idx, n - 1)];
+  const existiam = useMemo(() => {
+    if (!antes) return null;
+    const s = new Set<string>();
+    for (const [slot, i] of Object.entries(antes.escolhas)) s.add(chaveItem(slot.split("#")[0], i));
+    return s;
+  }, [antes]);
 
   function estampas(dx: number) {
     if (sim.current) sim.current.style.opacity = podeMatch ? String(Math.max(0, Math.min(1, dx / 110))) : "0";
@@ -289,7 +340,9 @@ export default function Deck({
         lojas={lojasDa(casada)}
         total={total}
         subtitulo={sub}
-        textoPrimario="Escolher como pagar"
+        textoPrimario={textoPrimario}
+        ocupado={fechando}
+        erro={erroFechar}
         onPrimario={() => onEscolher(casou!)}
         onContinuar={continuar}
       />
@@ -312,7 +365,19 @@ export default function Deck({
       </div>
       <p className="ld-sr" role="status" aria-live="polite">
         Opção {idx + 1} de {n}: {afinidadeDe(c)}% de afinidade.
+        {atualizado && " Pedido atualizado."}
       </p>
+      {faixa && (
+        <div className="ld-faixa" role="status">
+          <IconeFaisca tamanho={16} />
+          <span>{faixa}</span>
+          {onFecharFaixa && (
+            <button type="button" onClick={onFecharFaixa} aria-label="Fechar aviso">
+              <IconeX tamanho={16} />
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="ld-deck">
         {n > 2 && <div className="ld-cartao b2" aria-hidden="true" />}
@@ -320,7 +385,7 @@ export default function Deck({
         <article
           key={`${idx}-${reinicio}`}
           ref={cartao}
-          className="ld-cartao front"
+          className={`ld-cartao front${atualizado && idx === 0 ? " ld-atual" : ""}`}
           aria-label={`Opção ${idx + 1} de ${n}`}
           onPointerDown={aoPressionar}
           onPointerMove={aoMover}
@@ -335,6 +400,8 @@ export default function Deck({
             mostrarSem={organizador}
             totalPessoas={pidsTodos.length}
             rotulo={`Opção ${idx + 1}`}
+            antes={existiam}
+            atualizado={atualizado && idx === 0}
           />
           {podeMatch && (
             <span ref={sim} className="ld-estampa sim" aria-hidden="true">
@@ -361,7 +428,13 @@ export default function Deck({
           )}
           {podeMatch && (
             <div className="ld-acao">
-              <button type="button" className="ld-redondo gosta" onClick={() => voar(1)} aria-label="Dar match nesta opção">
+              <button
+                type="button"
+                className="ld-redondo gosta"
+                onClick={() => voar(1)}
+                disabled={ocupado}
+                aria-label={ocupado ? "Aguarde: o IBits está refazendo o pedido" : "Dar match nesta opção"}
+              >
                 <IconeCoracao tamanho={34} />
               </button>
               <span aria-hidden="true">Dar match</span>
@@ -371,12 +444,15 @@ export default function Deck({
       )}
 
       <p className="ld-dica">
-        {organizador
+        {ocupado
+          ? "O IBits está refazendo o pedido. Já já as opções aparecem atualizadas."
+          : organizador
           ? n > 1
             ? "Deslize para a direita para dar match ou para a esquerda para ver a próxima opção."
             : "Deslize para a direita ou toque em Dar match."
           : `O organizador está escolhendo a opção e o modo de pagamento.${n > 1 ? " Deslize para a esquerda para ver as outras opções." : ""}`}
       </p>
+      {rodape}
       </div>
       {overlay}
     </section>

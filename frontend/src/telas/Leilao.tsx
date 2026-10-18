@@ -15,14 +15,18 @@ const MS_FALA = 820; // intervalo entre falas
 const MS_FECHAMENTO = 1400;
 const MS_DIGITANDO = 520;
 const MS_AUTO_CONVIDADO = 4000; // convidado segue sozinho; organizador toca em "Ver as opções" (narra o fechamento)
+// Versão curta (C14, depois de "Ajustar com o IBits"): ~4 s, abertura + 2 lances/passes + fechamento, segue sozinha.
+const COMPACTO = { maxFalas: 4, lances: 2, msFala: 560, msFechamento: 900, msDigitando: 300, msAuto: 1200 };
 
 /**
  * Se o roteiro for longo, mostra: abertura, até 4 lances/passes (vencedoras e patrocinadas primeiro),
  * 1 réplica e o fechamento. Só escolhe o que mostrar; não altera nenhum texto ou número.
  */
-function selecionarFalas(L: LeilaoDados): FalaLeilao[] {
+function selecionarFalas(L: LeilaoDados, compacto = false): FalaLeilao[] {
   const f = L.falas;
-  if (f.length <= MAX_FALAS) return f;
+  const maxFalas = compacto ? COMPACTO.maxFalas : MAX_FALAS;
+  const nLances = compacto ? COMPACTO.lances : 4;
+  if (f.length <= maxFalas) return f;
   const venc = new Set(L.vencedoras);
   const patro = new Set(L.lojas.filter((l) => l.patrocinado).map((l) => l.loja_id));
   const prioridade = (x: FalaLeilao) =>
@@ -34,9 +38,12 @@ function selecionarFalas(L: LeilaoDados): FalaLeilao[] {
     .filter((x) => x.tipo === "lance" || x.tipo === "passe")
     .map((x, i) => ({ x, i }))
     .sort((a, b) => prioridade(a.x) - prioridade(b.x) || a.i - b.i)
-    .slice(0, 4)
+    .slice(0, nLances)
     .map((e) => e.x);
-  const manter = new Set<FalaLeilao>([...escolhidas, ...[abertura, replica, fechamento].filter((x): x is FalaLeilao => !!x)]);
+  const manter = new Set<FalaLeilao>([
+    ...escolhidas,
+    ...[abertura, compacto ? undefined : replica, fechamento].filter((x): x is FalaLeilao => !!x),
+  ]);
   return f.filter((x) => manter.has(x));
 }
 
@@ -63,16 +70,19 @@ export default function Leilao({
   rastro,
   organizador,
   onFim,
+  compacto = false,
 }: {
   leilao: LeilaoDados;
   rastro: ChamadaRastro[];
   organizador: boolean;
   onFim: () => void;
+  /** C14: disputa curta (~4 s) depois de um ajuste; segue sozinha para o deck e tem "Pular". */
+  compacto?: boolean;
 }) {
   // O polling troca o objeto a cada 2 s: o roteiro usa só o que existia ao montar.
   const L = useRef(leilao).current;
   const R = useRef(rastro).current;
-  const falas = useRef(selecionarFalas(leilao)).current;
+  const falas = useRef(selecionarFalas(leilao, compacto)).current;
   const fimRef = useRef(onFim);
   fimRef.current = onFim;
 
@@ -116,7 +126,10 @@ export default function Leilao({
     const passo = Math.max(90, Math.min(180, 4200 / Math.max(1, R.length)));
     R.forEach((_, j) => later(() => setTick(j), 200 + j * passo));
 
-    let t = 350;
+    const msFala = compacto ? COMPACTO.msFala : MS_FALA;
+    const msFech = compacto ? COMPACTO.msFechamento : MS_FECHAMENTO;
+    const msDig = compacto ? COMPACTO.msDigitando : MS_DIGITANDO;
+    let t = compacto ? 200 : 350;
     falas.forEach((f, i) => {
       const comecar = () => {
         setLinhas((l) => [...l, { i, pronta: false }]);
@@ -131,13 +144,14 @@ export default function Leilao({
         }
       };
       later(comecar, t);
-      later(() => setLinhas((l) => l.map((x) => (x.i === i ? { ...x, pronta: true } : x))), t + MS_DIGITANDO);
-      t += f.tipo === "fechamento" ? MS_FECHAMENTO : MS_FALA;
+      later(() => setLinhas((l) => l.map((x) => (x.i === i ? { ...x, pronta: true } : x))), t + msDig);
+      t += f.tipo === "fechamento" ? msFech : msFala;
     });
     later(() => setTerminou(true), t);
-    if (!organizador) later(() => fimRef.current(), t + MS_AUTO_CONVIDADO);
+    if (compacto) later(() => fimRef.current(), t + COMPACTO.msAuto);
+    else if (!organizador) later(() => fimRef.current(), t + MS_AUTO_CONVIDADO);
     return () => ts.forEach(clearTimeout);
-  }, [L, R, falas, organizador]);
+  }, [L, R, falas, organizador, compacto]);
 
   useEffect(() => {
     const el = feedRef.current;
@@ -158,7 +172,7 @@ export default function Leilao({
           .filter(Boolean)
           .join(" · ")
       : "";
-  const algumPatro = L.lojas.some((l) => l.patrocinado);
+  const algumPatro = !compacto && L.lojas.some((l) => l.patrocinado);
   const rotuloTicker = tick !== null && R[tick] ? `${R[tick].tool} · ${R[tick].resumo}` : "aguardando";
 
   function bolha(f: FalaLeilao) {
@@ -178,7 +192,7 @@ export default function Leilao({
     <section className="tela ld-raiz ld-sala" aria-label="A disputa pelo pedido">
       <div className="ld-top">
         <span className="ld-step">
-          Disputa das lojas
+          {compacto ? "Refazendo o pedido" : "Disputa das lojas"}
         </span>
         {R.length > 0 && (
           <span className="ld-mcp" title="Chamadas ao MCP do iFood neste match">
@@ -193,8 +207,12 @@ export default function Leilao({
       </div>
 
       <div>
-        <h1 className="ld-titulo">A disputa pelo seu pedido</h1>
-        <p className="ld-subtitulo">Como os agentes das lojas disputaram, com dados do iFood.</p>
+        <h1 className="ld-titulo">{compacto ? "As lojas disputam de novo" : "A disputa pelo seu pedido"}</h1>
+        <p className="ld-subtitulo">
+          {compacto
+            ? "Com o seu ajuste, os agentes das lojas refizeram a disputa."
+            : "Como os agentes das lojas disputaram, com dados do iFood."}
+        </p>
       </div>
 
       {L.lojas.length > 0 && (
@@ -222,7 +240,7 @@ export default function Leilao({
         </div>
       )}
 
-      {fechou && L.lojas.some((l) => l.afinidade > 0) && (
+      {!compacto && fechou && L.lojas.some((l) => l.afinidade > 0) && (
         <p className="ld-patro-nota">
           % = afinidade da loja: quanto os pratos dela combinam com quem ela atende. A afinidade do pedido inteiro
           aparece no Match.
@@ -294,7 +312,7 @@ export default function Leilao({
 
       {terminou && (
         <button type="button" className="primario ld-seguir" onClick={onFim} autoFocus>
-          Ver as opções
+          {compacto ? "Ver o pedido atualizado" : "Ver as opções"}
         </button>
       )}
 

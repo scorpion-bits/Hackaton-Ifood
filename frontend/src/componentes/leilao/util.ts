@@ -1,4 +1,4 @@
-import type { Candidato, Combinacao, EstadoSala } from "../../tipos";
+import type { Candidato, Combinacao, EstadoSala, Entendido, AjusteSala, ResultadoMatch } from "../../tipos";
 
 /** Slots "pid" e "pid#k" viram uma lista por pessoa. */
 export function agruparPorPessoa(escolhas: Record<string, Candidato>): Record<string, Candidato[]> {
@@ -88,20 +88,61 @@ export function nomeCurto(n: string): string {
 
 export const leilaoVistoChave = (salaId: string) => `match.leilao.visto.${salaId}`;
 
-export function leilaoVisto(salaId: string): boolean {
+/**
+ * Assinatura do resultado: muda quando muda alguma escolha ou preço (ajuste do organizador, novo match).
+ * O "leilão visto" é guardado por assinatura, não só pela sala.
+ */
+export function assinatura(res?: ResultadoMatch | null): string {
+  if (!res) return "";
+  const txt = res.combinacoes
+    .map((c) =>
+      Object.keys(c.escolhas)
+        .sort()
+        .map((k) => `${k}=${c.escolhas[k].loja_id}/${c.escolhas[k].item_id}/${c.escolhas[k].preco}`)
+        .join(","),
+    )
+    .join("|");
+  let h = 5381;
+  for (let i = 0; i < txt.length; i++) h = ((h * 33) ^ txt.charCodeAt(i)) >>> 0;
+  return `${res.combinacoes.length}-${h.toString(36)}`;
+}
+
+/** Com `sig`, só vale se o leilão visto foi o desta assinatura; sem ela, qualquer um conta. */
+export function leilaoVisto(salaId: string, sig?: string): boolean {
   try {
-    return localStorage.getItem(leilaoVistoChave(salaId)) !== null;
+    const v = localStorage.getItem(leilaoVistoChave(salaId));
+    if (v === null) return false;
+    return sig === undefined ? true : v === sig;
   } catch {
     return false;
   }
 }
 
-export function marcarLeilaoVisto(salaId: string): void {
+export function marcarLeilaoVisto(salaId: string, sig = "1"): void {
   try {
-    localStorage.setItem(leilaoVistoChave(salaId), "1");
+    localStorage.setItem(leilaoVistoChave(salaId), sig);
   } catch {
     /* ignora */
   }
+}
+
+/** "Milan: açaí no lugar do sorvete · Antonio: mais barato". */
+export function textoEntendido(e: Entendido[] | string | undefined): string {
+  if (!e) return "";
+  if (typeof e === "string") return e.trim();
+  return e
+    .map((x) => (x.nome ? `${x.nome}: ${x.resumo}` : x.resumo))
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export function resumoAjuste(a: AjusteSala): string {
+  return textoEntendido(a.entendido);
+}
+
+/** Chave de um item de uma pessoa na combinação (para marcar o que mudou depois de um ajuste). */
+export function chaveItem(pid: string, c: Candidato): string {
+  return `${pid}|${c.loja_id}|${c.item_id}`;
 }
 
 export function reduzirMovimento(): boolean {
