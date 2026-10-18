@@ -53,7 +53,7 @@ ficar em até 3 lojas". É honesto, mas gasta tempo explicando. Com as duas pess
 | Selo "iFood real · conta de teste" | "Isso é o MCP do iFood de verdade, numa conta de teste. Lojas, preço e taxa vêm do iFood." | "o pedido foi entregue", "pagamos" |
 | Envio no real | "O envio fica travado de propósito: só com o meu ok e com a trava liberada. E nunca pagamos Pix de teste." | — |
 
-> ✅ 18/10 06h55 (P11, navegador em modo real): o Match chega aos carrinhos da conta de teste com taxa e total do `getCart`, e o fim é o cartão verde "Carrinhos prontos no iFood" (decisão T8: sem envio real). A conta precisa de **endereço salvo em cidade atendida pela conta de teste** (São Carlos dá ADR-2001; Avenida Paulista, 1000, São Paulo salvou) — sem ele o app usa o endereço mockado.
+> ✅ 18/10 06h50 (P11, navegador em modo real): o Match chega aos carrinhos da conta de teste com taxa e total do `getCart`, e o fim é o cartão verde "Carrinhos prontos no iFood" (decisão T8: sem envio real). A conta precisa de **endereço salvo em cidade atendida pela conta de teste** (São Carlos dá ADR-2001; Avenida Paulista, 1000, São Paulo salvou) — sem ele o app usa o endereço mockado.
 > Se não chegar até 10h30, a demo é no modo demonstração e a fala do rastro é a da 1ª linha da tabela.
 
 > ⚠️ confirmar no PC do Thales: com chave de IA no `.env`, quem entende a frase do ajuste é o LLM; sem chave, é o
