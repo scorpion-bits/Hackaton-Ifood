@@ -541,7 +541,7 @@ async def test_taxa_da_busca_entra_no_custo_e_avisa_que_e_estimada():
     ("preciso de shampoo, pasta de dente e pilha", "loja-demo-farmacia", {"fm-shampoo", "fm-pasta", "fm-pilha"}),
 ])
 async def test_lista_de_compras_sai_de_uma_loja_da_categoria_certa(texto, loja, itens):
-    r = await _rodar([Desejo("ana", "Ana", texto)])
+    r = await _rodar([Desejo("ana", "Ana", texto, chips=["modo:compras"])])  # botão Compras (regras_pedido.json)
     melhor = r["combinacoes"][0]
     assert melhor["lojas"] == [loja]
     assert {e["item_id"] for e in melhor["escolhas"].values()} == itens
@@ -550,7 +550,7 @@ async def test_lista_de_compras_sai_de_uma_loja_da_categoria_certa(texto, loja, 
 
 
 async def test_produto_que_nao_existe_no_varejo_nao_vira_opcao_aproximada():
-    r = await _rodar([Desejo("ana", "Ana", "dipirona e areia de praia")])
+    r = await _rodar([Desejo("ana", "Ana", "dipirona e areia de praia", chips=["modo:compras"])])
     assert "Não achei areia de praia para Ana." in r["avisos"]
     assert not any("opção mais próxima" in a for a in r["avisos"])
     assert "browseOffers" not in [c["tool"] for c in r["rastro"]]
@@ -640,7 +640,8 @@ async def test_loja_fechada_diz_que_esta_fechada_e_nao_pede_mais_orcamento():
 
     cfg = carregar()
     async with abrir_cliente(cfg) as cli:
-        r = await rodar_match(cfg, _cliente_com(cli, fechar), [Desejo("ana", "Ana", "dipirona e protetor solar")])
+        r = await rodar_match(cfg, _cliente_com(cli, fechar), [Desejo("ana", "Ana", "dipirona e protetor solar",
+                                                                         chips=["modo:compras"])])
     assert r["combinacoes"] == []
     assert any("Drogaria Bem Estar (demo)" in a and "fechadas agora" in a for a in r["avisos"])
     assert "Tente de novo quando as lojas abrirem." in r["avisos"]
@@ -704,4 +705,4 @@ async def test_busca_na_loja_inclui_a_loja_mais_barata_do_primeiro_item(monkeypa
     slots = [(Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana", consultas=["hambúrguer"])),
              (Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana#2", consultas=["batata frita"]))]
     await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
-    assert "Mcdonalds" in chamadas and len(chamadas) <= motor_mod.MAX_LOJAS_DO_PRINCIPAL + motor_mod.MAX_LOJAS_MAIS_BARATAS
+    assert "Mcdonalds" in chamadas and len(chamadas) <= motor_mod.MAX_LOJAS_DO_PRINCIPAL + motor_mod.lojas_mais_baratas_na_busca()

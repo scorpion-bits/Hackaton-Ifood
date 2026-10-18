@@ -34,7 +34,7 @@ def test_arroz_feijao_salada_e_guarnicao_e_uma_marmita_de_restaurante():
 
 
 def test_lista_de_compras_com_arroz_e_feijao_continua_no_mercado():
-    itens = _ler("preciso fazer compras: arroz, feijão e detergente")
+    itens = _ler("preciso fazer compras: arroz, feijão e detergente", ["modo:compras"])  # com o botão Compras
     assert [i.verticais for i in itens] == [["GROCERIES"]] * 3
     assert all(i.consultas != CONSULTAS_MARMITA for i in itens)
 
@@ -43,7 +43,7 @@ def test_lista_de_compras_com_arroz_e_feijao_continua_no_mercado():
                                    "arroz, feijão, salada e detergente", "arroz e feijão"])
 def test_sinal_de_compra_ou_so_arroz_e_feijao_nao_viram_marmita(texto):
     assert not pede_refeicao(normalizar(texto))
-    assert all(i.consultas != CONSULTAS_MARMITA for i in _ler(texto))
+    assert all(i.consultas != CONSULTAS_MARMITA for i in _ler(texto, ["modo:compras"]))  # com o botão Compras
 
 
 @pytest.mark.parametrize("texto,consultas", [
@@ -149,6 +149,7 @@ async def test_marmita_de_frango_no_demo_acha_o_marmitex_de_frango():
 async def test_compras_de_mercado_no_demo_nao_vao_para_a_marmita():
     cfg = carregar()
     async with abrir_cliente(cfg) as cli:
-        r = await rodar_match(cfg, cli, [Desejo("ana", "Ana", "preciso fazer compras: arroz, feijão e detergente")])
+        r = await rodar_match(cfg, cli, [Desejo("ana", "Ana", "preciso fazer compras: arroz, feijão e detergente",
+                                                chips=["modo:compras"])])
     lojas = {e["loja_id"] for e in r["combinacoes"][0]["escolhas"].values()}
     assert lojas == {"loja-demo-mercado"}

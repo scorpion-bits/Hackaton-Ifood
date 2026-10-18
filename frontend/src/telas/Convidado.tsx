@@ -9,16 +9,14 @@ export const RESTRICOES = ["vegetariano", "vegano", "sem lactose", "sem glúten"
 export const CHIPS = [...PREFERENCIAS, ...RESTRICOES];
 const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-// "Onde pedir?" (T16): opcional; vai nos chips como `onde:X` e o IBits busca só naquele tipo de loja.
-// Sem escolha = "IBits decide". Não fica lembrado no aparelho: vale só para este pedido.
+// "É comida ou compras?" (regras do pedido, backend/app/match/regras_pedido.json): sem escolha, tudo é restaurante
+// ("arroz, feijão e bife" vira prato); "Compras" (chip `modo:compras`) libera mercado, farmácia e pet shop.
+// Não fica lembrado no aparelho: vale só para este pedido.
 export const ONDE_PEDIR: [string, string | null][] = [
-  ["IBits decide", null],
-  ["Restaurante", "onde:RESTAURANT"],
-  ["Mercado", "onde:GROCERIES"],
-  ["Farmácia", "onde:DRUGSTORE"],
-  ["Pet shop", "onde:PETSTORE"],
+  ["Comida", null],
+  ["Compras (mercado, farmácia, pet)", "modo:compras"],
 ];
-const ehOnde = (c: string) => c.startsWith("onde:");
+const ehOnde = (c: string) => c.startsWith("onde:") || c.startsWith("modo:");
 export const semOnde = (chips: string[]) => chips.filter((c) => !ehOnde(c));
 
 /** Fileira de escolha única com a mesma aparência dos chips de Preferência/Restrição. */
@@ -35,7 +33,7 @@ export function OndePedir({
   return (
     <div className="chgrupo">
       <span className="chrotulo" id={id}>
-        Onde pedir?
+        É comida ou compras?
       </span>
       <div className="grupo-chips" role="radiogroup" aria-labelledby={id}>
         {ONDE_PEDIR.map(([rotulo, valor]) => (

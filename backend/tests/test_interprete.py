@@ -104,7 +104,7 @@ def test_consulta_da_ia_com_marca_ganha_refrigerante():
 
 # ---------- Só eu além de restaurante (Trilha A′, etapa 05: A′F5) ----------
 def test_lista_de_compras_vira_um_item_por_produto_sem_o_contexto():
-    intencoes = _fallback("preciso fazer compras: arroz, feijão e detergente")
+    intencoes = _fallback("preciso fazer compras: arroz, feijão e detergente", ["modo:compras"])
     assert [i.consultas[0] for i in intencoes] == ["arroz", "feijão", "detergente"]
     assert all(i.verticais == ["GROCERIES"] for i in intencoes)
 

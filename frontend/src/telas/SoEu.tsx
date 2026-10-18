@@ -13,6 +13,8 @@ export const salaSolo = (salaId: string) => lerLocal<boolean>(chaveSolo(salaId))
 // comida e também compras de farmácia, mercado e pet shop (A′F5: cada produto vai para a loja da categoria certa)
 const EXEMPLOS = ["uma pizza e uma coca", "japonês até 40", "dipirona e protetor solar", "ração de cachorro e um petisco",
   "arroz, feijão e detergente"];
+// exemplos de mercado/farmácia/pet: tocar neles já liga "Compras" (regras_pedido.json); os de comida desligam
+const EXEMPLOS_DE_COMPRAS = new Set(EXEMPLOS.slice(2));
 const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 interface SalaSolo {
@@ -205,12 +207,15 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             rows={3}
-            placeholder="Ex.: um lanche e um refri, até R$ 40 — ou uma lista: arroz, detergente e pilha"
+            placeholder="Ex.: um lanche e um refri, até R$ 40 — mercado ou farmácia? marque “Compras” abaixo"
             required
           />
           <div className="soeu-exemplos" role="group" aria-label="Exemplos para preencher">
             {EXEMPLOS.map((x) => (
-              <button key={x} type="button" className="chip chip-exemplo" onClick={() => setTexto(x)}>
+              <button key={x} type="button" className="chip chip-exemplo" onClick={() => {
+                  setTexto(x);
+                  setChips((l) => (EXEMPLOS_DE_COMPRAS.has(x) ? [...semOnde(l), "modo:compras"] : semOnde(l)));
+                }}>
                 {x}
               </button>
             ))}

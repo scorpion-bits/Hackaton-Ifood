@@ -18,12 +18,12 @@ from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
 from .interprete import (CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite,
                          normalizar)
 from .juiz import ROTULO_RESTRICAO, acertos, avaliar, bebida_sem_pedir, nota_fallback
+from .regras import aplicar_regras, lojas_mais_baratas_na_busca
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
 MAX_LOJAS_DO_PRINCIPAL = 3  # lojas do 1º item da pessoa onde os outros itens dela também são procurados (A′F1)
-MAX_LOJAS_MAIS_BARATAS = 2  # + as lojas do 1º item mais baratas: o otimizador costuma escolher por preço (Big Mac R$ 2,90)
 MAX_LOJAS = 3  # cada loja a mais = +1 pedido, +1 taxa, +1 entrega (o δ do otimizador penaliza; os avisos deixam o custo explícito)
 TOP = 3
 NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só fica se não houver nada melhor
@@ -237,7 +237,7 @@ async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Dese
         # lojas mais baratas do 1º item, para que 1 loja vença sempre que der.
         preco_min = {c.loja_id: min(x.preco for x in julgados[indices[0]] if x.loja_id == c.loja_id and not x.viola)
                      for c in julgados[indices[0]] if not c.viola}
-        lojas += [l for l in sorted(preco_min, key=preco_min.get)[:MAX_LOJAS_MAIS_BARATAS] if l not in lojas]
+        lojas += [l for l in sorted(preco_min, key=preco_min.get)[:lojas_mais_baratas_na_busca()] if l not in lojas]
         for k in indices[1:]:
             desejo, intencao = slots[k]
             detalhes = buscas[k][1]
@@ -366,6 +366,14 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo],
     ajustadas = [aplicar_quantidades(d, lista) for d, lista in zip(desejos, interpretacoes)]
     interpretacoes = [lista for lista, _ in ajustadas]
     avisos.extend(a for _, avs in ajustadas for a in avs)  # quantidade ignorada nunca some calada
+    # regras_pedido.json: sem o botão "Compras", tudo é restaurante; item só de mercado/farmácia/pet sai com aviso
+    reguladas = [aplicar_regras(d, lista) for d, lista in zip(desejos, interpretacoes)]
+    avisos.extend(a for _, avs in reguladas for a in avs)
+    desejos = [d for d, (lista, _) in zip(desejos, reguladas) if lista]
+    interpretacoes = [lista for lista, _ in reguladas if lista]
+    if not desejos:  # ninguém ficou com item: a rota responde 409 com os avisos ("ligue Compras")
+        resultado["rastro"] = cliente.rastro_como_dicts()
+        return resultado
     for d in desejos:  # lista de compras longa: o que passou do limite vira aviso
         if fora_do_limite := itens_alem_do_limite(d):
             avisos.append(f"{d.nome} pediu mais de {MAX_SLOTS} itens: o Match monta até {MAX_SLOTS} por pessoa; "

@@ -24,6 +24,7 @@ import math
 from dataclasses import dataclass
 
 from .modelos import PERFIS, Candidato, Combinacao, Pesos
+from .regras import peso_mesma_loja
 
 MAX_CANDIDATOS_POR_PESSOA = 8  # por slot
 MAX_COMBINACOES = 50_000  # por conjunto de lojas
@@ -157,6 +158,7 @@ class _OpcaoPessoa:
     sat: float
     lojas: frozenset[str]
     mascara: int = 0  # bit de cada loja (para testar o conjunto de lojas rápido)
+    n_lojas: int = 1  # lojas dos itens desta pessoa (regras_pedido.json: mesma loja sempre que der)
     eta_max: int = 0
     perecivel: bool = False
 
@@ -208,6 +210,7 @@ def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], tet
             sat=sum(c.nota * (1 + len(c.cobre)) for c in escolhidos) / (len(escolhidos) + len(cobertos)),
             lojas=frozenset(c.loja_id for c in escolhidos),
             mascara=sum({bits[c.loja_id] for c in escolhidos}),
+            n_lojas=len({c.loja_id for c in escolhidos}),
             eta_max=max((c.eta_min for c in escolhidos if c.eta_min is not None), default=0),
             perecivel=any(c.perecivel and c.vertical == VERTICAL_RESTAURANTE for c in escolhidos),
         ))
@@ -300,6 +303,7 @@ def otimizar(
                 penal_slots = 0.0
                 atraso = 0
                 tem_perecivel = False
+                divididas = 0
                 for p, o in zip(ativas, escolha):
                     if o is None:
                         minimo = 0.0
@@ -310,6 +314,7 @@ def otimizar(
                     preco += o.preco
                     penal_slots += o.penal
                     atraso = max(atraso, o.eta_max)
+                    divididas += o.n_lojas - 1
                     tem_perecivel = tem_perecivel or o.perecivel
                 custo_total = round(preco + soma_taxas, 2)
                 penal = 0.0
@@ -318,7 +323,8 @@ def otimizar(
                 score = (soma_sat / len(ativas) + pesos.alfa_justica * minimo
                          - pesos.beta_custo * (custo_total / orcamento_ref)
                          - pesos.gama_atraso * (atraso / TEMPO_ALVO_MIN)
-                         - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots)
+                         - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots
+                         - peso_mesma_loja() * divididas)
                 # 1º critério: atender o máximo de slots (deixar item de fora só se não couber no orçamento ou
                 # no limite de lojas); só depois o score. Assim δ/custo/perecível nunca "compram" um item cortado.
                 item = (-round(penal_slots, 4), round(score, 4), -custo_total, -next(contador), escolha)
@@ -363,7 +369,9 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
     termo_atraso = pesos.gama_atraso * (atraso_max / TEMPO_ALVO_MIN)
     termo_lojas = pesos.delta_lojas * (len(lojas) - 1)
     termo_perecivel = pesos.epsilon_perecivel * penal
-    score = (media + termo_justica - termo_custo - termo_atraso - termo_lojas - termo_perecivel - penal_slots)
+    termo_mesma_loja = peso_mesma_loja() * sum(o.n_lojas - 1 for o in escolha if o is not None)
+    score = (media + termo_justica - termo_custo - termo_atraso - termo_lojas - termo_perecivel - penal_slots
+             - termo_mesma_loja)
 
     componentes = {
         "media_nota": round(media, 4),
@@ -378,6 +386,7 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
         "termo_atraso": round(-termo_atraso, 4),
         "termo_lojas": round(-termo_lojas, 4),
         "termo_perecivel": round(-termo_perecivel, 4),
+        "termo_mesma_loja": round(-termo_mesma_loja, 4),
         "slots_fora": float(slots_fora),
         "termo_slots_fora": round(-penal_slots, 4),
         "pessoas_sem_opcao": float(len(sem_opcao) + len(fora_pessoas)),

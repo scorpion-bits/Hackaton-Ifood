@@ -17,6 +17,7 @@ import unicodedata
 from ..config import Config
 from .llm import completar_json
 from .modelos import PERFIS, Desejo, Intencao
+from .regras import compras_ligado
 
 MAX_SLOTS = 4
 MAX_REPETICOES = 3  # "2 sorvetes" vira 2 slots iguais; acima de 3 do mesmo item, o resto é ignorado (com aviso)
@@ -534,9 +535,12 @@ def aplicar_onde(desejo: Desejo, intencoes: list[Intencao]) -> list[Intencao]:
 
 
 def _modo_refeicao(desejo: Desejo, texto_norm: str) -> bool:
-    """A pessoa pede uma refeição (prato feito)? "Onde pedir? Mercado/Farmácia/Pet" desliga; "Restaurante" faz
-    arroz + feijão + salada valer refeição mesmo com sinal de compra."""
+    """A pessoa pede uma refeição (prato feito)? Sem o botão "Compras" (regras_pedido.json) tudo é restaurante:
+    "arroz, feijão e bife" é prato feito mesmo com cara de lista. Com "Compras", "Onde pedir? Mercado/Farmácia/Pet"
+    desliga e "Restaurante" faz arroz + feijão + salada valer refeição mesmo com sinal de compra."""
     onde = onde_pedir(desejo.chips)
+    if not compras_ligado(desejo.chips):
+        return pede_refeicao(texto_norm, ignorar_compra=True)
     if onde and onde != "RESTAURANT":
         return False
     return pede_refeicao(texto_norm, ignorar_compra=onde == "RESTAURANT")

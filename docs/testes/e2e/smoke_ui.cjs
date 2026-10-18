@@ -43,11 +43,13 @@ async function verPedido(page) {
 const SOLO = [
   ['solo-pizza-coca', 'uma pizza e uma coca', ['Forno da Praça Pizzaria', 'Refrigerante 2 L', 'com taxa']],
   ['solo-combo', 'hambúrguer com batata e refri', ['Combo smash + batata + refri', 'Combo com']],
-  ['solo-farmacia', 'dipirona e protetor solar', ['Drogaria Bem Estar', 'Dipirona', 'Protetor solar']],
-  ['solo-mercado', 'preciso fazer compras: arroz, feijão e detergente', ['Mercadinho Bairro Feliz', 'Arroz', 'Detergente']],
-  // T16 / bug 40: prato feito vai para restaurante; "Onde pedir? Restaurante" faz "arroz e feijão" virar PF
+  // regras do pedido (regras_pedido.json): mercado, farmácia e pet shop só com o botão "Compras"
+  ['solo-farmacia', 'dipirona e protetor solar', ['Drogaria Bem Estar', 'Dipirona', 'Protetor solar'], /^Compras/],
+  ['solo-mercado', 'preciso fazer compras: arroz, feijão e detergente', ['Mercadinho Bairro Feliz', 'Arroz', 'Detergente'],
+    /^Compras/],
+  // sem "Compras", prato feito vai para restaurante: "arroz e feijão" também vira PF
   ['solo-marmita', 'arroz, feijão, salada e guarnição', ['Tempero de Casa']],
-  ['solo-onde-restaurante', 'arroz e feijão', ['Tempero de Casa'], 'Restaurante'],
+  ['solo-sem-compras-arroz-feijao', 'arroz e feijão', ['Tempero de Casa']],
 ];
 
 (async () => {

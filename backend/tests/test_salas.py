@@ -535,7 +535,7 @@ def test_envio_real_desligado_devolve_409_legivel_e_mantem_a_sala(c, monkeypatch
 # ---------- Só eu além de restaurante (Trilha A′, etapa 05: A′F5) ----------
 def test_lista_da_farmacia_monta_o_carrinho_na_drogaria(c):
     s = Sala(c)
-    s.convidar({"Ana": {"texto": "dipirona e protetor solar"}})
+    s.convidar({"Ana": {"texto": "dipirona e protetor solar", "chips": ["modo:compras"]}})
     r = s.rodar()
     assert r.status_code == 200, r.text
     assert r.json()["combinacoes"][0]["lojas"] == ["loja-demo-farmacia"]
