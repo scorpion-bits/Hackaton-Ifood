@@ -80,14 +80,37 @@ def _mensagem_legivel(texto: str) -> str:
     return re.sub(r"^Error executing tool \w+:\s*", "", texto).strip()
 
 
+MSG_ENVIO_DESLIGADO = ("Envio real desligado: o pedido para no carrinho (conta de teste). "
+                       "Para enviar de verdade, use IFOOD_MCP_PERMITIR_ENVIO=true no .env.")
+
+
+def adaptar_args(args: dict[str, Any], schema: dict | None) -> dict[str, Any]:
+    """Ajusta os argumentos ao input_schema real da tool.
+
+    O motor manda `latitude`/`longitude` soltos (como a doc e o servidor de demonstração); o MCP real pede
+    `userLocation: {latitude, longitude}` em algumas tools. Com schema conhecido, também descarta argumentos que a
+    tool não declara (ex.: `latitude` no `getCart`). Sem schema, devolve os argumentos como vieram.
+    """
+    props = (schema or {}).get("properties") or {}
+    if not props:
+        return args
+    novos = dict(args)
+    lat, lng = novos.get("latitude"), novos.get("longitude")
+    if "userLocation" in props and "userLocation" not in novos and lat is not None and lng is not None:
+        novos["userLocation"] = {"latitude": float(lat), "longitude": float(lng)}
+    return {k: v for k, v in novos.items() if k in props}
+
+
 class ClienteIFood:
     """Envolve uma sessão MCP aberta e registra cada chamada em `rastro`."""
 
-    def __init__(self, sessao: Client, modo: str, sinal_http: dict | None = None):
+    def __init__(self, sessao: Client, modo: str, sinal_http: dict | None = None, permitir_envio: bool = True):
         self._sessao = sessao
         self.modo = modo
         self.rastro: list[ChamadaRastro] = []
         self._sinal_http = sinal_http  # modo real: último status HTTP visto (para explicar um 401)
+        self._permitir_envio = permitir_envio  # modo real: `submitOrder` só com IFOOD_MCP_PERMITIR_ENVIO=true
+        self._schemas: dict[str, dict] | None = None  # modo real: input_schema por tool (lido 1 vez)
 
     @property
     def demonstracao(self) -> bool:
@@ -97,6 +120,11 @@ class ClienteIFood:
         """Chama a tool e devolve o `structured_content`. Erro → `ErroMCP` com a mensagem da tool."""
         resumo = resumir(tool, args)
         inicio = time.perf_counter()
+        if tool == "submitOrder" and not self._permitir_envio:
+            self._registrar(tool, resumo, inicio, ok=False, erro=MSG_ENVIO_DESLIGADO)
+            raise ErroMCP(MSG_ENVIO_DESLIGADO)
+        if self.modo == "real":
+            args = adaptar_args(args, (await self._schemas_reais()).get(tool))
         try:
             resultado = await self._sessao.call_tool(tool, args)
         except Exception as e:  # falha de transporte/protocolo
@@ -141,6 +169,15 @@ class ClienteIFood:
             if not cursor:
                 break
         return tools
+
+    async def _schemas_reais(self) -> dict[str, dict]:
+        """input_schema de cada tool do servidor real (1 `list_tools` por sessão; falha → sem adaptação)."""
+        if self._schemas is None:
+            try:
+                self._schemas = {t["name"]: t.get("input_schema") or {} for t in await self.listar_tools()}
+            except Exception:
+                self._schemas = {}
+        return self._schemas
 
     def rastro_como_dicts(self) -> list[dict]:
         return [asdict(c) for c in self.rastro]
@@ -206,7 +243,8 @@ async def _conectar_real(cfg: Config, pilha: AsyncExitStack) -> ClienteIFood:
             e = _desembrulhar(bruto)
             raise ErroMCP(f"Não consegui conectar ao MCP do iFood ({type(e).__name__}): {e}") from None
         await pilha.enter_async_context(tentativa_pilha)
-        return ClienteIFood(sessao, "real", sinal_http=sinal)
+        return ClienteIFood(sessao, "real", sinal_http=sinal,
+                            permitir_envio=getattr(cfg, "ifood_mcp_permitir_envio", False))
     raise ErroMCP(MSG_401)
 
 
