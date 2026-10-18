@@ -100,3 +100,32 @@ def test_consulta_da_ia_com_marca_ganha_refrigerante():
     dados = {"itens": [{"consultas": ["pizza"]}, {"consultas": ["Coca-Cola"], "vontades": ["coca-cola"]}]}
     intencoes = validar_resposta_llm(dados, Desejo("p", "P", "pizza e uma coca-cola"))
     assert intencoes[1].consultas == ["Coca-Cola", "refrigerante"]
+
+
+# ---------- Só eu além de restaurante (Trilha A′, etapa 05: A′F5) ----------
+def test_lista_de_compras_vira_um_item_por_produto_sem_o_contexto():
+    intencoes = _fallback("preciso fazer compras: arroz, feijão e detergente")
+    assert [i.consultas[0] for i in intencoes] == ["arroz", "feijão", "detergente"]
+    assert all(i.verticais == ["GROCERIES"] for i in intencoes)
+
+
+@pytest.mark.parametrize("texto, verticais", [
+    ("dipirona e protetor solar", ["DRUGSTORE", "DRUGSTORE"]),
+    ("ração de cachorro e um petisco", ["PETSTORE", "PETSTORE"]),
+    ("preciso de ração pro gato, areia e um shampoo", ["PETSTORE", "PETSTORE", "DRUGSTORE"]),
+    ("na farmácia: remédio pra dor de cabeça e curativo", ["DRUGSTORE", "DRUGSTORE"]),
+])
+def test_produto_de_varejo_busca_na_categoria_certa(texto, verticais):
+    assert [i.verticais[0] for i in _fallback(texto)] == verticais
+
+
+def test_comida_continua_em_restaurante_e_cebola_do_prato_nao_vira_compra():
+    assert [(i.consultas[0], i.verticais) for i in _fallback("hambúrguer sem cebola")] == [("hambúrguer", ["RESTAURANT"])]
+    assert all(i.verticais == ["RESTAURANT"] for i in _fallback("pizza e um refri"))
+
+
+def test_lista_longa_avisa_o_que_passou_do_limite():
+    from app.match.interprete import itens_alem_do_limite
+    d = Desejo("p", "P", "lista de compras: leite, ovos, papel higiênico, sabão em pó e pilha")
+    assert len(interpretar_fallback(d)) == 4
+    assert itens_alem_do_limite(d) == ["pilha"]

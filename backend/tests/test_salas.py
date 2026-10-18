@@ -530,3 +530,17 @@ def test_envio_real_desligado_devolve_409_legivel_e_mantem_a_sala(c, monkeypatch
     monkeypatch.setattr(rotas_match, "abrir_cliente", original)  # envio ligado: a mesma sala segue
     assert s.enviar().status_code == 200
     assert s.estado()["estado"] == "enviado"
+
+
+# ---------- Só eu além de restaurante (Trilha A′, etapa 05: A′F5) ----------
+def test_lista_da_farmacia_monta_o_carrinho_na_drogaria(c):
+    s = Sala(c)
+    s.convidar({"Ana": {"texto": "dipirona e protetor solar"}})
+    r = s.rodar()
+    assert r.status_code == 200, r.text
+    assert r.json()["combinacoes"][0]["lojas"] == ["loja-demo-farmacia"]
+    r = s.escolher("junto")
+    assert r.status_code == 200, r.text
+    carrinhos = s.estado()["carrinhos"]
+    assert len(carrinhos) == 1
+    assert carrinhos[0]["subtotal"] == round(6.49 + 39.90, 2) and carrinhos[0]["taxa"] == 5.90

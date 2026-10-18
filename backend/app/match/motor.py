@@ -15,7 +15,7 @@ import re
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
-from .interprete import CONSULTA_RESTRICAO, aplicar_quantidades, interpretar
+from .interprete import CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite
 from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
@@ -112,6 +112,22 @@ def _sem_irrelevantes(candidatos: list[Candidato]) -> list[Candidato]:
     """Tira itens com nota < NOTA_MINIMA quando o slot tem opções que atendem ao pedido."""
     bons = [c for c in candidatos if c.nota >= NOTA_MINIMA]
     return bons if bons else candidatos
+
+
+MARGEM_VAREJO = 0.15  # no varejo, só concorrem itens com nota até isto abaixo do melhor (A′F5)
+
+
+def _de_varejo(intencao: Intencao) -> bool:
+    return bool(intencao.verticais) and "RESTAURANT" not in intencao.verticais
+
+
+def _so_os_melhores(candidatos: list[Candidato]) -> list[Candidato]:
+    """Varejo: produto diferente não ganha por ser mais barato (ração de gato para quem pediu ração de cachorro).
+    O preço decide só entre itens que atendem igualmente bem."""
+    if not candidatos:
+        return candidatos
+    melhor = max(c.nota for c in candidatos)
+    return [c for c in candidatos if c.nota >= melhor - MARGEM_VAREJO - 1e-9]
 
 
 def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
@@ -256,6 +272,10 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     ajustadas = [aplicar_quantidades(d, lista) for d, lista in zip(desejos, interpretacoes)]
     interpretacoes = [lista for lista, _ in ajustadas]
     avisos.extend(a for _, avs in ajustadas for a in avs)  # quantidade ignorada nunca some calada
+    for d in desejos:  # lista de compras longa: o que passou do limite vira aviso
+        if fora_do_limite := itens_alem_do_limite(d):
+            avisos.append(f"{d.nome} pediu mais de {MAX_SLOTS} itens: o Match monta até {MAX_SLOTS} por pessoa; "
+                          f"ficou de fora: {', '.join(fora_do_limite)}.")
     slots: list[tuple[Desejo, Intencao]] = [(d, i) for d, lista in zip(desejos, interpretacoes) for i in lista]
     pessoa_de = {i.participante_id: d.participante_id for d, i in slots}
 
@@ -272,7 +292,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     julgados = await asyncio.gather(*(
         avaliar(cfg, d, i, cands, det) for (d, i), (cands, det) in zip(slots, buscas)
     ))
-    candidatos = {i.participante_id: _sem_irrelevantes(lista) for (_, i), lista in zip(slots, julgados)}
+    candidatos = {i.participante_id: (_so_os_melhores(_sem_irrelevantes(lista)) if _de_varejo(i)
+                                      else _sem_irrelevantes(lista))
+                  for (_, i), lista in zip(slots, julgados)}
     validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
 
     # relevância: o melhor item do slot precisa passar de NOTA_RELEVANTE; senão é "opção aproximada" (e avisa)
