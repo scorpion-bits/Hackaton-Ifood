@@ -49,7 +49,7 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     melhor = r["combinacoes"][0]
     assert {s: e["item_id"] for s, e in melhor["escolhas"].items()} == TOP1_ROTEIRO
     assert all(0 <= c["afinidade"] <= 100 and 0 <= c["felizes"] <= 3 for c in r["combinacoes"])
-    assert melhor["felizes"] == 3
+    assert melhor["felizes"] == 3 and melhor["afinidade"] == 82
 
     bloco = r["leilao"]
     assert bloco["llm"] is False and bloco["demonstracao"] is True
@@ -58,6 +58,9 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     assert falas[0]["quem"] == "ibits" and falas[0]["tipo"] == "abertura" and "3 pessoas" in falas[0]["texto"]
     assert falas[-1]["tipo"] == "fechamento" and set(falas[-1]["vencedoras"]) == VENCEDORAS
     assert "as taxas aparecem no carrinho antes do seu ok" in falas[-1]["texto"]
+    assert "82% de afinidade e 3 de 3 bem atendidos" in falas[-1]["texto"]
+    # só uma loja tem a maior nota (4,9): só ela diz "a melhor da sala"
+    assert sum("a melhor da sala" in f["texto"] for f in falas) == 1
     assert "R$" not in falas[-1]["texto"]  # taxa nunca aparece nas falas
     lances = [f for f in falas if f["tipo"] == "lance"]
     assert 1 <= len(lances) <= 5 and sum(f["tipo"] == "passe" for f in falas) <= 2
@@ -372,4 +375,131 @@ async def test_agente_lento_usa_fallback_sem_derrubar_o_leilao(monkeypatch):
     assert all(l["fonte_fala"] == "llm" for l in lojas.values())
     assert r["leilao"]["llm"] is True
     assert r["leilao"]["medicoes"]["ms_por_loja"]["loja-demo-japones"] < 2000
+    # a tentativa que estourou o tempo não conta como chamada ao LLM
+    assert r["leilao"]["medicoes"]["chamadas_llm"] == len(r["leilao"]["lojas"]) - 1
     assert r["combinacoes"] and set(r["leilao"]["vencedoras"]) == VENCEDORAS
+
+
+# ---------- correções do QA (T17b) ----------
+def _com_llm(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    monkeypatch.setenv("LLM_MODEL", "modelo-teste")
+
+
+async def test_chamadas_llm_conta_so_resposta_json_valida(monkeypatch):
+    _com_llm(monkeypatch)
+    _, bloco, _ = await _leilao(monkeypatch, {
+        "Gelato": {"ofertas": [{"slot_id": "ana", "item_id": "sv1"}], "fala": "SV1 pra Ana."},
+        "Japa": None,  # erro/timeout → completar_json devolve None
+        "Praça": "lixo"})  # não é objeto JSON
+    assert bloco["medicoes"]["chamadas_llm"] == 1 and bloco["llm"] is True
+    _, bloco, _ = await _leilao(monkeypatch, {})  # nenhum agente respondeu
+    assert bloco["medicoes"]["chamadas_llm"] == 0 and bloco["llm"] is False
+
+
+async def test_llm_falso_coerente_quando_so_veio_lixo(monkeypatch):
+    _com_llm(monkeypatch)
+    # JSON válido mas sem nenhuma oferta válida e sem "passo": fallback em tudo → leilão não é "llm"
+    _, bloco, lojas = await _leilao(monkeypatch, {"Gelato": {"ofertas": [{"slot_id": "zz", "item_id": "x"}]}})
+    assert bloco["medicoes"]["chamadas_llm"] == 1
+    assert bloco["llm"] is False and all(l["fonte_fala"] == "modelo" for l in lojas.values())
+
+
+def test_item_cortado_conta_zero_na_afinidade_e_nos_felizes():
+    pessoa_de = {"ana": "ana", "ana#2": "ana", "bia": "bia"}
+    combinacao = {"escolhas": {"ana": {"nota": 0.8}, "bia": {"nota": 0.8}}}  # o 2º item da Ana ficou de fora
+    assert leilao.afinidade_e_felizes(combinacao, ["ana", "bia"], pessoa_de) == (60, 1)
+    combinacao["escolhas"]["ana#2"] = {"nota": 0.8}
+    assert leilao.afinidade_e_felizes(combinacao, ["ana", "bia"], pessoa_de) == (80, 2)
+
+
+async def test_fechamento_nao_diz_todos_bem_atendidos_com_item_cortado():
+    seis = [Desejo(f"p{i}", n, t) for i, (n, t) in enumerate([
+        ("Ana", "pizza"), ("Beto", "hambúrguer"), ("Caio", "sushi"), ("Duda", "sorvete"), ("Eva", "salada vegana"),
+        ("Fabio", "pizza e sorvete")])]
+    r = await _rodar(seis)
+    melhor = r["combinacoes"][0]
+    fora = [s for p in r["pessoas"] for s in p["slots"] if s not in melhor["escolhas"]]
+    if not fora:
+        pytest.skip("nenhum item ficou de fora neste cenário")
+    pessoas_com_corte = {s.split("#", 1)[0] for s in fora}
+    assert melhor["felizes"] <= len(seis) - len(pessoas_com_corte)
+    assert f"{melhor['felizes']} de {len(seis)} bem atendidos" in r["leilao"]["falas"][-1]["texto"]
+
+
+@pytest.mark.parametrize("fala, item, fonte", [
+    ("SV1 com frete grátis.", "sv1", "modelo"),
+    ("Ganhe um brinde com o SV1.", "sv1", "modelo"),
+    ("Use o cupom e leve SV1.", "sv1", "modelo"),
+    ("SV1 sem taxa hoje.", "sv1", "modelo"),
+    ("SV1 em promoção!", "sv1", "modelo"),                     # sem preço "de" real
+    ("SV2 em promoção: de R$ 19,90 por R$ 15,50.", "sv2", "llm"),  # preço "de" real nos dados
+    ("SV3 sem leite.", "sv3", "modelo"),
+    ("SV3 lactose zero.", "sv3", "modelo"),
+    ("SV3 plant-based.", "sv3", "modelo"),
+    ("SV3 sem carne.", "sv3", "modelo"),
+    ("SV3 orgânico e fresquinho.", "sv3", "modelo"),
+    ("SV3 light, bem fit.", "sv3", "modelo"),
+    ("SV1 sem carne nenhuma.", "sv1", "llm"),                   # tag "vegano" confirma
+    ("SV1 por dezenove e noventa.", "sv1", "modelo"),          # número por extenso fora dos dados
+    ("SV1 por R$ 20 e noventa.", "sv1", "modelo"),
+    ("Chego em trinta minutos com o SV1.", "sv1", "llm"),       # 30 min é o ETA da loja
+    ("Um SV1 cremoso pra Ana.", "sv1", "llm"),                  # "um" = 1
+    ("Atendo todo mundo com SV1.", "sv1", "modelo"),           # atende 1 de 2
+    ("SV1 pra todos vocês.", "sv1", "modelo"),
+    ("Fecho 2 sorvetes pra Ana.", "sv1", "modelo"),             # é 1 sorvete só
+    ("Tenho dois potes de SV1.", "sv1", "modelo"),
+    ("Atendo 1 de 2 pessoas com SV1.", "sv1", "llm"),
+    ("Atendo 2 pessoas com SV1.", "sv1", "modelo"),
+])
+async def test_fala_sem_promessa_extenso_ou_contagem_errada(monkeypatch, fala, item, fonte):
+    _, _, lojas = await _leilao(monkeypatch, {
+        "Gelato": {"ofertas": [{"slot_id": "ana", "item_id": item}], "fala": fala}})
+    assert lojas[L1]["fonte_ofertas"] == "llm" and lojas[L1]["fonte_fala"] == fonte, lojas[L1]["fala"]
+
+
+async def test_replica_com_contagem_certa_passa_e_errada_cai_no_modelo(monkeypatch):
+    for replica, fonte in (("Fecho os 2 pedidos num só: 1 entrega em vez de 2.", "llm"),
+                           ("Fecho 3 pedidos num só: 1 entrega em vez de 3.", "modelo"),
+                           ("Junto tudo e o frete sai grátis.", "modelo")):
+        _, _, lojas = await _leilao(monkeypatch, {
+            "Praça": {"ofertas": [{"slot_id": "ana", "item_id": "pr1"}, {"slot_id": "bia", "item_id": "pr2"}],
+                      "fala": "Atendo as 2.", "replica": replica}})
+        assert lojas[L3]["agrupa"]["fonte"] == fonte, replica
+
+
+def test_motivo_sem_extenso_e_sem_promessa():
+    assert leilao._motivo_valido("Dois sabores cremosos", set()) == ""
+    assert leilao._motivo_valido("Frete grátis", set()) == ""
+    assert leilao._motivo_valido("Opção fit", set()) == ""
+    assert leilao._motivo_valido("Um clássico gelado", set()) == "Um clássico gelado"
+    assert leilao._motivo_valido("Salada fit fresquinha", set(), ["Salada fit"]) == "Salada fit fresquinha"
+
+
+async def test_melhor_da_sala_so_com_nota_unica(monkeypatch):
+    _agentes(monkeypatch, {})
+    slots, candidatos, detalhes, nomes = _cenario()
+    _, bloco = await leilao.rodar_leilao(carregar(), slots, candidatos, detalhes, nomes, {})
+    lojas = {l["loja_id"]: l for l in bloco["lojas"]}
+    assert "Nota 4,7, a melhor da sala." in lojas[L1]["fala"]
+    assert "a melhor da sala" not in lojas[L2]["fala"]
+    # empate na maior nota: ninguém é "a melhor da sala"; as duas só dizem a nota
+    for chave in ((L2, "jp1"), (L2, "jp2")):
+        detalhes[chave]["avaliacao"] = 4.7
+    _, bloco = await leilao.rodar_leilao(carregar(), slots, candidatos, detalhes, nomes, {})
+    lojas = {l["loja_id"]: l for l in bloco["lojas"]}
+    assert not any("a melhor da sala" in l["fala"] for l in lojas.values())
+    assert lojas[L1]["fala"].endswith("Nota 4,7.") and lojas[L2]["fala"].endswith("Nota 4,7.")
+
+
+async def test_abertura_usa_o_texto_da_pessoa_sem_categoria(monkeypatch):
+    _agentes(monkeypatch, {})
+    _, candidatos, detalhes, nomes = _cenario()
+    slots = [(Desejo("ana", "Ana", "feijoada completa, até R$ 40"), Intencao("ana")),
+             (Desejo("bia", "Bia", "japonês"), Intencao("bia", consultas=["japonês"]))]
+    _, bloco = await leilao.rodar_leilao(carregar(), slots, candidatos, detalhes, nomes, {})
+    abertura = bloco["falas"][0]["texto"]
+    assert abertura == "Pedido novo para 2 pessoas: feijoada completa, japonês. Quem topa?"
+    r = await _rodar([Desejo("a", "Ana", "feijoada completa")])
+    assert "feijoada completa" in r["leilao"]["falas"][0]["texto"]
+    assert "surpreenda-me" not in r["leilao"]["falas"][0]["texto"]

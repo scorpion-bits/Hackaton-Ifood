@@ -35,6 +35,8 @@ def saude(request: Request):
     return {
         "ok": True, "llm_provedor": cfg.llm_provedor, "llm_modelo": cfg.llm_modelo,
         "ifood_modo": cfg.ifood_mcp_modo, "demonstracao": cfg.ifood_mcp_modo != "real",
+        # `submitOrder` liberado? No demo sempre (pedido simulado); no real só com IFOOD_MCP_PERMITIR_ENVIO=true
+        "envio_real_permitido": cfg.ifood_mcp_modo != "real" or bool(cfg.ifood_mcp_permitir_envio),
         "ip_local": ip_local(request.url.port or 8000),
     }
 

@@ -84,21 +84,52 @@ MSG_ENVIO_DESLIGADO = ("Envio real desligado: o pedido para no carrinho (conta d
                        "Para enviar de verdade, use IFOOD_MCP_PERMITIR_ENVIO=true no .env.")
 
 
-def adaptar_args(args: dict[str, Any], schema: dict | None) -> dict[str, Any]:
-    """Ajusta os argumentos ao input_schema real da tool.
+# nomes que o campo de texto da busca pode ter no schema real, se não for `query`
+CAMPOS_TEXTO_BUSCA = ("term", "q", "search", "searchTerm", "text", "keyword", "keywords")
+
+
+def adaptar_args_com_ajustes(args: dict[str, Any], schema: dict | None) -> tuple[dict[str, Any], list[str]]:
+    """Ajusta os argumentos ao input_schema real da tool e diz o que mudou (para o rastro).
 
     O motor manda `latitude`/`longitude` soltos (como a doc e o servidor de demonstração); o MCP real pede
-    `userLocation: {latitude, longitude}` em algumas tools. Com schema conhecido, também descarta argumentos que a
-    tool não declara (ex.: `latitude` no `getCart`). Sem schema, devolve os argumentos como vieram.
+    `userLocation: {latitude, longitude}` em algumas tools. `query` vira o campo de texto que o schema declarar
+    (`term`, `q`, `search`…). Com schema conhecido, descarta argumentos que a tool não declara (ex.: `latitude` no
+    `getCart`) e devolve os ajustes ("query→term", "descartados: latitude, longitude"). Sem schema, não mexe.
     """
     props = (schema or {}).get("properties") or {}
     if not props:
-        return args
+        return args, []
     novos = dict(args)
+    ajustes: list[str] = []
     lat, lng = novos.get("latitude"), novos.get("longitude")
+    usou_coordenadas = False
     if "userLocation" in props and "userLocation" not in novos and lat is not None and lng is not None:
         novos["userLocation"] = {"latitude": float(lat), "longitude": float(lng)}
-    return {k: v for k, v in novos.items() if k in props}
+        usou_coordenadas = True
+    if "query" in novos and "query" not in props:
+        campo = next((c for c in CAMPOS_TEXTO_BUSCA if c in props and c not in novos), None)
+        if campo is not None:
+            novos[campo] = novos.pop("query")
+            ajustes.append(f"query→{campo}")
+    descartados = [k for k in novos if k not in props
+                   and not (usou_coordenadas and k in ("latitude", "longitude"))]
+    if descartados:
+        ajustes.append("descartados: " + ", ".join(descartados))
+    return {k: v for k, v in novos.items() if k in props}, ajustes
+
+
+def adaptar_args(args: dict[str, Any], schema: dict | None) -> dict[str, Any]:
+    """Só os argumentos ajustados (ver `adaptar_args_com_ajustes`)."""
+    return adaptar_args_com_ajustes(args, schema)[0]
+
+
+def resumo_com_ajustes(resumo: str, ajustes: list[str]) -> str:
+    """`searchOffers(term="pizza") · query→term; descartados: latitude` (a parte dos ajustes vai até 60 chars)."""
+    if not ajustes:
+        return resumo
+    extra = "; ".join(ajustes)
+    extra = extra if len(extra) <= 60 else extra[:59] + "…"
+    return f"{resumo} · {extra}"
 
 
 class ClienteIFood:
@@ -124,7 +155,9 @@ class ClienteIFood:
             self._registrar(tool, resumo, inicio, ok=False, erro=MSG_ENVIO_DESLIGADO)
             raise ErroMCP(MSG_ENVIO_DESLIGADO)
         if self.modo == "real":
-            args = adaptar_args(args, (await self._schemas_reais()).get(tool))
+            args, ajustes = adaptar_args_com_ajustes(args, (await self._schemas_reais()).get(tool))
+            if ajustes:  # o rastro mostra o que de fato foi enviado e o que ficou de fora
+                resumo = resumo_com_ajustes(resumir(tool, args), ajustes)
         try:
             resultado = await self._sessao.call_tool(tool, args)
         except Exception as e:  # falha de transporte/protocolo

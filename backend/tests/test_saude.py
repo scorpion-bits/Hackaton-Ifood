@@ -13,6 +13,15 @@ def _saude(base="http://testserver"):
 def test_saude_basico():
     d = _saude()
     assert d["ok"] is True and d["demonstracao"] is True and "ip_local" in d
+    assert d["envio_real_permitido"] is True  # no demo o pedido é simulado
+
+
+def test_envio_real_permitido_segue_a_trava_no_modo_real(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_MODO", "real")
+    monkeypatch.delenv("IFOOD_MCP_PERMITIR_ENVIO", raising=False)
+    assert _saude()["envio_real_permitido"] is False
+    monkeypatch.setenv("IFOOD_MCP_PERMITIR_ENVIO", "true")
+    assert _saude()["envio_real_permitido"] is True
 
 
 def test_ip_local_usa_ip_da_rede_e_porta_do_request(monkeypatch):

@@ -78,3 +78,37 @@ def test_submit_order_real_desligado_por_padrao():
         asyncio.run(cliente.chamar("submitOrder", cartId="c1", userConsent=True))
     assert str(e.value) == MSG_ENVIO_DESLIGADO
     assert sessao.chamadas == [] and cliente.rastro[-1].ok is False
+
+
+def test_adaptar_registra_descartados_e_mapeia_query():
+    from app.ifood_mcp.cliente import adaptar_args_com_ajustes, resumo_com_ajustes
+
+    schema = {"properties": {"term": {}, "limit": {}}}
+    novos, ajustes = adaptar_args_com_ajustes(
+        {"query": "pizza", "limit": 5, "resultKind": "ITEM", "latitude": -22.0, "longitude": -47.9}, schema)
+    assert novos == {"term": "pizza", "limit": 5}
+    assert ajustes == ["query→term", "descartados: resultKind, latitude, longitude"]
+    resumo = resumo_com_ajustes('searchOffers(term="pizza", limit=5)', ajustes)
+    assert resumo.startswith('searchOffers(term="pizza", limit=5) · query→term; descartados: resultKind')
+    # convertidos em userLocation não contam como descartados
+    _, ajustes = adaptar_args_com_ajustes({"query": "x", "latitude": 1.0, "longitude": 2.0}, SCHEMA_BUSCA)
+    assert ajustes == []
+
+
+class _SessaoQueResponde:
+    def __init__(self):
+        self.chamadas = []
+
+    async def call_tool(self, tool, args):
+        from types import SimpleNamespace
+        self.chamadas.append((tool, args))
+        return SimpleNamespace(is_error=False, structured_content={"ok": True}, content=[])
+
+
+def test_rastro_do_modo_real_mostra_o_que_foi_descartado():
+    sessao = _SessaoQueResponde()
+    cliente = ClienteIFood(sessao, "real")
+    cliente._schemas = {"getCart": {"properties": {"cartId": {}}}}
+    asyncio.run(cliente.chamar("getCart", cartId="c1", latitude=-22.0, longitude=-47.9))
+    assert sessao.chamadas == [("getCart", {"cartId": "c1"})]
+    assert cliente.rastro[-1].resumo == 'getCart(cartId="c1") · descartados: latitude, longitude'

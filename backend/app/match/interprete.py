@@ -8,6 +8,7 @@ o que o texto/chips dizem de forma explícita sempre entra.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 import unicodedata
@@ -17,6 +18,7 @@ from .llm import completar_json
 from .modelos import PERFIS, Desejo, Intencao
 
 MAX_SLOTS = 4
+MAX_REPETICOES = 3  # "2 sorvetes" vira 2 slots iguais; acima de 3 do mesmo item, o resto é ignorado (com aviso)
 VERTICAIS = ("RESTAURANT", "GROCERIES", "LIQUORSTORE", "DRUGSTORE", "PETSTORE", "SHOPPING")
 
 
@@ -27,9 +29,9 @@ def normalizar(texto: str) -> str:
 
 
 def contem(texto_norm: str, termo: str) -> bool:
-    """`termo` aparece como palavra(s) inteira(s) em `texto_norm` (aceita plural simples com "s")."""
+    """`termo` aparece como palavra(s) inteira(s) em `texto_norm` (aceita plural com "s" ou "es")."""
     termo = normalizar(termo).strip()
-    return bool(termo) and re.search(rf"\b{re.escape(termo)}s?\b", texto_norm) is not None
+    return bool(termo) and re.search(rf"\b{re.escape(termo)}(?:e?s)?\b", texto_norm) is not None
 
 
 # ---------- dicionário pt-BR (fallback) ----------
@@ -79,8 +81,9 @@ CONSULTA_RESTRICAO = {"vegano": "vegano", "vegetariano": "vegetariano", "sem_lac
                       "sem_gluten": "sem glúten"}
 
 PERFIL_GATILHOS: list[tuple[str, list[str]]] = [
-    ("barato", ["barato", "barata", "baratinho", "econômico", "econômica", "economizar", "em conta",
-                "pouco dinheiro", "custo benefício"]),
+    ("barato", ["barato", "barata", "baratinho", "baratinha", "baratos", "baratas", "econômico", "econômica",
+                "economizar", "em conta", "pouco dinheiro", "custo benefício", "menor preço", "preço baixo",
+                "mais em conta"]),
     ("rapido", ["rápido", "rápida", "rapidinho", "pressa", "urgente", "correndo", "chegar logo"]),
     ("qualidade", ["caprichado", "caprichada", "qualidade", "premium", "gourmet", "especial", "bem avaliado"]),
 ]
@@ -91,6 +94,8 @@ PALAVRAS_VAZIAS = {
     "hoje", "agora", "bem", "bom", "boa", "tipo", "assim", "mais", "menos", "muito", "pouco", "qualquer", "so",
     "ate", "reais", "real", "r", "no", "na", "nos", "nas", "que", "se", "por", "favor", "gostaria", "vontade",
     "comer", "pedir", "estou", "to", "ta", "afim", "fim", "quer",
+    # quantidades por extenso não são vontade ("duas coxinhas" → a vontade é "coxinhas")
+    "dois", "duas", "tres", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez",
 }
 
 _NUM = r"(\d+(?:[.,]\d{1,2})?)(?!\d)(?!\s*(?:min\b|minutos|h\b|horas?|pessoas?|fatias|pecas|ml\b|g\b|kg\b|l\b|%))"
@@ -168,8 +173,88 @@ def _id_slot(pid: str, k: int) -> str:
     return pid if k == 1 else f"{pid}#{k}"
 
 
+# ---------- quantidades ("2 sorvetes", "duas coxinhas") ----------
+_QTD_EXTENSO = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7,
+                "oito": 8, "nove": 9, "dez": 10}
+_RE_QTD = re.compile(r"(?<![\d.,$])\b(\d{1,2}|" + "|".join(_QTD_EXTENSO) + r")\s+(?:x\s+)?([a-z]{3,})")
+# palavras depois de um número que não são item: unidade, fatia, pessoa, dinheiro…
+_NAO_ITEM = {"reais", "real", "contos", "conto", "pilas", "pessoas", "pessoa", "min", "minutos", "horas", "hora",
+             "fatias", "pecas", "unidades", "gramas", "litros", "litro", "por", "cada", "vezes", "dias", "anos",
+             "mais", "menos", "outros", "outras", "porcoes",
+             # parte do nome do prato ("pizza 4 queijos", "sorvete 2 bolas")
+             "queijos", "sabores", "bolas", "camadas", "carnes", "recheios", "coberturas", "acompanhamentos",
+             "pedacos", "andares"}
+
+
+def _alvos(palavra: str) -> set[str]:
+    return {palavra, palavra[:-1], palavra[:-2]} if palavra.endswith("es") else {palavra, palavra[:-1]}
+
+
+def _quantidades(texto: str) -> list[tuple[int, str, str]]:
+    """(quantidade ≥ 2, palavra normalizada, trecho como a pessoa escreveu) para cada "2 sorvetes"/"duas coxinhas"."""
+    norm = normalizar(texto)
+    mesmo_tamanho = len(norm) == len(texto or "")
+    achadas = []
+    for m in _RE_QTD.finditer(norm):
+        bruto, palavra = m.group(1), m.group(2)
+        q = int(bruto) if bruto.isdigit() else _QTD_EXTENSO[bruto]
+        if q < 2 or palavra in _NAO_ITEM or palavra in PALAVRAS_VAZIAS:
+            continue
+        antes = re.split(r",|;|\+|\be\b|\bcom\b|\bou\b", norm[:m.start()])[-1]
+        if _categorias_do_trecho(antes):  # "pizza 4 queijos": o número descreve o prato, não é quantidade
+            continue
+        trecho = texto[m.start():m.end()] if mesmo_tamanho else m.group(0)
+        achadas.append((q, palavra, trecho))
+    return achadas
+
+
+def _casa(intencao: Intencao, palavra: str) -> bool:
+    """O slot é desse item? Compara com as consultas e os gatilhos da categoria delas (não com palavras soltas,
+    que podem ser de outro item que o Match não separou, como "coxinhas" em "2 sorvetes e 3 coxinhas")."""
+    if not intencao.consultas:
+        return False
+    consultas = {normalizar(c).strip() for c in intencao.consultas}
+    termos = list(intencao.consultas)
+    for cat in CATEGORIAS:
+        if consultas & {normalizar(c) for c in cat["consultas"]}:
+            termos += cat["gatilhos"]
+    palavras = set(re.findall(r"[a-z]+", normalizar(" ".join(termos))))
+    return bool(_alvos(palavra) & palavras)
+
+
+def aplicar_quantidades(desejo: Desejo, intencoes: list[Intencao]) -> tuple[list[Intencao], list[str]]:
+    """"2 sorvetes" → 2 slots de sorvete (até 3 iguais e até `MAX_SLOTS` por pessoa), com os ids renumerados.
+
+    Idempotente: se já há slots suficientes para a quantidade, não repete de novo. O que não deu para repetir
+    (item que o Match não separou, passou de 3 ou do limite de slots) vira aviso, nunca some calado."""
+    lista = list(intencoes)
+    avisos: list[str] = []
+    for q, palavra, trecho in _quantidades(desejo.texto):
+        casam = [i for i in lista if _casa(i, palavra)]
+        if not casam:
+            avisos.append(f"A quantidade em '{trecho}' ({desejo.nome}) foi ignorada: o Match escolhe 1 item "
+                          "para esse pedido.")
+            continue
+        queria = min(q, MAX_REPETICOES)
+        faltam = max(0, min(queria - len(casam), MAX_SLOTS - len(lista)))
+        if faltam:
+            base = casam[-1]
+            pos = lista.index(base) + 1
+            lista[pos:pos] = [dataclasses.replace(base) for _ in range(faltam)]
+        if len(casam) + faltam < q:
+            avisos.append(f"{desejo.nome} pediu '{trecho}': o Match põe {len(casam) + faltam} no pedido "
+                          f"(até {MAX_REPETICOES} iguais por pessoa); o resto foi ignorado.")
+    lista = [dataclasses.replace(i, participante_id=_id_slot(desejo.participante_id, k))
+             for k, i in enumerate(lista, start=1)]
+    return lista, avisos
+
+
 def interpretar_fallback(desejo: Desejo) -> list[Intencao]:
     """Interpretação determinística por palavras-chave (sem LLM)."""
+    return aplicar_quantidades(desejo, _interpretar_palavras(desejo))[0]
+
+
+def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
     orc_texto, sem_orcamento = extrair_orcamento(desejo.texto)
     orcamento = desejo.orcamento_max if desejo.orcamento_max else orc_texto
     norm = normalizar(desejo.texto)
@@ -322,4 +407,5 @@ async def interpretar(cfg: Config, desejo: Desejo) -> list[Intencao]:
     usuario = json.dumps({"frase": desejo.texto, "chips": desejo.chips, "orcamento_max": desejo.orcamento_max},
                          ensure_ascii=False)
     dados = await completar_json(cfg, SISTEMA, usuario)
-    return validar_resposta_llm(dados, desejo) or interpretar_fallback(desejo)
+    validas = validar_resposta_llm(dados, desejo)
+    return aplicar_quantidades(desejo, validas)[0] if validas else interpretar_fallback(desejo)
