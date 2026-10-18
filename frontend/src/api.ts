@@ -62,6 +62,7 @@ export const api = {
     chamar<unknown>(`${S(id)}/enviar`, { corpo: { confirmo: true }, token }),
   atualizarPedido: (id: string, orderId: string) =>
     chamar<unknown>(`${S(id)}/pedidos/${encodeURIComponent(orderId)}/atualizar`, { metodo: "POST", corpo: {} }),
+  saude: () => chamar<{ ok?: boolean; ip_local?: string | null }>("/api/saude"),
   ifoodStatus: () => chamar<StatusIfood>("/api/ifood/status"),
   ifoodSair: () => chamar<unknown>("/api/ifood/sair", { metodo: "POST", corpo: {} }),
   resetar: () => chamar<unknown>("/api/demo/resetar", { metodo: "POST", corpo: {} }),
