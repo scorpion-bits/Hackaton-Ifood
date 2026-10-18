@@ -503,10 +503,14 @@ def interpretar_fallback(texto: str, participantes: list[dict]) -> list[Mudanca]
             continue  # citou só quem ainda não respondeu: não aplico em outra pessoa
         if not ids:
             ids = alvos_anteriores or ([pessoas[0].id] if len(pessoas) == 1 else [])
-        if not ids:
-            continue
         acoes = _entender_acao(alvos.resto, texto, alvos.para_alguem)
-        if not acoes:
+        if not ids and acoes and not alvos.citou:
+            # sem nome: se só uma pessoa tem o item citado ("troca o sorvete por açaí"), é dela
+            donos = [p.id for p in pessoas
+                     if acoes[0].tipo in ("troca", "tira") and acoes[0].x
+                     and _achar_no_texto(normalizar(p.texto), normalizar(acoes[0].x))]
+            ids = donos if len(donos) == 1 else []
+        if not ids or not acoes:
             continue
         alvos_anteriores = ids
         for pid in ids:

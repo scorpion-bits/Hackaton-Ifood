@@ -365,3 +365,13 @@ def test_rodar_continua_igual_depois_da_refatoracao(c):
     sid, org, _ = sala_com_match(c, rodar=False)
     r = c.post(f"/api/salas/{sid}/rodar", headers=org)
     assert r.status_code == 200 and r.json()["combinacoes"] and r.json()["rastro"]
+
+
+def test_troca_sem_nome_acha_o_dono_do_item():
+    from app.match.ajuste import interpretar_fallback
+    participantes = [
+        {"id": "a", "nome": "Milan", "texto": "japonês e um açaí", "respondeu": True, "organizador": True},
+        {"id": "b", "nome": "Zenon", "texto": "pizza e um sorvete", "respondeu": True},
+    ]
+    m = interpretar_fallback("troca o sorvete por açaí", participantes)
+    assert len(m) == 1 and "açaí" in m[0].novo_texto and "sorvete" not in m[0].novo_texto
