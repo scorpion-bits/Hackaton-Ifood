@@ -38,7 +38,7 @@ Regras:
 | 1:10–1:20 | Thales | Bolha "Entendi: …" → disputa curta (**Pular**) → **Ver o pedido atualizado** → cartão com o destaque "Atualizado" | "Ele entendeu quem e o quê, refez só o que mudou, e o açaí entrou. Conversa com o agente; a conta, com o código." |
 | 1:20–1:25 | Thales | **Confirmar pedido** → "Como pagar?" → **Cada um paga a sua parte (vaquinha)** | "Agora, a conta. Cada um paga a sua parte; a taxa de cada loja só entre quem pediu dela." |
 | 1:25–1:42 | Milan, Zenon, Antonio, Thales | Milan: **Pix** (QR aparece). Zenon e Antonio: **dinheiro**. Thales toca **Recebi** nos três | "O Pix vai para a minha chave, sem intermediário. O pedido só sai com 100% pago." |
-| 1:42–1:55 | Thales | "Confira antes do ok" → **Deslize para enviar** | "Três lojas, três carrinhos no iFood, com a taxa de cada um. Nada sai sem o meu ok." |
+| 1:42–1:55 | Thales | "Confira antes do ok" → **Deslize para enviar** → **Ver como ficaria** → cartão verde **"✅ Carrinhos prontos no iFood"** | "Três lojas, três carrinhos prontos no iFood, com a taxa de cada um. Na conta de teste paramos aqui; com uma conta real, o pedido sai neste deslize." |
 | 1:55–2:00 | Thales | Abre **Como a IA chegou aqui** (rastro) por 3 s e volta ao slide | "Cada linha é uma tool do MCP do iFood. Do restaurante ao fechamento do carrinho." |
 
 Por que a frase do ajuste tem duas pessoas: com *"troca o sorvete do Milan por açaí"* (só o Milan), o modo demonstração
@@ -53,7 +53,7 @@ ficar em até 3 lojas". É honesto, mas gasta tempo explicando. Com as duas pess
 | Selo "iFood real · conta de teste" | "Isso é o MCP do iFood de verdade, numa conta de teste. Lojas, preço e taxa vêm do iFood." | "o pedido foi entregue", "pagamos" |
 | Envio no real | "O envio fica travado de propósito: só com o meu ok e com a trava liberada. E nunca pagamos Pix de teste." | — |
 
-> ⚠️ confirmar no PC do Thales (tarefa A1): no modo real, o Match chega ao carrinho da conta de teste com taxa e total do `getCart`.
+> ✅ 18/10 06h50 (P11, navegador em modo real): o Match chega aos carrinhos da conta de teste com taxa e total do `getCart`, e o fim é o cartão verde "Carrinhos prontos no iFood" (decisão T8: sem envio real). A conta precisa de **endereço salvo em cidade atendida pela conta de teste** (São Carlos dá ADR-2001; Avenida Paulista, 1000, São Paulo salvou) — sem ele o app usa o endereço mockado.
 > Se não chegar até 10h30, a demo é no modo demonstração e a fala do rastro é a da 1ª linha da tabela.
 
 > ⚠️ confirmar no PC do Thales: com chave de IA no `.env`, quem entende a frase do ajuste é o LLM; sem chave, é o
@@ -137,7 +137,7 @@ Frase que **não** entende (só se sobrar tempo): *"bom dia"* → o servidor res
 
 ## Checklist pré-demo (15 min antes)
 - [ ] `.env` no PC do Thales: `IFOOD_MCP_MODO` (demo ou real), `LLM_PROVIDER` (ou `mock`), `MATCH_LEILAO=on`.
-      No real: `IFOOD_MCP_PERMITIR_ENVIO` só `true` se a equipe decidiu enviar na conta de teste; nunca pagar Pix de teste.
+      No real: `IFOOD_MCP_PERMITIR_ENVIO=false` (decisão T8: a demo para nos carrinhos prontos); nunca pagar Pix de teste.
       Chave Pix do organizador digitada na tela ao criar a sala (campo opcional), nunca no git. Sem a chave, o Pix
       falha: nesse caso Milan também paga em **dinheiro**.
 - [ ] App iniciado (`iniciar.bat`), aberto em `http://localhost:8000`, **Recarregar demo** clicado.

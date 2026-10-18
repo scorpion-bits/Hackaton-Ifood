@@ -255,6 +255,19 @@ def test_desconto_explicito_do_summary_e_lido_e_nao_e_derivado():
     assert t["desconto"] == 19.47 and "desconto_derivado" not in t
 
 
+def test_desconto_com_frete_gratis_fecha_com_o_total():
+    """Bug 39 (PC do Thales, MCP real em SP): `benefitsTotalAmount` soma o frete grátis que já veio zerado no
+    `deliveryFeeAmount`; sem ajuste, 14,40 + 0 + 0,99 − 13,19 ≠ 8,19 na tela."""
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"summary": {"subtotalAmount": 14.40, "deliveryFeeAmount": 0.0, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 13.19, "totalAmount": 8.19}})
+    assert (t["desconto"], t["total"], t["desconto_ajustado"]) == (7.20, 8.19, True)
+    t = _ler_totais({"summary": {"subtotalAmount": 16.90, "deliveryFeeAmount": 0.0, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 11.99, "totalAmount": 17.89}})
+    assert t["desconto"] == 0.0 and round(t["subtotal"] + t["taxa"] + t["servico"] - t["desconto"], 2) == t["total"]
+
+
 def test_sem_desconto_nao_muda_o_formato():
     from app.match.checkout import _ler_totais
 

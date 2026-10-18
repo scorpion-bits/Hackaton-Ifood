@@ -75,7 +75,7 @@ async def test_createcart_falha_numa_loja_e_a_outra_segue():
     assert f["loja_id"] == "loja-demo-sorvete" and f["codigo_ifood"] == "MERCH-007"
     assert f["participantes"] == ["thales", "zenon"]  # thales#2 → thales
     assert {i["slot"] for i in f["itens"]} == {"thales#2", "zenon"}
-    assert "Could not retrieve merchant" in f["erro"]
+    assert "não está aceitando pedidos pelo iFood agora" in f["erro"]  # bug 36: sem o inglês do iFood
 
 
 async def test_getcart_internal_duas_vezes_tira_a_loja():
@@ -115,7 +115,9 @@ async def test_uma_loja_so_falhando_mantem_a_mensagem_de_sempre():
         with pytest.raises(ErroCheckout) as erro:
             await montar_carrinhos(cli, comb, ENDERECO, falhas=[])
     assert erro.value.mensagem.startswith("Não deu para montar o carrinho de ")
-    assert "MERCH-007" in erro.value.mensagem
+    # bug 36: MERCH-007 vira texto em português, sem o id da loja nem o inglês do iFood
+    assert "não está aceitando pedidos pelo iFood agora" in erro.value.mensagem
+    assert "Could not" not in erro.value.mensagem and erro.value.codigo == checkout.CODIGO_LOJA_INDISPONIVEL
 
 
 async def test_sem_lista_de_falhas_continua_derrubando_tudo():
@@ -213,7 +215,9 @@ def test_escolher_com_todas_as_lojas_falhando_continua_502_legivel(c, monkeypatc
     r = s.escolher("separado")
     assert r.status_code == 502
     detalhe = r.json()["detail"]
-    assert detalhe.startswith("Não deu para montar o carrinho de") and "MERCH-007" in detalhe
+    assert detalhe.startswith("Não deu para montar o carrinho de") and "não está aceitando pedidos" in detalhe
+    from app.match import salas
+    assert set(salas.obter(s.id)["lojas_indisponiveis"]) == set(comb["lojas"])  # bug 36: o próximo Match pula
     assert s.estado()["estado"] == "match_pronto"  # dá para tentar de novo
 
 
@@ -240,6 +244,47 @@ def test_erro_interno_do_ifood_nao_mostra_json_cru_na_tela():
     assert erro.mensagem == ("Não deu para montar o carrinho de Lanchonete Tropical: "
                              "o iFood está instável agora; tente de novo em instantes")
     assert erro.__cause__ is bruto
-    legivel = checkout._erro_da_loja("loja-x", "Kaigan", ErroMCP("Could not retrieve merchant (código MERCH-007)",
-                                                                  codigo="MERCH-007"))
-    assert "MERCH-007" in legivel.mensagem  # erro já legível continua como está
+    legivel = checkout._erro_da_loja("loja-x", "Kaigan", ErroMCP("Item indisponível (código ITEM-002)",
+                                                                  codigo="ITEM-002"))
+    assert "ITEM-002" in legivel.mensagem  # erro já legível continua como está
+
+
+# ---------- bug 36: loja com MERCH-* (não monta carrinho nunca) ----------
+def _so_da_loja(comb: dict, loja: str) -> dict:
+    escolhas = {slot: cand for slot, cand in comb["escolhas"].items() if cand["loja_id"] == loja}
+    return {**comb, "escolhas": escolhas, "lojas": [loja]}
+
+
+def test_escolher_com_a_unica_loja_indisponivel_monta_a_proxima_opcao(c, monkeypatch):
+    """P11 (MCP real, 05h): a loja escolhida dava MERCH-007 e o "Confirmar pedido" falhava sempre, sem saída."""
+    from app.match import salas
+
+    s, comb = _sala_com_duas_lojas(c)
+    ruim, boa = comb["lojas"][0], comb["lojas"][1]
+    salas.atualizar(s.id, lambda sala: sala["resultado"].__setitem__(
+        "combinacoes", [_so_da_loja(comb, ruim), _so_da_loja(comb, ruim), _so_da_loja(comb, boa)]))
+    _falhar_no_ifood(monkeypatch, "createCart", {ruim})
+
+    r = s.escolher("junto")
+    assert r.status_code == 200, r.text
+    dados = r.json()
+    assert [k["loja_id"] for k in dados["carrinhos"]] == [boa]
+    assert any(a.endswith("montei a próxima opção do Match.") for a in dados["avisos"])
+    interno = salas.obter(s.id)
+    assert interno["combinacao"] == 2 and ruim in interno["lojas_indisponiveis"]
+
+
+def test_rodar_de_novo_deixa_de_fora_a_loja_indisponivel(c):
+    from app.match import salas
+
+    s = Sala(c)
+    s.convidar()
+    primeira = s.rodar().json()
+    ruim = primeira["combinacoes"][0]["lojas"][0]
+    salas.atualizar(s.id, lambda sala: sala.__setitem__("lojas_indisponiveis", {ruim: "Loja ruim"}))
+    r = s.rodar()
+    assert r.status_code in (200, 409), r.text
+    if r.status_code == 200:
+        assert all(ruim not in comb["lojas"] for comb in r.json()["combinacoes"])
+    texto = " ".join(r.json().get("avisos") or []) if r.status_code == 200 else r.json()["detail"]
+    assert "Deixei de fora Loja ruim: não está aceitando pedidos pelo iFood agora." in texto

@@ -473,6 +473,12 @@ def _ler_totais(resp: dict) -> dict:
     if desconto == 0 and total > 0 and sobra > 0:
         totais["desconto"] = sobra / 100
         totais["desconto_derivado"] = True
+    elif desconto > 0 and total > 0 and sobra >= 0 and _centavos(desconto) != sobra:
+        # bug 39 (PC do Thales, endereço em SP): com frete grátis o `benefitsTotalAmount` inclui a entrega que já
+        # veio zerada no `deliveryFeeAmount` → o desconto contava 2 vezes e as linhas não fechavam com o total.
+        # O total do iFood é a verdade: o desconto exibido é o que falta para fechar a conta.
+        totais["desconto"] = sobra / 100
+        totais["desconto_ajustado"] = True
     return totais
 
 
@@ -701,11 +707,24 @@ def _erro_curto(erro: str) -> str:
     return erro
 
 
+CODIGO_LOJA_INDISPONIVEL = "loja_indisponivel"
+
+
+def loja_indisponivel(e: BaseException | None) -> bool:
+    """Erro `MERCH-*` do iFood (ex.: MERCH-007 no createCart): a loja aparece na busca mas não monta carrinho.
+    Tentar de novo na mesma loja não adianta (bug 36): o Match precisa de outra."""
+    return str(getattr(e, "codigo", None) or "").startswith("MERCH-")
+
+
 def _erro_da_loja(loja_id: str, nome: str, e: ErroMCP) -> ErroCheckout:
     if getattr(e, "codigo", None) == "ITEM-001":
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
                                      f"complementos que o iFood não informou ({e}). Troque o item com 'Ajustar com o IBits'.",
                             codigo="complemento_obrigatorio")
+    elif loja_indisponivel(e):
+        # bug 36: MERCH-007 ("Could not retrieve merchant for id …") em inglês e com o id ia direto para a tela
+        erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: a loja não está aceitando pedidos "
+                                     "pelo iFood agora.", codigo=CODIGO_LOJA_INDISPONIVEL)
     else:
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {_erro_curto(str(e))}")
     erro.__cause__ = e
