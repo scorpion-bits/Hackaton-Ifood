@@ -1,0 +1,15 @@
+{
+  "name": "match-entrega",
+  "private": true,
+  "type": "module",
+  "description": "Gera docs/entrega/Match-Entregaveis.pdf a partir dos Markdown dos 6 entregáveis",
+  "scripts": {
+    "pdf": "node gerar_pdf.mjs"
+  },
+  "dependencies": {
+    "marked": "18.1.1",
+    "mermaid": "12.2.0",
+    "pdf-lib": "1.17.1",
+    "playwright": "1.56.1"
+  }
+}
