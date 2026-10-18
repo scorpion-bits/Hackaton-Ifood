@@ -108,10 +108,10 @@ Limites: ≤ 8 lojas no leilão (as de melhor nota), ≤ 2 passes, ≤ 5 lances,
 | T1 | `match/04-leilao-motor` | Agentes por loja com LLM + validação + fallback + patrocinado + afinidade (C11, C12) | dev-backend | opus | high | `backend/app/match/leilao.py` (novo), `motor.py`, `llm.py` (só `timeout`), `politica_lojas.json` (novo), `backend/tests/test_leilao.py` (novo), `backend/tests/test_motor.py` | — | testes: fala com número inventado cai no modelo; item de outra loja é rejeitado; patrocinado não muda a escolha; roteiro mock inalterado; LLM falso cobre o caminho LLM; tempo limite respeitado || 🔄 |
 | T2 | `match/04-leilao-telas` | Leilão ao vivo + Deck (C13), visual do protótipo | dev-frontend | sonnet | high | `frontend/src/telas/Leilao.tsx`, `Deck.tsx` (novos), `frontend/src/componentes/leilao/*` (novos), `frontend/src/leilao.css` (novo), `telas/Resultado.tsx`, `App.tsx`, `tipos.ts` | C11 | build + typecheck ok; com fixture C11 o leilão toca, Pular funciona, deck com botões e gesto, escolher chama a API || 🔄 |
 | T3 | `match/04-visual-ifood` | Visual do app do iFood nas demais telas + estados carregando/erro/vazio | dev-frontend | sonnet | high | `frontend/src/estilo.css`, `telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/*` existentes, `frontend/index.html` | — | build ok; tokens existentes mantidos (só acrescentar); telas no padrão do `design-ifood.md` e do protótipo || 🔄 |
-| T4 | `match/05-doc-tecnico` | README do Match + doc técnico com diagramas (entregáveis 2 e 5) | arquiteto | opus | medium | `README.md`, `docs/tecnico.md` (novo) | — | README roda do zero (Windows/Linux); arquitetura, sequência MCP, leilão (C11/C12), segurança, testes, limites; Mermaid || 🔄 |
-| T5 | `match/05-pesquisa-impacto` | Pesquisa com fonte: anúncios patrocinados em marketplaces/iFood, comércio entre agentes, números do iFood; formulário da pesquisa da equipe | pesquisador | opus | medium | `docs/pesquisa-mercado.md`, `docs/pesquisa-usuarios.md` (novos) | — | todo fato com link e data; formulário de ≤ 6 perguntas (1 min) || 🔄 |
+| T4 | `match/05-doc-tecnico` | README do Match + doc técnico com diagramas (entregáveis 2 e 5) | arquiteto | opus | medium | `README.md`, `docs/tecnico.md` (novo) | — | README roda do zero (Windows/Linux); arquitetura, sequência MCP, leilão (C11/C12), segurança, testes, limites; Mermaid || ✅ |
+| T5 | `match/05-pesquisa-impacto` | Pesquisa com fonte: anúncios patrocinados em marketplaces/iFood, comércio entre agentes, números do iFood; formulário da pesquisa da equipe | pesquisador | opus | medium | `docs/pesquisa-mercado.md`, `docs/pesquisa-usuarios.md` (novos) | — | todo fato com link e data; formulário de ≤ 6 perguntas (1 min) || ✅ |
 | T6 | `match/05-racional-ux` | Racional de UX (entregável 3) | pitch-demo | opus | medium | `docs/racional-ux.md` (novo) | — | princípios, jornada do organizador/convidado, leilão, deck, confiança (consentimento, selo), acessibilidade, o que medimos || ✅ |
-| T7 | (só leitura) | Avaliação 1 do jurado (produto atual + este plano) | jurado | opus | high | — (o engenheiro grava `docs/avaliacao-jurado.md`) | — | nota por critério + o que tira pontos || 🔄 |
+| T7 | (só leitura) | Avaliação 1 do jurado (produto atual + este plano) | jurado | opus | high | — (o engenheiro grava `docs/avaliacao-jurado.md`) | — | nota por critério + o que tira pontos || ✅ |
 | T8 | `match/03-formato-real` | 03.5: busca e checkout no formato real; ≤ 8 lojas e concorrência limitada no `getMerchant`; `imagem_url`; feedback do MCP (entregável 6) | dev-mcp-ifood | opus | high | `match/busca.py`, `match/checkout.py`, `match/modelos.py`, `ifood_mcp/demo_server.py`, `backend/tests/test_formato_real.py`, `docs/feedback-mcp.md`, `docs/mcp-ifood.md` | 👥 03.4 | amostras reais viram fixtures e passam; Match real até `getCart` no PC | ⬜ |
 | T9 | `match/04-limpeza-legado` | Remover domínio antigo (vendedor/comprador, Merchant API, `mcp_server.py`, `acoes.py`, `ifood/`, rotas e testes antigos) mantendo `agente/provedores.py` | dev-backend | sonnet | medium | `backend/app/agente/laco.py`, `mcp_server.py`, `mcp_stdio.py`, `acoes.py`, `ifood/`, `main.py`, testes antigos, `dados_demo.json`, `iniciar.*` se citarem | R1 integrada | suíte passa; app sobe; nada importa o legado | ⬜ |
 | T10 | (integração) | Integrar rodada 1 + navegador 390×780 | engenheiro-chefe | — | — | — | R1 | fluxo inteiro com leilão no mock | ⬜ |
@@ -151,6 +151,20 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
   mandava lat/lng soltos → 0 resultados. Pedido ao T0: montar argumentos pelo `input_schema` + `--lat/--lng`.
   **Para o T8:** `busca.py`/`checkout.py` devem mandar `userLocation` (e o `demo_server.py` passa a aceitar `userLocation`
   também, para o demo espelhar o real); registrar no `feedback-mcp.md` (doc não cita `userLocation`; 23 × 24 tools).
+
+- 17/10 ~22h40 — T6 ✅ (racional de UX), T4 ✅ (README + `docs/tecnico.md`), T5 ✅ (pesquisa com fontes + formulário),
+  T7 ✅ (`docs/avaliacao-jurado.md`: 28,5 → 39/50 projetado). Achados do jurado repassados a T1 (validação semântica,
+  agrupamento/promo, `MATCH_LEILAO`, `medicoes`), T2 (rótulo honesto, `fonte_fala`, legenda da afinidade, "bem
+  atendidos", ≤ 10 s) e T3 (toast nos itens inertes, `ip_local` no QR).
+- 👥 No modo real a sala dizia "Nenhum endereço salvo": `ler_endereco` só lia o formato da doc. Correção
+  (`match/03-endereco-localizacao`, engenheiro-chefe): leitor de endereço/coordenadas em formatos variados; no modo
+  real o `ClienteIFood` lê o `input_schema` (1 `list_tools`) e converte lat/lng em `userLocation`, descartando
+  argumentos não declarados; **`submitOrder` real travado** salvo `IFOOD_MCP_PERMITIR_ENVIO=true`. 187 testes.
+- Pendências para T8 (vindas do T4/jurado): `_ler_pagamento` pode escolher Pix na conta de teste → preferir forma
+  que não cobra (na entrega/dinheiro) e nunca Pix no modo real; usar `getItem` se trouxer preço promocional/tags;
+  buscas em paralelo com limite; `ip_local` em `/api/saude` (backend, `main.py`) — fazer junto com a T9.
+- Novas tarefas do jurado: nota "substituída por D9" no §8 da 01b (T14), slide do rastro real com ms (T14), seção
+  "avaliar em 5 min" no README (T15), orçamento de tempo do roteiro v2 (T14).
 
 ## Fechamento
 (preenchido ao concluir)
