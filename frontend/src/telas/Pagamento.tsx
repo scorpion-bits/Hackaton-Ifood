@@ -99,6 +99,8 @@ function MinhaParte({
   const forma = formaLocal ?? pag?.forma;
   const mostrarFormas = !pago && (!forma || trocando);
   const pix = pag?.pix ?? pixLocal;
+  // Sem chave do organizador o servidor recusa o Pix (409); a opção já aparece desabilitada. Sem o campo, nada muda.
+  const semChavePix = sala.tem_chave_pix === false;
 
   async function pagar(escolhida: FormaPagamento) {
     setOcupado(true);
@@ -153,13 +155,13 @@ function MinhaParte({
         <div className="formas">
           <p className="formas-titulo">Como você quer pagar?</p>
           {!ehOrganizador && (
-            <button type="button" className="forma" disabled={ocupado} onClick={() => pagar("pix")}>
+            <button type="button" className="forma" disabled={ocupado || semChavePix} onClick={() => pagar("pix")}>
               <span className="forma-ico" aria-hidden>
                 <Icone nome="raio" tamanho={22} />
               </span>
               <span>
                 <strong>Pix</strong>
-                <small>Vai direto para {nomeOrg}</small>
+                <small>{semChavePix ? `${nomeOrg} não cadastrou chave Pix` : `Vai direto para ${nomeOrg}`}</small>
               </span>
             </button>
           )}
