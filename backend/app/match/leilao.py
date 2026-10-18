@@ -336,7 +336,8 @@ def _valido(c: Candidato, intencao: Intencao) -> bool:
 
 def _ofertavel(c: Candidato, intencao: Intencao, detalhes: dict) -> bool:
     """O que o agente da loja pode ofertar: válido (restrição e orçamento) e nunca bebida para quem pediu comida."""
-    return _valido(c, intencao) and not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}))
+    return _valido(c, intencao) and not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}),
+                                                          c.item_nome)
 
 
 def _ordem(c: Candidato) -> tuple:

@@ -669,3 +669,17 @@ async def test_nada_achado_nao_culpa_o_orcamento_e_pao_de_queijo_nao_vira_hambur
     assert not r["combinacoes"] or "Smash" not in str(r["combinacoes"][0]["escolhas"])
     assert any("Não achei pão de queijo" in a for a in r["avisos"])
 
+
+
+def test_bebida_pelo_nome_nao_vira_opcao_aproximada_de_comida():
+    """Bug 35 (P11, MCP real às 05h): sem pizza aberta, "Coca-Cola Original 350ml" (achada na busca da loja, sem
+    categoria) virou a "opção mais próxima" da pizza. O nome basta para saber que é bebida; combo não conta."""
+    from app.match.juiz import bebida_sem_pedir
+
+    pizza = Intencao("p", consultas=["pizza"])
+    for nome in ("Coca-Cola Original 350ml", "Refrigerante Coca-Cola Lata 350ml", "Guarana Antartica2lt",
+                 "Suco de laranja 500 ml"):
+        assert bebida_sem_pedir(pizza, {}, nome), nome
+    for nome in ("Pizza de calabresa", "Combo X-salada + refri", "X-Bacon + Coca 350ml", "Frango tudo"):
+        assert not bebida_sem_pedir(pizza, {}, nome), nome
+    assert not bebida_sem_pedir(Intencao("p", consultas=["coca"]), {}, "Coca-Cola Original 350ml")

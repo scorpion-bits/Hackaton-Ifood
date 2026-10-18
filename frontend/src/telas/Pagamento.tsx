@@ -575,7 +575,20 @@ export default function Pagamento({
         </div>
       )}
 
-      {organizador ? (
+      {organizador && prontosNoIfood ? (
+        // Bug 38: com os carrinhos prontos, deslizar de novo só repetia o 409; o rodapé vira "fazer outro pedido".
+        <div className="rodape-acao">
+          <button
+            type="button"
+            className="primario"
+            onClick={() => {
+              window.location.hash = "#/";
+            }}
+          >
+            Fazer outro pedido
+          </button>
+        </div>
+      ) : organizador ? (
         <div className="rodape-acao">
           <Deslizar
             bloqueado={!podeEnviar || enviando}

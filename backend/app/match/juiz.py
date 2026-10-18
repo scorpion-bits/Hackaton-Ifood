@@ -52,11 +52,21 @@ def _termos(intencao: Intencao) -> dict[str, str]:
     return termos
 
 
-def bebida_sem_pedir(intencao: Intencao, detalhe: dict) -> bool:
+def _nome_de_bebida(nome: str) -> bool:
+    """Bug 35: no MCP real o item achado na busca da loja vem sem categoria; o nome diz que é bebida ("Coca-Cola
+    Original 350ml", "Guarana Antartica2lt"). Combo ("X-salada + refri") não conta: é comida com bebida."""
+    palavras = _palavras(normalizar(nome or ""))
+    if not palavras or "+" in (nome or "") or "combo" in palavras:
+        return False
+    volume = re.search(r"\d+\s*(ml|l|lt|litros?)\b", normalizar(nome))
+    return palavras[0] in PALAVRAS_BEBIDA or (bool(volume) and any(p in PALAVRAS_BEBIDA for p in palavras))
+
+
+def bebida_sem_pedir(intencao: Intencao, detalhe: dict, nome: str = "") -> bool:
     """O item é bebida e a pessoa pediu comida (bebida nunca vale como "opção mais próxima" de comida)."""
     categoria = _palavras(normalizar(detalhe.get("categoria", "")))
     pediu_bebida = any(p in PALAVRAS_BEBIDA for t in _termos(intencao) for p in _palavras(t))  # "coca", "guaraná"
-    return any(b in categoria for b in BEBIDAS) and not pediu_bebida
+    return (any(b in categoria for b in BEBIDAS) or _nome_de_bebida(nome)) and not pediu_bebida
 
 
 def _nao_confirmadas(restricoes: list[str], tags: list[str]) -> list[str]:

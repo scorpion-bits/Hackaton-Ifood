@@ -315,8 +315,11 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     return avisos, fora
 
 
-async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo]) -> dict:
-    """Roda o Match para o grupo. Nunca inventa preço; erro de tool vira aviso legível."""
+async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo],
+                      lojas_excluidas: dict[str, str] | None = None) -> dict:
+    """Roda o Match para o grupo. Nunca inventa preço; erro de tool vira aviso legível.
+
+    `lojas_excluidas` ({loja_id: nome}, bug 36): lojas que responderam MERCH-* no carrinho desta sala; ficam de fora."""
     resultado: dict = {"combinacoes": [], "intencoes": [], "avisos": [], "rastro": [], "endereco": None,
                        "pessoas": []}
     avisos: list[str] = resultado["avisos"]
@@ -392,6 +395,12 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     candidatos = {i.participante_id: (_so_os_melhores(_sem_irrelevantes(lista)) if _de_varejo(i)
                                       else _sem_irrelevantes(lista))
                   for (_, i), lista in zip(slots, julgados)}
+    if lojas_excluidas:
+        tinham = {c.loja_id for lista in candidatos.values() for c in lista} & set(lojas_excluidas)
+        candidatos = {slot: [c for c in lista if c.loja_id not in lojas_excluidas] for slot, lista in candidatos.items()}
+        if tinham:
+            avisos.append(f"Deixei de fora {', '.join(lojas_excluidas[l] for l in sorted(tinham))}: não está aceitando "
+                          "pedidos pelo iFood agora.")
     validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
 
     # relevância: o melhor item do slot precisa passar de NOTA_RELEVANTE; senão é "opção aproximada" (e avisa)
@@ -416,7 +425,7 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             continue
         slot = intencao.participante_id
         candidatos[slot] = [c for c in candidatos[slot]
-                            if not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}))]
+                            if not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}), c.item_nome)]
         validos[slot] = _validos(intencao, candidatos[slot])
         if not validos[slot]:  # só sobrou bebida para quem pediu comida: não sugere nada
             descartados.append((desejo, intencao))
