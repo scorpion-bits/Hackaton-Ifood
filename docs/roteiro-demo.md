@@ -130,8 +130,9 @@ Frase que **não** entende (só se sobrar tempo): *"bom dia"* → o servidor res
 1. **Sem a disputa:** `MATCH_LEILAO=off` no `.env` e reiniciar o app. O Match vai direto às opções; o Ajustar continua.
 2. **Modo demonstração offline:** `IFOOD_MCP_MODO=demo` e `LLM_PROVIDER=mock`. Não precisa de internet nem de chave.
    Resultado esperado: a seção acima.
-3. **Vídeo gravado** (`docs/roteiro-video.md`): arquivo `match-demo.mp4` no PC do Thales e no celular do Zenon
-   (👥 anotar aqui a pasta exata depois de gravar).
+3. **Vídeo gravado** (`docs/roteiro-video.md`): `match-demo-rascunho.mp4` (1080p, 98 s, sem voz, falas na tela),
+   enviado pelo Zenon ao Thales fora do git em 18/10. Thales narra ao vivo lendo o painel da direita.
+   (👥 anotar aqui a pasta exata no PC do Thales.)
 
 ## Checklist pré-demo (15 min antes)
 - [ ] `.env` no PC do Thales: `IFOOD_MCP_MODO` (demo ou real), `LLM_PROVIDER` (ou `mock`), `MATCH_LEILAO=on`.

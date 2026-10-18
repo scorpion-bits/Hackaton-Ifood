@@ -1,12 +1,16 @@
 # Feedback sobre o MCP do iFood (entregável 06)
 
-## Top 3 por gravidade
+## Top 4 por gravidade
 
-1. **`userLocation` exigido e sem documentação.** `searchOffers` e `getRecommendations` recusam `latitude`/`longitude`
+1. **Conta de teste não consegue salvar endereço (`ADR-2001`).** `createAddress` geocodifica (`SINGLE`), mas salvar
+   falha sempre com `ADDRESS_CREATION_FAILED` / `ADR-2001` ("unexpected status: 400 Bad Request") nas **3 contas de
+   teste**, inclusive repetindo o exemplo exato da doc do portal. O erro não está documentado e vem com
+   `retryable: true`, mas nunca passa. Sem endereço não há `createCart`, ou seja, nenhum pedido. Pedimos ajuda aos mentores.
+2. **`userLocation` exigido e sem documentação.** `searchOffers` e `getRecommendations` recusam `latitude`/`longitude`
    soltos (como nos exemplos da doc) e pedem `userLocation: {latitude, longitude}`. No 1º teste real nenhuma busca
    funcionou. Contornamos lendo o `input_schema` do `list_tools` e montando o objeto (`backend/app/ifood_mcp/cliente.py`).
-2. **23 tools no servidor × 24 na documentação.** `listItemTaxonomy` está na doc e não existe no `list_tools` real.
-3. **`listAddresses` com formato diferente do exemplo da doc.** Nosso leitor não achou a lista e a sala dizia
+3. **23 tools no servidor × 24 na documentação.** `listItemTaxonomy` está na doc e não existe no `list_tools` real.
+4. **`listAddresses` com formato diferente do exemplo da doc.** Nosso leitor não achou a lista e a sala dizia
    "nenhum endereço salvo", sem erro. Contornamos com um leitor que aceita formatos variados (`match/busca.py`).
 
 ## O que funcionou bem
@@ -41,6 +45,7 @@ Anotar **na hora** cada dor real: data/hora, o que tentamos, o que aconteceu, im
 | 18/10 00h48 | `createCart` com `merchantId` + `addressId` (o schema não marca nada como obrigatório) | Volta `MISSING_REQUIRED_FIELDS`: "addressId, merchantId, and items are required when orderId is absent". O `input_schema` tem `required: []` | Sequência natural "criar carrinho → adicionar itens" (a da doc) falha; o schema não avisa | Marcar no schema (ou num `oneOf` com/sem `orderId`) os campos realmente exigidos, ou aceitar carrinho vazio |
 | 18/10 00h48 | Erro de negócio do `createCart` | Vem como **resposta normal** (`{"error": {"code", "message", "userFriendlyMessage"}}`, sem `isError`) | Cliente MCP genérico (e o nosso diagnóstico) trata como sucesso e segue sem `cartId` | Devolver `isError: true` em todo erro de tool (como o `getRecommendations` já faz) |
 | 18/10 00h58 | Erro do `createAddress` | Outro formato: `{"success": false, "errors": {"mcpCode", "code"}}` (ex.: `ADDRESS_CREATION_FAILED` / `ADR-2001`, "unexpected status: 400 Bad Request", `retryable: true`); o `getRecommendations` usa um 3º (`isError` + texto JSON `{"error": "..."}`) | 3 formatos de erro em 23 tools: cada cliente precisa de 3 leitores | Um envelope de erro único (`isError` + `{code, message, userFriendlyMessage, retryable}`) |
+| 18/10 01h22 | `createAddress` em 3 contas de teste | `ADR-2001` também em `safe-` e `fair-thales`, repetindo o exemplo exato da doc e com `listAddresses` antes na mesma sessão; `retryable: true` que nunca passa | Bloqueia carrinho e pedido no MCP real (P1/P3/P4 parados) | Documentar o `ADR-2001` (causa e correção); `retryable` só quando repetir resolve; contas de teste com endereço salvo |
 | 18/10 00h58 | `createAddress` na conta de teste (`unique-thales`) | Geocodifica (`SINGLE`), mas salvar falha sempre com `ADR-2001`, com 2 endereços diferentes, em 1 e 2 passos | Conta de teste sem endereço = nenhum carrinho possível (o `createCart` exige `addressId`) | Contas de teste já com 1 endereço salvo, ou detalhar o ADR-2001 |
 | 18/10 00h48 | `listPaymentMethods` | O schema pede só `merchantId` (obrigatório), não `cartId` — a doc o põe depois do `setCartDelivery`, no fluxo do carrinho | Quem passa o `cartId` (natural no fluxo) leva erro; não fica claro se a lista depende do carrinho/endereço | Aceitar `cartId` também ou explicar na descrição que a lista é por loja |
 | 18/10 00h48 | `getRecommendations` | `contentMode` é obrigatório (enum `RECOMMENDED`, `RECENT_ORDERS`, …), mas sem `default`; sem ele: "the value provided for `contentMode` (\"\") is not valid" | Erro em toda chamada "simples" | Default `RECOMMENDED` |
