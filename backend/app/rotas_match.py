@@ -372,6 +372,8 @@ async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
 
     if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
         raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
+    if resultado.get("problema") == "ifood":  # bug 31: iFood fora do ar — a culpa não é do pedido
+        raise ErroSala(503, " ".join(resultado.get("avisos") or []) or motor.MSG_IFOOD_FORA)
     if not resultado.get("combinacoes"):
         avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
         para_quem = "para você" if len({d.participante_id for d in desejos}) == 1 else "que sirva para todos"

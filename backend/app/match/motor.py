@@ -37,6 +37,17 @@ MSG_ENDERECO_SEM_COORDENADAS = ("O endereço do iFood veio sem coordenadas (lati
                                 "no mapa e rode o Match de novo.")
 MSG_ENDERECO_MOCK = ("Endereço de teste: a conta do iFood não tem endereço salvo, então a busca e o carrinho usam um "
                      "local fixo de exemplo. O pedido real só sai com um endereço salvo na conta.")
+MSG_IFOOD_FORA = ("O iFood não respondeu à busca agora (erro do servidor do iFood, não do seu pedido). Tente de novo "
+                  "em instantes.")
+_TOOLS_DE_BUSCA = {"searchOffers", "browseOffers", "getMerchant"}
+
+
+def _ifood_fora(cliente: ClienteIFood) -> bool:
+    """Bug 31: houve busca e TODAS as chamadas de busca falharam (ex.: `INTERNAL` do iFood)."""
+    buscas = [c for c in cliente.rastro_como_dicts() if c["tool"] in _TOOLS_DE_BUSCA]
+    return bool(buscas) and not any(c["ok"] for c in buscas)
+
+
 # addressId fixo do mock: o createCart real aceita (testado em 18/10) e devolve taxa e total reais.
 ID_ENDERECO_MOCK = "00000000-0000-4000-8000-000000000000"
 
@@ -337,8 +348,15 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     pessoa_de = {i.participante_id: d.participante_id for d, i in slots}
 
     buscas = []
+    fechadas: dict[str, list[str]] = {}  # slot → lojas que tinham o item, mas estão fechadas agora (bug 32)
     for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
-        buscas.append(await buscar_detalhado(cliente, intencao, endereco))
+        buscas.append(await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas))
+    if not any(cands for cands, _ in buscas) and _ifood_fora(cliente):
+        # bug 31: todas as buscas deram erro do iFood — não é o pedido nem o orçamento da pessoa
+        avisos[:] = [a for a in avisos if "endereço de teste" in a or "endereços no iFood" in a] + [MSG_IFOOD_FORA]
+        resultado["problema"] = "ifood"
+        resultado["rastro"] = cliente.rastro_como_dicts()
+        return resultado
     if sem_coordenadas and not any(cands for cands, _ in buscas):
         # sem coordenadas e nada achado: o problema é o endereço, não o pedido ("Não achei X" enganaria)
         avisos[:] = [a for a in avisos if a == MSG_ENDERECO_SEM_ID] + [MSG_ENDERECO_SEM_COORDENADAS]
@@ -359,7 +377,11 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
               if validos[i.participante_id] and max(c.nota for c in validos[i.participante_id]) < NOTA_RELEVANTE]
     for desejo, intencao in slots:
         slot = intencao.participante_id
-        if not validos[slot]:
+        if not validos[slot] and fechadas.get(slot):  # bug 32: achou, mas a loja está fechada agora
+            lojas = ", ".join(fechadas[slot][:3]) + (" e outras" if len(fechadas[slot]) > 3 else "")
+            avisos.append(f"{_o_que(intencao).capitalize()} para {desejo.nome}: as lojas que têm ({lojas}) estão "
+                          "fechadas agora.")
+        elif not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
             avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
     if sem_coordenadas and any(not cands for cands, _ in buscas):
@@ -436,6 +458,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
 
     if nada_relevante:
         pass  # já avisado acima
+    elif not combos and any(fechadas.get(i.participante_id) and not validos[i.participante_id] for _, i in slots):
+        avisos.append("Tente de novo quando as lojas abrirem.")  # bug 32: não é o orçamento
     elif not combos:
         avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
                       "Tente aumentar o orçamento ou tirar uma restrição.")

@@ -394,11 +394,19 @@ def _diversificar(itens: list[tuple[Candidato, dict]]) -> list[tuple[Candidato, 
     return escolhidos
 
 
-async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
-                           endereco: dict) -> tuple[list[Candidato], dict[tuple[str, str], dict]]:
-    """Candidatos do slot + detalhes de cada um (descrição, categoria, tags…) para o juiz."""
+async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: dict,
+                           fechadas: dict[str, list[str]] | None = None
+                           ) -> tuple[list[Candidato], dict[tuple[str, str], dict]]:
+    """Candidatos do slot + detalhes de cada um (descrição, categoria, tags…) para o juiz.
+    `fechadas` (bug 32): recebe, por slot, as lojas que tinham o item mas vieram `isOpen: false`."""
     geo = {k: endereco.get(k) for k in ("latitude", "longitude") if endereco.get(k) is not None}
     coletados: dict[tuple[str, str], tuple[Candidato, dict]] = {}
+    lojas_fechadas: list[str] = []
+
+    def anotar_fechada(r: dict) -> None:
+        loja = _ler_loja(r)
+        if loja.get("aberta") is False and loja.get("nome") and loja["nome"] not in lojas_fechadas:
+            lojas_fechadas.append(loja["nome"])
 
     def guardar(item: dict | None) -> None:
         if item and _aceita(item, intencao):
@@ -422,7 +430,10 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
             continue
         for r in dados.get("results") or dados.get("items") or []:
             if isinstance(r, dict):
-                guardar(_ler_item(r))
+                item = _ler_item(r)
+                if item is None:
+                    anotar_fechada(r)
+                guardar(item)
 
     if bons() < MIN_RESULTADOS and intencao.consultas:
         lojas_vistas: set[str] = set()
@@ -466,6 +477,8 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
         except ErroMCP:
             pass
 
+    if fechadas is not None and lojas_fechadas:
+        fechadas[intencao.participante_id] = lojas_fechadas
     selecionados = _diversificar(list(coletados.values()))
     candidatos = [c for c, _ in selecionados]
     detalhes = {(c.loja_id, c.item_id): item for c, item in selecionados}

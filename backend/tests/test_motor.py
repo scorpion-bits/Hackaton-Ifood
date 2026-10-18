@@ -138,9 +138,9 @@ async def test_item_fora_do_dicionario_busca_pelo_proprio_texto(monkeypatch):
     consultas: list[str] = []
     original = busca_mod.buscar_detalhado
 
-    async def espiao(cliente, intencao, endereco):
+    async def espiao(cliente, intencao, endereco, **kw):
         consultas.append(intencao.consultas)
-        return await original(cliente, intencao, endereco)
+        return await original(cliente, intencao, endereco, **kw)
 
     monkeypatch.setattr(motor_mod, "buscar_detalhado", espiao)
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
@@ -186,7 +186,7 @@ async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consult
 async def test_restricao_sem_tag_que_confirme_avisa_sem_eliminar(monkeypatch):
     original = motor_mod.buscar_detalhado
 
-    async def sem_tags(cliente, intencao, endereco):  # como uma loja que não informa nenhuma tag
+    async def sem_tags(cliente, intencao, endereco, **kw):  # como uma loja que não informa nenhuma tag
         candidatos, detalhes = await original(cliente, intencao, endereco)
         return candidatos, {k: {**v, "tags": []} for k, v in detalhes.items()}
 
@@ -505,8 +505,8 @@ async def test_segundo_item_e_procurado_na_loja_do_primeiro(monkeypatch):
     da pizza (searchOffers + refinements.merchantId) e o pedido sai de 1 loja só."""
     original = busca_mod.buscar_detalhado
 
-    async def sem_refri_da_pizzaria(cliente, intencao, endereco):
-        cands, det = await original(cliente, intencao, endereco)
+    async def sem_refri_da_pizzaria(cliente, intencao, endereco, **kw):
+        cands, det = await original(cliente, intencao, endereco, **kw)
         if intencao.participante_id.endswith("#2"):  # simula a busca da cidade sem o refri da pizzaria
             cands = [c for c in cands if c.loja_id != "loja-demo-pizza"]
         return cands, det
@@ -592,3 +592,52 @@ async def test_busca_na_loja_vai_nas_lojas_de_melhor_nota_e_preco_do_primeiro_it
              (Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana#2", consultas=["refri"]))]
     await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
     assert chamadas == ["L4", "L3", "L2"]
+
+
+# ---------- mensagens honestas (bugs 31 e 32, P8/P9 no MCP real) ----------
+def _cliente_com(cli, troca):
+    """Embrulha `cli.chamar`: `troca(tool, resposta)` muda a resposta; levanta ErroMCP registrado no rastro."""
+    original = cli.chamar
+
+    async def chamar(tool, **args):
+        return troca(tool, await original(tool, **args))
+
+    cli.chamar = chamar
+    return cli
+
+
+async def test_ifood_fora_do_ar_nao_culpa_o_pedido():
+    """Bug 31: com INTERNAL em todas as buscas, a mensagem dizia "aumente o orçamento"."""
+    from app.ifood_mcp import ErroMCP
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        original = cli.chamar
+
+        async def chamar(tool, **args):
+            if tool in ("searchOffers", "browseOffers", "getMerchant"):
+                cli._registrar(tool, tool, 0.0, ok=False, erro="INTERNAL")
+                raise ErroMCP("INTERNAL: upstream service")
+            return await original(tool, **args)
+
+        cli.chamar = chamar
+        r = await rodar_match(cfg, cli, ROTEIRO)
+    assert r["problema"] == "ifood" and r["combinacoes"] == []
+    assert any("O iFood não respondeu" in a for a in r["avisos"])
+    assert not any("orçamento" in a or "Não achei" in a for a in r["avisos"])
+
+
+async def test_loja_fechada_diz_que_esta_fechada_e_nao_pede_mais_orcamento():
+    """Bug 32: de madrugada o iFood acha a dipirona, mas toda loja vem isOpen: false."""
+    def fechar(tool, resposta):
+        if tool in ("searchOffers", "browseOffers"):
+            for r in resposta.get("results") or []:
+                r["isOpen"] = False
+        return resposta
+
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        r = await rodar_match(cfg, _cliente_com(cli, fechar), [Desejo("ana", "Ana", "dipirona e protetor solar")])
+    assert r["combinacoes"] == []
+    assert any("Drogaria Bem Estar (demo)" in a and "fechadas agora" in a for a in r["avisos"])
+    assert "Tente de novo quando as lojas abrirem." in r["avisos"]
+    assert not any("orçamento" in a for a in r["avisos"])
