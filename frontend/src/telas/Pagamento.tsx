@@ -23,6 +23,12 @@ const FORMA_ROTULO: Record<string, string> = {
   dinheiro: "Dinheiro",
   organizador: "Organizador cobre",
 };
+/** Mesmo prefixo de `PREFIXO_LOJA_FORA` em `rotas_match.py` (bug 21: loja que o iFood recusou no escolher). */
+const PREFIXO_LOJA_FORA = "Não consegui montar o carrinho em ";
+
+function juntarNomes(nomes: string[]): string {
+  return nomes.length <= 1 ? (nomes[0] ?? "") : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+}
 
 function PixQr({ codigo, organizadorNome, demo }: { codigo: string; organizadorNome: string; demo: boolean }) {
   const [img, setImg] = useState("");
@@ -434,6 +440,11 @@ export default function Pagamento({
     }
   }
 
+  // Bugs 21 e 26: a loja que falhou saiu do pedido; quem só tinha itens nela fica sem parte e precisa aparecer aqui.
+  const lojasFora = (sala.avisos ?? []).filter((a) => a.startsWith(PREFIXO_LOJA_FORA));
+  const comParte = new Set(partes.map((p) => p.participante_id));
+  const semPedido = n > 0 ? sala.participantes.filter((p) => p.respondeu && !comParte.has(p.id)).map((p) => p.nome) : [];
+
   const falta = partes.filter((p) => sala.pagamentos?.[p.participante_id]?.status !== "pago").length;
   const rotuloTrava = falta > 0 ? `Falta pagar ${falta} de ${partes.length}` : "Aguardando liberação";
 
@@ -446,6 +457,21 @@ export default function Pagamento({
           ? "É 1 pedido: na fatura aparece 1 cobrança e chega 1 entrega."
           : `São ${n} pedidos: na fatura aparecem ${n} cobranças e chegam ${n} entregas.`}
       </div>
+
+      {lojasFora.length > 0 && (
+        <div className="aviso" role="status">
+          {lojasFora.map((a) => (
+            <p key={a}>{a}</p>
+          ))}
+          {semPedido.length > 0 && (
+            <p>
+              <strong>
+                {juntarNomes(semPedido)} {semPedido.length === 1 ? "ficou" : "ficaram"} sem pedido nesta rodada.
+              </strong>
+            </p>
+          )}
+        </div>
+      )}
 
       {n === 0 && <EsqueletoCartoes n={2} rotulo="Montando os carrinhos…" />}
       {carrinhos.map((c) => (
