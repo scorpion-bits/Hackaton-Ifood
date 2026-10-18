@@ -21,7 +21,7 @@ interface SalaSolo {
 
 /**
  * "Só eu": tela única para pedir sozinho. Cria a sala, grava o desejo do organizador, roda o Match e
- * abre a sala (que já chega em `match_pronto`: disputa e deck). Sem vaquinha, sem QR, sem chave Pix.
+ * abre a sala (que já chega em `match_pronto`: avaliação e pedido). Sem vaquinha, sem QR, sem chave Pix.
  */
 export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
   const eu = lerLocal<Eu>(chaveEu);
@@ -134,7 +134,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
           </div>
           <div role="status" aria-live="polite">
             <h1 className="titulo">Procurando nas lojas perto de você…</h1>
-            <p className="sub">A IA lê o seu pedido, consulta os cardápios e monta as melhores opções.</p>
+            <p className="sub">A IA lê o seu pedido, consulta os cardápios e monta o melhor pedido.</p>
           </div>
           <div className="soeu-esq" aria-hidden="true">
             <div className="soeu-esq-linha">

@@ -19,7 +19,7 @@ import Leilao from "./Leilao";
 import Deck from "./Deck";
 import "../leilao.css";
 
-type Fase = "leilao" | "leilao-curto" | "deck" | "escolha";
+type Fase = "leilao" | "leilao-curto" | "pedido" | "escolha";
 
 const MS_DESTAQUE = 8000;
 const MS_FAIXA = 10000;
@@ -52,8 +52,8 @@ function textoModos(nPedidos: number): { id: ModoPagamento; titulo: string; text
 }
 
 /**
- * match_pronto (C13): disputa das lojas (1 vez por aparelho) -> deck -> "É um Match!" -> escolha de pagamento.
- * Convidado vê a disputa e o deck só para leitura.
+ * match_pronto (C13): avaliação das lojas (1 vez por aparelho) -> o pedido que o IBits escolheu -> como pagar.
+ * Mudar o pedido = "Ajustar com o IBits"; não há outras opções para passar. Convidado vê tudo só para leitura.
  */
 export default function Resultado({
   salaId,
@@ -70,14 +70,13 @@ export default function Resultado({
 
   // C14: depois de "Ajustar", usa a resposta do servidor até a sala (polling de 2 s) trazer o mesmo resultado.
   const [local, setLocal] = useState<{ res: ResultadoMatch; base: string } | null>(null);
-  // Enquanto o IBits refaz o pedido, o deck não muda por baixo da pessoa.
+  // Enquanto o IBits refaz o pedido, o cartão não muda por baixo da pessoa.
   const [retido, setRetido] = useState<ResultadoMatch | null>(null);
   const res = retido ?? (local && sigSala === local.base ? local.res : resSala);
   const sig = assinatura(res);
   const leilao = res?.leilao;
 
-  const [fase, setFase] = useState<Fase>(() => (leilao && !leilaoVisto(salaId, sig) ? "leilao" : "deck"));
-  const [escolhida, setEscolhida] = useState(0);
+  const [fase, setFase] = useState<Fase>(() => (leilao && !leilaoVisto(salaId, sig) ? "leilao" : "pedido"));
   const [modo, setModo] = useState<ModoPagamento>("junto");
   const [montando, setMontando] = useState(false);
   const [erro, setErro] = useState("");
@@ -100,7 +99,7 @@ export default function Resultado({
     if (local && sigSala !== local.base) setLocal(null);
   }, [sigSala, local]);
 
-  // Convidado: o organizador ajustou o pedido -> faixa e deck atualizado (o leilão "visto" é por assinatura).
+  // Convidado: o organizador ajustou o pedido -> faixa e cartão atualizado (o leilão "visto" é por assinatura).
   useEffect(() => {
     const antes = anterior.current;
     anterior.current = { sig, res };
@@ -108,14 +107,13 @@ export default function Resultado({
     setAnteriores(antes.res?.combinacoes);
     setFaixa("O organizador ajustou o pedido");
     setPendDestaque(true);
-    setEscolhida(0);
     marcarLeilaoVisto(salaId, sig);
-    setFase((f) => (f === "leilao" ? "deck" : f));
+    setFase((f) => (f === "leilao" ? "pedido" : f));
   }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // O destaque "Atualizado" só começa a contar quando o deck está na tela.
+  // O destaque "Atualizado" só começa a contar quando o pedido está na tela.
   useEffect(() => {
-    if (fase !== "deck" || !pendDestaque) return;
+    if (fase !== "pedido" || !pendDestaque) return;
     setPendDestaque(false);
     setAtualizado(true);
     window.clearTimeout(tDestaque.current);
@@ -131,7 +129,7 @@ export default function Resultado({
     [],
   );
 
-  // Trocou de fase interna (disputa -> opções -> como pagar): volta ao topo, sem herdar a rolagem anterior.
+  // Trocou de fase interna (avaliação -> pedido -> como pagar): volta ao topo, sem herdar a rolagem anterior.
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [fase]);
@@ -141,10 +139,10 @@ export default function Resultado({
 
   function fimLeilao() {
     marcarLeilaoVisto(salaId, sig);
-    setFase("deck");
+    setFase("pedido");
   }
 
-  // C14: manda a frase ao servidor, mostra o que ele entendeu, toca a disputa curta e volta ao deck.
+  // C14: manda a frase ao servidor, mostra o que ele entendeu, toca a avaliação curta e volta ao pedido.
   async function ajustar(texto: string) {
     if (ocupado) return;
     const id = Date.now();
@@ -166,7 +164,6 @@ export default function Resultado({
       setAnteriores(antes?.combinacoes);
       setLocal({ res: r.resultado, base });
       setRetido(null);
-      setEscolhida(0);
       setPendDestaque(true);
       setHistLocal((h) => [...h, { texto, resumo: entendido }]);
       setTroca({ id, texto, estado: "pronto", entendido });
@@ -175,7 +172,7 @@ export default function Resultado({
         setFase("leilao-curto");
       } else {
         marcarLeilaoVisto(salaId, assinatura(r.resultado));
-        setFase("deck");
+        setFase("pedido");
       }
     } catch (x) {
       setRetido(null);
@@ -187,10 +184,11 @@ export default function Resultado({
 
   function fimLeilaoCurto() {
     marcarLeilaoVisto(salaId, sig);
-    setFase("deck");
+    setFase("pedido");
   }
 
-  async function montar(idx = escolhida, formaPag: ModoPagamento = modo) {
+  // A API continua recebendo o índice da combinação (C7); o resultado mostra só a melhor, a 0.
+  async function montar(formaPag: ModoPagamento = modo) {
     const token = lerToken(salaId);
     if (!token) {
       setErro("Sem permissão de organizador neste aparelho.");
@@ -199,7 +197,7 @@ export default function Resultado({
     setMontando(true);
     setErro("");
     try {
-      await api.escolher(salaId, token, idx, formaPag);
+      await api.escolher(salaId, token, 0, formaPag);
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não consegui montar o pedido.");
     } finally {
@@ -214,7 +212,7 @@ export default function Resultado({
     return <Leilao leilao={leilaoCurto} rastro={[]} organizador={organizador} onFim={fimLeilaoCurto} compacto />;
   }
 
-  const comb = combinacoes[Math.min(escolhida, Math.max(combinacoes.length - 1, 0))];
+  const comb = combinacoes[0];
   if (!comb) {
     return (
       <section className="tela">
@@ -232,7 +230,7 @@ export default function Resultado({
     );
   }
 
-  if (fase === "deck" || fase === "leilao-curto" || !organizador) {
+  if (fase === "pedido" || fase === "leilao-curto" || !organizador) {
     const servidor: ItemHistorico[] = (sala.ajustes ?? []).map((a) => ({ texto: a.texto, resumo: resumoAjuste(a) }));
     const todos = servidor.length >= histLocal.length ? servidor : histLocal;
     // A última troca já aparece em bolhas; o recolhível guarda só as anteriores.
@@ -246,13 +244,12 @@ export default function Resultado({
           avisos={[...new Set(res?.avisos ?? [])]}
           organizador={organizador}
           meuPid={meuPid}
-          textoPrimario={solo ? "Fechar meu pedido" : undefined}
+          solo={solo}
           fechando={solo && montando}
           erroFechar={solo ? erro : ""}
-          onEscolher={(i) => {
-            setEscolhida(i);
+          onConfirmar={() => {
             // Sala de 1 pessoa: não há o que dividir, então fecha direto como "junto".
-            if (solo) void montar(i, "junto");
+            if (solo) void montar("junto");
             else setFase("escolha");
           }}
           onVerLeilao={leilao ? () => setFase("leilao") : undefined}
@@ -278,7 +275,7 @@ export default function Resultado({
     );
   }
 
-  // Fase "escolha" (só organizador): detalhe da opção que deu match + junto/separado.
+  // Fase "escolha" (só organizador): resumo do pedido confirmado + junto/separado.
   const grupos = agruparPorPessoa(comb.escolhas);
   const nomeDe = (pid: string) => sala.participantes.find((p) => p.id === pid)?.nome ?? "Convidado";
   const pids = Object.keys(grupos);
@@ -290,8 +287,8 @@ export default function Resultado({
 
   return (
     <section className="tela">
-      <button type="button" className="link-btn ld-voltar" onClick={() => setFase("deck")}>
-        ‹ Voltar às opções
+      <button type="button" className="link-btn ld-voltar" onClick={() => setFase("pedido")}>
+        ‹ Voltar ao pedido
       </button>
       <h1>Como pagar?</h1>
 
