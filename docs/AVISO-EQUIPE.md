@@ -1,6 +1,6 @@
 # ⚠️ AVISO À EQUIPE E A TODOS OS AGENTES — leia antes de qualquer tarefa
 
-> Vale a partir de **sáb 17/10 ~23h15** (decisão do Milan, a equipe está sendo avisada). Substitui qualquer plano
+> Vale a partir de **sáb 17/10 ~23h20** (decisão do Milan, a equipe está sendo avisada). Substitui qualquer plano
 > que diga o contrário. Agente (Claude ou outro): leia este arquivo e o `docs/quadro.md` **antes** de editar código.
 
 ## 1. Estratégia daqui até a submissão (dom 12h30)
@@ -24,7 +24,7 @@ Prioridades, nesta ordem:
 - "Patrocinado" — não evoluir e não destacar no pitch.
 - Funcionalidade nova de qualquer tipo, pesquisa nova, refatoração grande.
 
-### 1.1 Quem faz o quê (17/10 ~23h55) — plano `docs/planos/etapa-05-dupla-milan-zenon.md`
+### 1.1 Quem faz o quê (17/10 ~23h27) — plano `docs/planos/etapa-05-dupla-milan-zenon.md`
 - **Milan** (agente dele): backend, MCP real, "Ajustar" no back, prompts de IA e **integração** (único que integra).
 - **Zenon** (agente dele): frontend ("Ajustar" na tela), pacote dos 6 entregáveis e pitch final.
 - **Thales** (agente dele): **guia os testes** pelo `docs/testes/roteiro-testes.md` e registra em `docs/testes/bugs.md`;
@@ -55,6 +55,7 @@ Cada pessoa usa a própria sessão do Claude. **Todo commit leva quem pediu o tr
 - Branch de integração: **`ccr-4c429dbb-lp7btg`** (integração vigente). Daqui sai o PR para a `main`.
 - Branch novo de tarefa: `<pessoa>/<tarefa>` (ex.: `zenon/fix-convidado`), criado a partir do de integração.
 - Commits pequenos em português: `tipo(escopo): descrição` (regra de sempre).
+- **Horário: sempre do relógio**, nunca estimado: `TZ=America/Sao_Paulo date +%d/%m\ %Hh%M` (Windows: `Get-Date`).
 - Quem integra no `ccr-4c429dbb-lp7btg` e na `main` é **só o agente do Milan**. Os outros dão push no branch
   da tarefa e avisam no quadro. Ninguém faz force-push em branch dos outros.
 - Antes do push: `./iniciar.sh --testes` (e `cd frontend && npm run build` se mexeu no front).

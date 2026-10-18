@@ -1,6 +1,6 @@
 # CLAUDE.md — memória operacional (só estado vigente; máx. 250 linhas — o hook arquiva o excesso)
 
-## ⚠️ Aviso (17/10 ~23h15) — vale acima de qualquer plano
+## ⚠️ Aviso (17/10 ~23h20) — vale acima de qualquer plano
 - **Leia `docs/AVISO-EQUIPE.md` e `docs/quadro.md` antes de qualquer tarefa.**
 - Foco único: **MCP real + Match em pedido em grupo funcionando**. Leilão/deck/Patrocinado congelados (só bug). Nada novo.
 - Todo commit com autor humano: pergunte "quem é você?", use `git commit --author="Nome <email>"` + `Responsável: Nome`.

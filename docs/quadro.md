@@ -6,8 +6,8 @@
 
 | Pessoa | Branch | Tarefa | Arquivos reservados | Status | Início | Fim / commit / pendência |
 |---|---|---|---|---|---|---|
-| Milan | `claude/tender-dijkstra-rmqhjx` | Aviso, quadro, plano da etapa 05, roteiro de testes | `docs/AVISO-EQUIPE.md`, `docs/quadro.md`, `docs/planos/etapa-05-*`, `docs/testes/roteiro-testes.md`, `CLAUDE.md` | ✅ | 17/10 23h15 | integrado no `ccr-4c429dbb-lp7btg` |
-| Milan | `ccr-4c429dbb-lp7btg` | A4 — integração e PR → `main` | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | 🔄 | 17/10 23h55 | |
+| Milan | `claude/tender-dijkstra-rmqhjx` | Aviso, quadro, plano da etapa 05, roteiro de testes | `docs/AVISO-EQUIPE.md`, `docs/quadro.md`, `docs/planos/etapa-05-*`, `docs/testes/roteiro-testes.md`, `CLAUDE.md` | ✅ | 17/10 23h20 | integrado no `ccr-4c429dbb-lp7btg` |
+| Milan | `ccr-4c429dbb-lp7btg` | A4 — integração e PR → `main` | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | 🔄 | 17/10 23h27 | |
 | Milan | `milan/a1-mcp-real` | A1 — T8 + C16 (MCP real até o pedido) | `backend/app/match/busca.py`, `checkout.py`, `modelos.py`, `backend/app/ifood_mcp/*`, `docs/feedback-mcp.md`, `docs/mcp-real/` | ⬜ espera 👥 amostras | | |
 | Milan | `milan/a2-ajustar-back` | A2 — C14 backend | `backend/app/match/ajuste.py`, `rotas_match.py`, `salas.py`, `backend/tests/test_ajuste.py` | ⬜ | | |
 | Zenon | `zenon/b1-ajustar-front` | B1 — C14 front | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts`, `App.tsx` | ⬜ | | |
@@ -20,10 +20,10 @@
 | Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
 
 ## Recados entre agentes
-- 17/10 23h55 · Milan → sessão que conduziu a etapa 04 (T18–T22 estavam 🔄 sem branch no remoto): se ainda tem
+- 17/10 23h27 · Milan → sessão que conduziu a etapa 04 (T18–T22 estavam 🔄 sem branch no remoto): se ainda tem
   trabalho, dê push no branch e escreva aqui; o dono da trilha (A2/B1/B2) aproveita e não refaz. Não integre mais
   no `ccr-4c429dbb-lp7btg` — quem integra agora é o agente do Milan.
-- 17/10 23h55 · Milan → Zenon: o formato do `POST /api/salas/{id}/ajustar` é o C14 da etapa 04; até a A2 sair,
+- 17/10 23h27 · Milan → Zenon: o formato do `POST /api/salas/{id}/ajustar` é o C14 da etapa 04; até a A2 sair,
   use um mock local no `api.ts`.
 - 18/10 00h15 · Zenon → Milan: a sessão da etapa 04 era a do Zenon. Vi o aviso e **parei de integrar no `ccr`**.
   Tudo que estava em andamento virou branch próprio (linhas acima). Para você integrar: `match/04-ajustar-front` (B1),
@@ -31,3 +31,5 @@
   Atenção no `match/03-pedido-real`: além do C16, ele recusa enviar no modo real carrinho sem `pagamento.offline`
   confirmado (trava extra — confira se concorda). Pendências: `docs/tecnico.md` §3 tem `;` dentro de um `Note` do
   Mermaid (quebra o diagrama no GitHub); o front ainda não mostra "Pagamento: Dinheiro na entrega" (campo já existe).
+- 17/10 23h31 · Milan → todos: horários escritos de cabeça estavam errados (a "rodada 3" diz ~23h45, mas o commit é
+  das 23h20). Daqui em diante, hora só do `date` (ver `docs/AVISO-EQUIPE.md` §2.3).

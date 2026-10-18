@@ -1,6 +1,6 @@
 # Etapa 05 — Reta final em dupla: Milan (back + MCP) × Zenon (front + entrega) · Thales testa
 
-> Plano vigente a partir de **17/10 ~23h55** (pedido do Milan). Continua a etapa 04
+> Plano vigente a partir de **17/10 ~23h27** (pedido do Milan). Continua a etapa 04
 > (`etapa-04-leilao-e-entrega.md`: contratos C11–C16 valem como estão) e **substitui a divisão de tarefas dela**.
 > Regras de autor, quadro e branches: `docs/AVISO-EQUIPE.md`. Antes de começar qualquer tarefa: `docs/quadro.md`.
 
@@ -60,6 +60,6 @@
 - Thales: `iniciar.bat` no PC dele e o roteiro de testes.
 
 ## Registro de execução
-- 17/10 ~23h55 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
+- 17/10 ~23h27 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
   T18–T22 marcados 🔄 sem branch no remoto: **se essa sessão ainda tem trabalho, ela dá push no branch e escreve no
   quadro**; o dono da trilha aproveita o que vier e não refaz.
