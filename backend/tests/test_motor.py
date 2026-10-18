@@ -98,6 +98,19 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     json.dumps(r)
 
 
+async def test_acai_e_sorvete_nao_sao_cortados_com_folga_de_lojas_e_aviso_diz_o_motivo_real():
+    """Regressão (A5, etapa 05): Milan pede açaí, Zenon sorvete. Antes o top 1 usava 2 lojas, cortava os dois e
+    culpava o limite de 3 lojas. Agora usa as 3 lojas; só o que exige a 4ª loja fica de fora (e o aviso diz isso)."""
+    r = await _rodar([Desejo("milan", "Milan", "japonês e um açaí, até 45"), *ROTEIRO[1:]])
+    melhor = r["combinacoes"][0]
+    assert len(melhor["lojas"]) == 3
+    assert melhor["componentes"]["slots_fora"] == 1  # japonês + açaí + burger + sorvete = 4 lojas: um não cabe
+    assert {"milan", "zenon", "antonio"} <= {s.split("#")[0] for s in melhor["escolhas"]}
+    fora = [a for a in r["avisos"] if "ficou de fora" in a]
+    assert len(fora) == 1 and "em até 3 lojas" in fora[0]
+    assert any(a.startswith("Com 4 lojas dá para incluir") for a in r["avisos"])
+
+
 async def test_pessoa_sem_opcao_vira_aviso_legivel():
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
                       Desejo("ana", "Ana", "algo vegano, até R$ 5")])

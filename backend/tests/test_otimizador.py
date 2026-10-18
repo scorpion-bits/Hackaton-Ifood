@@ -255,3 +255,24 @@ def test_explicacao_em_linguagem_simples_sem_nota():
     assert "quem entrou está bem atendido" in sem.explicacao and "sem opção válida para caio" in sem.explicacao
     for comb in (bem, longe, sem):
         assert "nota" not in comb.explicacao and "≥" not in comb.explicacao
+
+
+def test_slot_extra_entra_quando_ha_folga_no_limite_de_lojas():
+    """Regressão (A5, etapa 05): o açaí/sorvete era cortado porque δ + custo + perecível > penalidade do slot,
+    mesmo com folga no limite de 3 lojas. Atender o pedido vale mais que economizar uma loja."""
+    candidatos = {
+        "milan": [cand("milan", "japones", "guioza", 22.9, 0.73, eta=45)],
+        "milan#2": [cand("milan#2", "acai", "acai300", 16.9, 0.73, eta=20, perecivel=True)],
+        "zenon": [cand("zenon", "burger", "smash", 29.9, 0.9, eta=35)],
+    }
+    pesos = Pesos(alfa_justica=0.5, beta_custo=0.5, gama_atraso=0.2, delta_lojas=0.1667, epsilon_perecivel=0.3)
+    combos = otimizar(candidatos, pesos, max_lojas=3, orcamentos={"milan": 45.0, "zenon": 50.0},
+                      pessoa_de={"milan": "milan", "milan#2": "milan", "zenon": "zenon"})
+    melhor = combos[0]
+    assert set(melhor.escolhas) == {"milan", "milan#2", "zenon"}
+    assert set(melhor.lojas) == {"japones", "acai", "burger"}
+    assert melhor.componentes["slots_fora"] == 0
+    # com o limite de 2 lojas o extra sai (aí sim por causa do limite)
+    dois = otimizar(candidatos, pesos, max_lojas=2, orcamentos={"milan": 45.0, "zenon": 50.0},
+                    pessoa_de={"milan": "milan", "milan#2": "milan", "zenon": "zenon"})
+    assert "milan#2" not in dois[0].escolhas

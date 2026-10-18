@@ -115,6 +115,7 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     for slot, c in melhor.escolhas.items():
         gasto[pessoa_de[slot]] = gasto.get(pessoa_de[slot], 0.0) + c.preco
     pessoas_avisadas: set[str] = set()
+    limite_atingido = len(melhor.lojas) >= MAX_LOJAS
     for desejo, intencao in slots:
         slot, pid = intencao.participante_id, desejo.participante_id
         if slot in melhor.escolhas or not validos[slot]:
@@ -123,7 +124,10 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
         if pid not in presentes:
             if pid not in pessoas_avisadas:
                 pessoas_avisadas.add(pid)
-                avisos.append(f"Nenhuma opção de {nomes[pid]} coube junto com as outras em até {MAX_LOJAS} lojas.")
+                if limite_atingido:
+                    avisos.append(f"Nenhuma opção de {nomes[pid]} coube junto com as outras em até {MAX_LOJAS} lojas.")
+                else:
+                    avisos.append(f"Nenhuma opção de {nomes[pid]} coube junto com o resto do pedido.")
             continue
         rotulo = _rotulo(intencao) or "um item"
         teto = intencao.orcamento_max
@@ -131,9 +135,12 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
         if teto is not None and gasto.get(pid, 0.0) + mais_barato > teto + 1e-9:
             avisos.append(f"{rotulo.capitalize()} de {nomes[pid]} ficou de fora: não cabe no orçamento de "
                           f"{_reais(teto)} junto com o resto.")
-        else:
+        elif limite_atingido:
             avisos.append(f"{rotulo.capitalize()} de {nomes[pid]} ficou de fora para o pedido ficar em até "
                           f"{MAX_LOJAS} lojas.")
+        else:  # só fala do limite de lojas quando ele foi de fato atingido
+            avisos.append(f"{rotulo.capitalize()} de {nomes[pid]} ficou de fora: não coube junto com o resto "
+                          "do pedido.")
     return avisos, fora
 
 

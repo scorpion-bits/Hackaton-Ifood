@@ -9,6 +9,8 @@ S(C) = média_p(sat_p) + α·mín_p(sat_p) − β·(custo_total / orçamento_ref
 - Orçamento da pessoa vale para a SOMA dos slots dela (restrição dura).
 - Slot extra (2º item em diante) é opcional: pode ficar de fora para caber no orçamento ou no limite de lojas,
   pagando PENAL_SLOT_EXTRA_FORA; o slot principal (1º item da frase) paga PENAL_SLOT_PRINCIPAL_FORA.
+- Ordem das combinações: primeiro a menor penalidade de slots de fora (atender o pedido vale mais que economizar
+  uma loja, taxa ou prazo), depois o score. Com folga no limite de lojas, nenhum item com opção válida fica de fora.
 - Enumeração por conjunto de lojas (≤ max_lojas): dentro de cada conjunto, produto das opções de cada pessoa.
 
 O LLM só dá a nota de cada candidato e o perfil; toda a conta é deste módulo (determinística).
@@ -303,14 +305,16 @@ def otimizar(
                          - pesos.beta_custo * (custo_total / orcamento_ref)
                          - pesos.gama_atraso * (atraso / TEMPO_ALVO_MIN)
                          - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots)
-                item = (round(score, 4), -custo_total, -next(contador), escolha)
+                # 1º critério: atender o máximo de slots (deixar item de fora só se não couber no orçamento ou
+                # no limite de lojas); só depois o score. Assim δ/custo/perecível nunca "compram" um item cortado.
+                item = (-round(penal_slots, 4), round(score, 4), -custo_total, -next(contador), escolha)
                 if len(finalistas) < limite_heap:
                     heapq.heappush(finalistas, item)
-                elif item[:2] > finalistas[0][:2]:
+                elif item[:3] > finalistas[0][:3]:
                     heapq.heapreplace(finalistas, item)
 
     resultado = []
-    for _, _, _, escolha in finalistas:
+    for _, _, _, _, escolha in finalistas:
         escolhidos = [c for o in escolha if o is not None for c in o.escolhidos]
         lojas: list[str] = []
         for c in escolhidos:
@@ -319,7 +323,6 @@ def otimizar(
         chave = tuple((c.participante_id, c.loja_id, c.item_id) for c in escolhidos)
         resultado.append(_pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_ref,
                                   ausente, sem_opcao))
-    # Desempate determinístico: score maior, depois mais barato, depois chave estável.
     resultado.sort(key=lambda par: par[0])
     return [comb for _, comb in resultado[:top]]
 
@@ -375,5 +378,5 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
                              atraso_max or None, penal, [*sem_opcao, *fora_pessoas],
                              slots_fora=int(slots_fora - sum(ausente[p][0] for p in fora_pessoas))),
     )
-    # Desempate determinístico: score maior, depois mais barato, depois chave estável.
-    return ((-score, custo_total, chave), combinacao)
+    # Ordem: menos itens de fora (penalidade dos slots), depois score maior, mais barato, chave estável.
+    return ((round(penal_slots, 4), -score, custo_total, chave), combinacao)
