@@ -188,7 +188,7 @@ def _cenario():
 
 def _agentes(monkeypatch, respostas: dict[str, object]):
     """Troca o LLM por respostas fixas por loja (chave = nome da loja que o agente recebe)."""
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         assert "agente vendedor" in sistema and timeout == leilao.TIMEOUT_AGENTE_S
         return respostas.get(json.loads(usuario)["loja"])
 
@@ -205,7 +205,7 @@ async def _leilao(monkeypatch, respostas):
 async def test_agente_so_enxerga_os_proprios_itens(monkeypatch):
     vistos = {}
 
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         dados = json.loads(usuario)
         vistos[dados["loja"]] = {p["slot_id"]: [i["item_id"] for i in p["itens"]] for p in dados["pedidos"]}
         return None
@@ -531,7 +531,7 @@ async def test_abertura_usa_o_texto_da_pessoa_sem_categoria(monkeypatch):
 async def test_bebida_nunca_e_oferta_para_quem_pediu_comida_e_patrocinada_passa_primeiro(monkeypatch):
     vistos = {}
 
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         dados = json.loads(usuario)
         vistos[dados["loja"]] = [i["item_id"] for p in dados["pedidos"] for i in p["itens"]]
         return None

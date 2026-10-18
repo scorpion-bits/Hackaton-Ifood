@@ -151,7 +151,7 @@ def test_frases_que_nao_entende():
 
 # ---------- LLM: validação ----------
 async def test_llm_valido_e_usado(monkeypatch):
-    async def llm(cfg, sistema, usuario, timeout=None):
+    async def llm(cfg, sistema, usuario, timeout=None, max_tokens=None):
         assert "Milan" in usuario and "japonês e um sorvete" in usuario
         return {"mudancas": [{"participante_id": "m", "novo_texto": "japonês e um açaí, até R$ 45",
                               "novo_orcamento": None, "resumo": "açaí no lugar do sorvete"}]}
@@ -171,7 +171,7 @@ async def test_llm_valido_e_usado(monkeypatch):
     None,
 ])
 async def test_llm_invalido_e_descartado_e_o_fallback_entende(monkeypatch, resposta):
-    async def llm(cfg, sistema, usuario, timeout=None):
+    async def llm(cfg, sistema, usuario, timeout=None, max_tokens=None):
         return resposta
 
     monkeypatch.setattr(ajuste, "completar_json", llm)
