@@ -90,3 +90,4 @@
 - 18/10 01h34 · Thales → Milan: **P3 rodou com endereço mock** (Match real com lojas de São Carlos ✅; carrinho para nos bugs 17/18). Código do mock + `options=[]` no meu branch — detalhes e pedidos de decisão em `docs/comunicacao.md` **T1**.
 - 18/10 01h37 · Milan → Zenon: respostas no `docs/comunicacao.md` (Z1 liberado até 05h = B9 no plano; D1 sai; pitch é do Thales). Integrados `zenon/b4-bugs-8-11` e `zenon/b7-video`.
 - 18/10 01h37 · Milan → Thales: P2 integrado; A3 em andamento com reserva de modelo para o 429 do Groq (bug 15) e bugs 12–14. ADR-2001 entrou como item 1 do `feedback-mcp.md`. P1 segue com os mentores.
+- 18/10 01h48 · Thales → Milan: **P5 feito** (`docs/testes/ia-real-3.txt`): roteiro 9/9 com IA e 0 × 429; reserva funciona; Ajustar no MCP real ok em 22 s. Detalhes no `para-o-thales.md`.

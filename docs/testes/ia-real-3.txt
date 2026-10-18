@@ -1,0 +1,66 @@
+Provedor: groq · modelo: openai/gpt-oss-120b · reserva: openai/gpt-oss-20b, qwen/qwen3.8-27b · chave: sim · MCP: demo
+
+=== Roteiro da demo (3 pessoas) ===
+  Milan: "japonês e um sorvete, até 45"
+  Zenon: "hambúrguer e sorvete, até 50"
+  Antonio: "algo barato e vegetariano, até 25"
+  → p1: Temaki de salmão · Kaigan Sushi (demo) · R$ 32.90
+  → p2: Smash burger clássico · Brasa Burger (demo) · R$ 29.90
+  → p2#2: Sundae de morango · Gelato Bom Clima (demo) · R$ 18.90
+  → p3: Copinho de sorvete 1 bola · Gelato Bom Clima (demo) · R$ 12.90
+  explicação: 3 lojas · quem entrou está bem atendido · R$ 94,60 sem taxa · chega em até 45 min · atenção: perecível chega em horário diferente · 1 item ficou de fora
+  LLM: 9 ok, 0 caíram no fallback, 13.1 s
+  modelo que atendeu: openai/gpt-oss-120b ×9 · respostas 429: 0 · requisições HTTP: 9
+
+=== Frase livre 1 ===
+  Thales: "quero algo leve, sem lactose, até 40"
+  → p1: Temaki de salmão · Kaigan Sushi (demo) · R$ 32.90
+  explicação: 1 loja · todos bem atendidos · R$ 32,90 sem taxa · chega em até 45 min
+  LLM: 5 ok, 0 caíram no fallback, 3.9 s
+  modelo que atendeu: openai/gpt-oss-20b ×5 · respostas 429: 1 · requisições HTTP: 6
+
+=== Frase livre 2 ===
+  Thales: "tô morrendo de fome, um lanche bem caprichado"
+  → p1: Smash burger clássico · Brasa Burger (demo) · R$ 29.90
+  explicação: 1 loja · todos bem atendidos · R$ 29,90 sem taxa · chega em até 35 min
+  LLM: 4 ok, 0 caíram no fallback, 2.7 s
+  modelo que atendeu: openai/gpt-oss-20b ×4 · respostas 429: 0 · requisições HTTP: 4
+
+=== Frase livre 3 ===
+  Thales: "pizza pra dividir, mas eu não como carne"
+  → p1: Pizza vegana de legumes grande · Forno da Praça Pizzaria (demo) · R$ 64.90
+  explicação: 1 loja · todos bem atendidos · R$ 64,90 sem taxa · chega em até 50 min
+  LLM: 3 ok, 0 caíram no fallback, 3.5 s
+  modelo que atendeu: openai/gpt-oss-20b ×1, openai/gpt-oss-120b ×1, qwen/qwen3.8-27b ×1 · respostas 429: 2 · requisições HTTP: 5
+
+=== Frase livre 4 ===
+  Thales: "uma comida caseira tipo marmita, até 30"
+  (nenhuma combinação) Não achei marmita para Thales.; Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?
+  LLM: 3 ok, 0 caíram no fallback, 2.6 s
+  modelo que atendeu: qwen/qwen3.8-27b ×2, openai/gpt-oss-20b ×1 · respostas 429: 1 · requisições HTTP: 4
+
+=== Frase livre 5 ===
+  Thales: "doce qualquer, chega rápido"
+  (nenhuma combinação) Não achei doce para Thales.; Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?
+  LLM: 3 ok, 0 caíram no fallback, 3.1 s
+  modelo que atendeu: qwen/qwen3.8-27b ×2, openai/gpt-oss-20b ×1 · respostas 429: 0 · requisições HTTP: 3
+
+=== Frase livre 6 ===
+  Thales: "nada com glúten até R$ 30"
+  → p1: Açaí 300 ml puro · Açaí do Campus (demo) · R$ 16.90
+  explicação: 1 loja · todos bem atendidos · R$ 16,90 sem taxa · chega em até 20 min
+  LLM: 2 ok, 5 caíram no fallback, 22.1 s
+  modelo que atendeu: openai/gpt-oss-120b ×1, qwen/qwen3.8-27b ×1 · respostas 429: 4 · requisições HTTP: 9
+
+=== Frase livre 7 ===
+  Thales: "🍕🍕"
+  → p1: Pizza margherita grande · Forno da Praça Pizzaria (demo) · R$ 59.90
+  explicação: 1 loja · todos bem atendidos · R$ 59,90 sem taxa · chega em até 50 min
+  LLM: 3 ok, 0 caíram no fallback, 2.8 s
+  modelo que atendeu: openai/gpt-oss-120b ×2, openai/gpt-oss-20b ×1 · respostas 429: 1 · requisições HTTP: 4
+
+=== Frase livre 8 ===
+  Thales: "coxinha"
+  (nenhuma combinação) Não achei coxinha para Thales.; Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?
+  LLM: 1 ok, 4 caíram no fallback, 1.2 s
+  modelo que atendeu: openai/gpt-oss-20b ×1 · respostas 429: 1 · requisições HTTP: 2
