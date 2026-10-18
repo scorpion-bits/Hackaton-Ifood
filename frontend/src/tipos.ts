@@ -21,6 +21,10 @@ export interface Combinacao {
   componentes: Record<string, number>;
   taxa_conhecida: boolean;
   explicacao: string;
+  /** C11: 0-100, média por pessoa das notas. Ausente em resultado antigo (o front calcula). */
+  afinidade?: number;
+  /** C11: pessoas com média de nota >= 0,5. */
+  felizes?: number;
 }
 
 export interface Parte {
@@ -50,8 +54,67 @@ export interface ChamadaRastro {
   erro?: string;
 }
 
+// C11: leilão de agentes por loja (só leitura no front).
+export interface OfertaLeilao {
+  slot_id: string;
+  participante_id: string;
+  nome: string;
+  item_id: string;
+  item_nome: string;
+  preco: number;
+  nota: number;
+  motivo: string;
+}
+
+export interface LojaLeilao {
+  loja_id: string;
+  loja_nome: string;
+  vertical: string;
+  eta_min: number | null;
+  avaliacao: number | null;
+  imagem_url: string | null;
+  patrocinado: boolean;
+  passou: boolean;
+  ofertas: OfertaLeilao[];
+  atende: number;
+  afinidade: number;
+  fala: string;
+  fonte_fala: "llm" | "modelo";
+  vencedora: boolean;
+}
+
+export type TipoFala = "abertura" | "passe" | "lance" | "replica" | "fechamento";
+
+export interface FalaLeilao {
+  /** "ibits" ou o loja_id. */
+  quem: string;
+  tipo: TipoFala;
+  texto: string;
+  preco?: number | null;
+  afinidade?: number | null;
+  vencedoras?: string[];
+}
+
+/** Medições do servidor (opcional; o front não inventa o que faltar). */
+export interface MedicoesLeilao {
+  ms_total?: number;
+  ms_por_loja?: Record<string, number>;
+  chamadas_llm?: number;
+}
+
+export interface Leilao {
+  llm: boolean;
+  medicoes?: MedicoesLeilao;
+  demonstracao: boolean;
+  lojas: LojaLeilao[];
+  falas: FalaLeilao[];
+  vencedoras: string[];
+}
+
 export interface ResultadoMatch {
   combinacoes: Combinacao[];
+  /** C11: ausente em resultado antigo ou se o leilão falhou. */
+  leilao?: Leilao;
   intencoes: Intencao[];
   avisos: string[];
   rastro: ChamadaRastro[];
