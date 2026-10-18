@@ -37,7 +37,11 @@ TAMANHO_VALOR = 24
 
 
 class ErroMCP(Exception):
-    """Erro devolvido por uma tool do MCP, com mensagem legível para a pessoa."""
+    """Erro devolvido por uma tool do MCP, com mensagem legível para a pessoa (`codigo`: o code do iFood, se veio)."""
+
+    def __init__(self, mensagem: str = "", codigo: str | None = None):
+        super().__init__(mensagem)
+        self.codigo = codigo
 
 
 @dataclass
@@ -76,8 +80,65 @@ def _texto_do_resultado(resultado: Any) -> str:
 
 
 def _mensagem_legivel(texto: str) -> str:
-    """Tira o prefixo técnico do SDK ("Error executing tool X: ") e deixa só a mensagem da tool."""
-    return re.sub(r"^Error executing tool \w+:\s*", "", texto).strip()
+    """Tira o prefixo técnico do SDK ("Error executing tool X: ") e deixa só a mensagem da tool.
+
+    O MCP real às vezes manda o erro como JSON no texto (`{"error": "the value provided for contentMode…"}`):
+    nesse caso fica só a mensagem (com o code, se houver).
+    """
+    limpo = re.sub(r"^Error executing tool \w+:\s*", "", texto).strip()
+    if limpo.startswith("{"):
+        try:
+            dados = json.loads(limpo)
+        except json.JSONDecodeError:
+            return limpo
+        achado = erro_na_resposta(dados)
+        if achado:
+            return achado[0]
+    return limpo
+
+
+def _texto_util(*valores: Any) -> str | None:
+    """1º texto não vazio (ignora "***", que é como as amostras sanitizadas mascaram texto)."""
+    for v in valores:
+        if isinstance(v, str) and v.strip() and v.strip("* ").strip():
+            return v.strip()
+    return None
+
+
+def _com_codigo(texto: str | None, codigos: list[str]) -> str:
+    codigos = [c for c in dict.fromkeys(codigos) if c]
+    texto = texto or "O iFood recusou a chamada sem mensagem."
+    return f"{texto} (código {' / '.join(codigos)})" if codigos else texto
+
+
+def erro_na_resposta(dados: Any) -> tuple[str, str | None] | None:
+    """(mensagem legível, code) se a resposta "normal" (sem isError) for, na verdade, um erro do MCP real.
+
+    Formatos vistos no MCP real (docs/mcp-real/):
+    - `{"error": {"code": "MISSING_REQUIRED_FIELDS", "message": "...", "userFriendlyMessage": "..."}}` (createCart);
+    - `{"error": "texto"}` (getRecommendations, no texto do isError);
+    - `{"success": false, "errors": {"mcpCode": "ADDRESS_CREATION_FAILED", "code": "ADR-2001"}, ...}` (createAddress).
+    Resposta válida com `error: null`, `errors: []` ou `success: true` não é erro.
+    """
+    if not isinstance(dados, dict):
+        return None
+    erro = dados.get("error")
+    if erro and isinstance(erro, dict):
+        codigos = [str(erro[k]) for k in ("code", "mcpCode") if erro.get(k)]
+        texto = _texto_util(erro.get("userFriendlyMessage"), erro.get("message"), dados.get("message"))
+        return _com_codigo(texto, codigos), (codigos[0] if codigos else None)
+    if erro and isinstance(erro, str):
+        return _com_codigo(erro, []), None
+    if dados.get("success") is False:
+        erros = dados.get("errors")
+        lista = erros if isinstance(erros, list) else [erros] if isinstance(erros, dict) else []
+        lista = [e for e in lista if isinstance(e, dict)]
+        codigos = [str(e[k]) for e in lista for k in ("mcpCode", "code") if e.get(k)]
+        texto = _texto_util(dados.get("userFriendlyMessage"), dados.get("message"),
+                            *(e.get("userFriendlyMessage") for e in lista), *(e.get("message") for e in lista),
+                            *(e if isinstance(e, str) else None for e in (erros if isinstance(erros, list) else [])))
+        return _com_codigo(texto, codigos), (codigos[0] if codigos else None)
+    return None
 
 
 MSG_ENVIO_DESLIGADO = ("Envio real desligado: o pedido para no carrinho (conta de teste). "
@@ -180,6 +241,10 @@ class ClienteIFood:
                 dados = json.loads(texto) if texto else {}
             except json.JSONDecodeError:
                 dados = {"texto": texto}
+        achado = erro_na_resposta(dados)  # MCP real: erro de negócio vem como resposta normal, sem isError
+        if achado:
+            self._registrar(tool, resumo, inicio, ok=False, erro=achado[0])
+            raise ErroMCP(achado[0], codigo=achado[1])
         self._registrar(tool, resumo, inicio, ok=True)
         return dados
 

@@ -1,7 +1,9 @@
 """Busca de candidatos no MCP do iFood para um slot (contrato C5).
 
 Toda leitura de campos das tools de descoberta (`listAddresses`, `searchOffers`, `getMerchant`, `browseOffers`)
-fica neste arquivo: a etapa 03 ajusta o mapeamento para o MCP real num lugar só.
+fica neste arquivo. Lê os dois formatos: o do demo (`name`, `price`, loja na raiz) e o do MCP real conferido nas
+amostras de docs/mcp-real/ (`itemName`, `promotionalUnitPrice`/`unitPrice`, loja em `merchant{}`, prazo em
+`deliveryMethod.estimatedMinutes`, nota em `reviewRating`, cardápio do getMerchant em `featuredItems`).
 Preço, loja, prazo, vertical, perecível e tags vêm SOMENTE da resposta da tool; item sem preço é descartado.
 """
 
@@ -15,7 +17,8 @@ from .interprete import contem, normalizar
 from .modelos import Candidato, Intencao
 
 MAX_POR_SLOT = 8
-LIMITE_BUSCA = 20
+LIMITE_BUSCA = 20  # `pageSize` (o MCP real aceita no máximo 25)
+TIPO_PADRAO_REAL = "RESTAURANT"  # browseOffers real exige merchantType; o Match é de comida
 MIN_RESULTADOS = 3  # abaixo disso tenta lojas (MERCHANT) + getMerchant
 MAX_LOJAS_EXTRA = 3
 
@@ -142,7 +145,7 @@ def _numero(valor: Any) -> float | None:
 
 def _preco(r: dict) -> float | None:
     """Preço do item como a tool devolveu (promocional, se houver). Sem preço → None (item descartado)."""
-    for chave in ("promotionalPrice", "price", "unitPrice"):
+    for chave in ("promotionalPrice", "promotionalUnitPrice", "price", "unitPrice"):
         valor = _numero(r.get(chave))
         if valor is not None and valor > 0:
             return round(valor, 2)
@@ -174,14 +177,29 @@ def _tags(valor: Any) -> list[str]:
     return saida
 
 
+def _eta_loja(r: dict) -> int | None:
+    """Prazo da loja: `deliveryTime` (demo) ou `deliveryMethod(s).estimatedMinutes` (MCP real)."""
+    if r.get("deliveryTime") is not None:
+        return _eta(r.get("deliveryTime"))
+    metodo = r.get("deliveryMethod")
+    if not isinstance(metodo, dict):
+        metodos = [m for m in (r.get("deliveryMethods") or []) if isinstance(m, dict)]
+        metodo = metodos[0] if metodos else {}
+    return _eta(metodo.get("estimatedMinutes"))
+
+
 def _ler_loja(r: dict) -> dict:
+    """Loja de um resultado MERCHANT, do getMerchant ou (MCP real) do `merchant{}` aninhado num resultado ITEM."""
+    if isinstance(r.get("merchant"), dict):
+        r = {**r["merchant"], **{k: r[k] for k in ("merchantType",) if r.get(k)}}
     return {
         "id": r.get("merchantId") or r.get("id"),
         "nome": r.get("merchantName") or r.get("name") or "",
         "vertical": r.get("merchantType") or "",
-        "eta": _eta(r.get("deliveryTime")),
+        "eta": _eta_loja(r),
         "categorias": [str(c) for c in (r.get("categories") or []) if c],
-        "avaliacao": _numero(r.get("rating")),
+        "avaliacao": _numero(r.get("rating") if r.get("rating") is not None else r.get("reviewRating")),
+        "aberta": r.get("isOpen"),
     }
 
 
@@ -189,12 +207,14 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
     """Item normalizado a partir de um resultado ITEM do searchOffers/browseOffers ou do menu do getMerchant."""
     loja = loja or _ler_loja(r)
     item_id = r.get("itemId") or r.get("id")
-    nome = r.get("name") or r.get("nome")
+    nome = r.get("name") or r.get("itemName") or r.get("nome")
     preco = _preco(r)
     if not item_id or not nome or preco is None or not loja.get("id"):
         return None
-    descricao = r.get("description") or ""
-    categoria = r.get("category") or r.get("categoria") or ""
+    if loja.get("aberta") is False:  # MCP real: `isOpen: false` → a loja não aceita pedido agora
+        return None
+    descricao = r.get("description") or r.get("itemDescription") or ""
+    categoria = r.get("category") or r.get("menuSection") or r.get("categoria") or ""
     texto = normalizar(" ".join([nome, descricao, categoria]))
     perecivel = r.get("perecivel")
     if not isinstance(perecivel, bool):  # campo do demo; no real, inferido do texto da própria tool
@@ -217,14 +237,17 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
 
 
 def _itens_do_menu(dados: dict) -> list[dict]:
+    """Itens do getMerchant: `menu[].items` (demo) ou `featuredItems` (MCP real: só os destaques da loja)."""
     loja = _ler_loja(dados)
     itens = []
-    for secao in dados.get("menu") or []:
-        for r in secao.get("items") or []:
-            r = {**r, "category": r.get("category") or secao.get("category") or ""}
-            item = _ler_item(r, loja)
-            if item:
-                itens.append(item)
+    brutos = [{**r, "category": r.get("category") or secao.get("category") or ""}
+              for secao in dados.get("menu") or [] if isinstance(secao, dict)
+              for r in secao.get("items") or [] if isinstance(r, dict)]
+    brutos += [r for r in dados.get("featuredItems") or [] if isinstance(r, dict)]
+    for r in brutos:
+        item = _ler_item(r, loja)
+        if item:
+            itens.append(item)
     return itens
 
 
@@ -303,7 +326,8 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
         if bons() >= 2 * MAX_POR_SLOT:
             break
         try:
-            dados = await cliente.chamar("searchOffers", query=consulta, resultKind="ITEM", limit=LIMITE_BUSCA, **geo)
+            dados = await cliente.chamar("searchOffers", query=consulta, resultKind="ITEM", pageSize=LIMITE_BUSCA,
+                                         **geo)
         except ErroMCP:
             continue
         for r in dados.get("results") or dados.get("items") or []:
@@ -314,7 +338,7 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
         lojas_vistas: set[str] = set()
         for consulta in intencao.consultas[:2]:
             try:
-                dados = await cliente.chamar("searchOffers", query=consulta, resultKind="MERCHANT", limit=5, **geo)
+                dados = await cliente.chamar("searchOffers", query=consulta, resultKind="MERCHANT", pageSize=5, **geo)
             except ErroMCP:
                 continue
             for r in (dados.get("results") or [])[:MAX_LOJAS_EXTRA]:
@@ -322,6 +346,8 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
                 if not loja.get("id") or loja["id"] in lojas_vistas:
                     continue
                 if intencao.verticais and loja["vertical"] and loja["vertical"] not in intencao.verticais:
+                    continue
+                if loja.get("aberta") is False:
                     continue
                 lojas_vistas.add(loja["id"])
                 try:
@@ -334,9 +360,11 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
     # Pedido genérico ("qualquer coisa") OU as consultas do slot não trouxeram nenhum candidato válido (C16):
     # explora perto do endereço, na vertical pedida. O juiz dá nota baixa e o motor avisa "a opção mais próxima é X".
     if bons() == 0:
-        args: dict[str, Any] = {"resultKind": "ITEM", "limit": LIMITE_BUSCA, **geo}
+        args: dict[str, Any] = {"resultKind": "ITEM", "pageSize": LIMITE_BUSCA, **geo}
         if intencao.verticais:
             args["merchantType"] = intencao.verticais[0]
+        elif getattr(cliente, "modo", "demo") != "demo":  # no real, merchantType é obrigatório no browseOffers
+            args["merchantType"] = TIPO_PADRAO_REAL
         try:
             dados = await cliente.chamar("browseOffers", **args)
             for r in dados.get("results") or []:

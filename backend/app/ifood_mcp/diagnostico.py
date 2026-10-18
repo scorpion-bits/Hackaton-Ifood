@@ -735,7 +735,8 @@ async def executar(cliente: ClienteIFood, saida: Path, carrinho: bool = False,
         await d.chamar("getMerchant", com_local=True, merchantId=merchant_id)
     if merchant_id and item_id:
         await d.chamar("getItem", com_local=True, merchantId=merchant_id, itemId=item_id)
-    await d.chamar("getRecommendations", com_local=True, limit=5)
+    # contentMode é obrigatório no real (enum; sem ele: "contentMode value is not valid")
+    await d.chamar("getRecommendations", com_local=True, contentMode="RECOMMENDED", limit=5)
 
     resultado_carrinho = None
     if carrinho:
@@ -758,10 +759,11 @@ async def _testar_carrinhos(d: Diagnostico, itens: list[dict]) -> dict:
             escolhidos.append((loja, item_id))
         if len(escolhidos) == 2:
             break
-    exigidos_cart = set((d.schemas.get("createCart") or {}).get("required") or [])
     carrinhos: list[Any] = []
     for loja, item_id in escolhidos:
-        itens_iniciais = [{"itemId": item_id, "quantity": 1}] if "items" in exigidos_cart else None
+        # o real exige items na criação mesmo sem marcar no `required` (MISSING_REQUIRED_FIELDS); args_para tira
+        # o campo se o schema não o declarar
+        itens_iniciais = [{"itemId": item_id, "quantity": 1}]
         criado = await d.chamar("createCart", com_local=True, merchantId=loja, items=itens_iniciais)
         cart_id = _achar(criado, ("cartId", "id"))
         if not cart_id:
@@ -769,7 +771,7 @@ async def _testar_carrinhos(d: Diagnostico, itens: list[dict]) -> dict:
         carrinhos.append(cart_id)
         await d.chamar("addItemToCart", cartId=cart_id, itemId=item_id, quantity=1)
         await d.chamar("getCartDeliveryMethods", cartId=cart_id)
-        await d.chamar("listPaymentMethods", cartId=cart_id)
+        await d.chamar("listPaymentMethods", merchantId=loja, cartId=cart_id)  # real: só merchantId (obrigatório)
     abertos = []
     for i, cart_id in enumerate(carrinhos):
         r = await d.chamar("getCart", rotulo=f"getCart carrinho {i + 1}", cartId=cart_id)
