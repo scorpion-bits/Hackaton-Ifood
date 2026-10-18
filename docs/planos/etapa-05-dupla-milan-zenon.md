@@ -60,14 +60,15 @@
 - Thales: `iniciar.bat` no PC dele e o roteiro de testes.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
-- **Agora (Milan):** smoke do fluxo completo com "Ajustar" no navegador 390×780 (modo demonstração) → se ok, merge
-  do PR #6 (`ccr-4c429dbb-lp7btg` → `main`) → **Sonnet**. Bug do otimizador e `;` do Mermaid ✅ (17/10 23h58).
-  Começar com `/clear` → `/continuar`.
+- **Agora:** PR #6 já está **mergeado em `main`** (18/10 00h37 BRT; `cc5413f`). 378 testes + typecheck ok. Falta só
+  👥: Thales rodar o `diagnostico --carrinho` no PC e dar push de `docs/mcp-real/` (destrava A1/T8) e criar chave
+  Groq/Gemini (destrava A3). Sem isso, a demo vai no modo demonstração (já estável). Congelar código às 10h30.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
 - **Zenon:** B4 (mostrar "Pagamento: Dinheiro na entrega" + bugs do Thales) → Sonnet; B3 pitch final → Opus.
 
 ## Registro de execução
+- 18/10 00h37 — A4: PR #6 confirmado mergeado em `main` (`6bc3fa0`). 378 testes ok. `docs/mcp-real/` ainda não chegou → A1/T8 e A3 seguem bloqueadas por 👥.
 - 18/10 00h30 — A4: integrados `zenon/b3-pitch-final` (pitch final) e `zenon/b4-fix-bolha-ajustar`. 377 testes, build ok. Smoke no navegador (qa-testador, Sonnet) em andamento; depois merge do PR #6 → `main`.
 - 17/10 ~23h27 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
   T18–T22 marcados 🔄 sem branch no remoto: **se essa sessão ainda tem trabalho, ela dá push no branch e escreve no
