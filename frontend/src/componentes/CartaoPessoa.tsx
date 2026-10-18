@@ -1,4 +1,5 @@
 import type { Candidato } from "../tipos";
+import Avatar from "./Avatar";
 
 const FMT = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -50,9 +51,7 @@ export default function CartaoPessoa({
   return (
     <article className={`pessoa ${destaque ? "pessoa-eu" : ""}`}>
       <header className="pessoa-topo">
-        <span className="avatar" aria-hidden>
-          {nome.trim().charAt(0).toUpperCase() || "?"}
-        </span>
+        <Avatar nome={nome} tam="sm" />
         <strong>
           {nome}
           {destaque ? " (você)" : ""}
@@ -81,7 +80,7 @@ export default function CartaoPessoa({
               </div>
               {c.motivo && <p className="item-motivo">{c.motivo}</p>}
               {ALERGENO.test(c.motivo) && (
-                <p className="alerta-alergeno">
+                <p className="alerta-alergeno" role="note">
                   Atenção: alergia ou restrição pode não estar informada no cardápio. Confirme com a loja.
                 </p>
               )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, limparMatchLocal } from "../api";
 import type { StatusIfood as Status } from "../tipos";
+import Folha from "./Folha";
 
 /** Consulta /api/ifood/status. Se a rota falhar, assume demo (comportamento anterior). */
 export function useStatusIfood(): { status: Status | null; recarregar: () => void } {
@@ -54,13 +55,13 @@ export default function StatusIfood() {
   );
 }
 
-/** Botão discreto, só no modo demo. */
+/** Botão discreto, só no modo demo. A confirmação é uma folha inferior (não o confirm do navegador). */
 export function RecarregarDemo() {
   const { status } = useStatusIfood();
+  const [aberta, setAberta] = useState(false);
   if (!status || status.modo !== "demo") return null;
 
   async function recarregar() {
-    if (!window.confirm("Recarregar a demo? Salas e pedidos de teste serão apagados.")) return;
     try {
       await api.resetar();
     } catch {
@@ -72,8 +73,23 @@ export function RecarregarDemo() {
   }
 
   return (
-    <button type="button" className="link-btn centro-btn" onClick={recarregar}>
-      Recarregar demo
-    </button>
+    <>
+      <button type="button" className="link-btn centro-btn" onClick={() => setAberta(true)}>
+        Recarregar demo
+      </button>
+      {aberta && (
+        <Folha titulo="Recarregar a demo?" onFechar={() => setAberta(false)}>
+          <p className="suave">Salas e pedidos de teste serão apagados deste aparelho e do servidor de demonstração.</p>
+          <div className="folha-acoes">
+            <button type="button" className="primario" onClick={recarregar}>
+              Recarregar
+            </button>
+            <button type="button" className="secundario" onClick={() => setAberta(false)}>
+              Cancelar
+            </button>
+          </div>
+        </Folha>
+      )}
+    </>
   );
 }

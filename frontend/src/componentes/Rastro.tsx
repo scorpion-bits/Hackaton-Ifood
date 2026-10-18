@@ -1,4 +1,5 @@
 import type { ChamadaRastro } from "../tipos";
+import Icone from "./Icone";
 
 /** "userConsent=True" -> "userConsent: sim". */
 function legivel(t: string): string {
@@ -11,11 +12,14 @@ export default function Rastro({ itens, aberto }: { itens: ChamadaRastro[]; aber
   if (!itens.length) return null;
   return (
     <details className="rastro" open={aberto}>
-      <summary>Como a IA chegou aqui ({itens.length} chamadas ao MCP)</summary>
+      <summary>
+        <Icone nome="trilha" tamanho={16} />
+        Como a IA chegou aqui ({itens.length} chamadas ao MCP)
+      </summary>
       <ul>
         {itens.map((c, i) => (
           <li key={i} className={c.ok ? "" : "falhou"}>
-            <span className="rastro-ico">{c.ok ? "✓" : "✗"}</span>
+            <span className="rastro-ico" aria-label={c.ok ? "ok" : "falhou"}>{c.ok ? "✓" : "✗"}</span>
             <span className="rastro-tool">{c.tool}</span>
             <span className="rastro-ms">{c.ms} ms</span>
             <span className="rastro-resumo">{legivel(c.resumo)}{c.erro ? ` — ${c.erro}` : ""}</span>

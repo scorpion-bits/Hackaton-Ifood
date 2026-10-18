@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { api, chaveBase, gravarLocal, lerLocal, lerToken } from "../api";
 import type { EstadoSala } from "../tipos";
+import Avatar from "../componentes/Avatar";
+import EsqueletoCartoes from "../componentes/Esqueleto";
+import Icone from "../componentes/Icone";
 import Rastro from "../componentes/Rastro";
 import { FormDesejo, contagemRespostas, lerPid } from "./Convidado";
 import StatusIfood from "../componentes/StatusIfood";
+
+const ENDERECO_LOCAL = /^https?:\/\/(localhost|127\.|\[::1\])/;
 
 function baseInicial(): string {
   return lerLocal<string>(chaveBase) ?? window.location.origin;
@@ -27,10 +32,27 @@ export default function Organizador({
   const [abrirDesejo, setAbrirDesejo] = useState(false);
 
   const link = `${base.replace(/\/+$/, "")}/#/s/${salaId}`;
-  const ehLocal = /^https?:\/\/(localhost|127\.|\[::1\])/.test(base);
+  const ehLocal = ENDERECO_LOCAL.test(base);
+
+  // Sem base escolhida pelo usuário e página aberta em localhost: usa o IP do PC na rede (vem do backend).
+  useEffect(() => {
+    if (lerLocal<string>(chaveBase) != null || !ENDERECO_LOCAL.test(window.location.origin)) return;
+    let vivo = true;
+    api
+      .saude()
+      .then((s) => {
+        if (vivo && s.ip_local) setBase(s.ip_local);
+      })
+      .catch(() => {
+        /* sem IP: o campo "Base do link" continua disponível */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   useEffect(() => {
-    QRCode.toDataURL(link, { margin: 1, width: 240 })
+    QRCode.toDataURL(link, { margin: 1, width: 280 })
       .then(setQr)
       .catch(() => setQr(""));
   }, [link]);
@@ -68,11 +90,21 @@ export default function Organizador({
 
   if (rodando) {
     return (
-      <section className="tela">
-        <div className="cartao centro">
-          <div className="girando" aria-hidden>✨</div>
-          <h1>Procurando…</h1>
-          <p className="suave">A IA está lendo os desejos e consultando as lojas.</p>
+      <section className="tela tela-centro">
+        <div className="radar" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <span className="radar-nucleo">
+            <Icone nome="coracao" tamanho={44} />
+          </span>
+          <span className="orbita">
+            <span>🍕</span>
+          </span>
+        </div>
+        <div role="status" aria-live="polite">
+          <h1 className="titulo">Procurando…</h1>
+          <p className="sub">A IA está lendo os desejos e consultando as lojas.</p>
         </div>
         <Rastro itens={sala?.rastro ?? []} aberto />
       </section>
@@ -81,61 +113,92 @@ export default function Organizador({
 
   return (
     <section className="tela">
-      <h1>Sua sala de Match</h1>
       <StatusIfood />
 
-      <div className="cartao centro">
-        <p className="suave">Peça para o pessoal escanear ou abrir o link:</p>
-        {qr ? <img className="qr" src={qr} alt="QR code do convite" width={200} height={200} /> : <div className="qr" />}
-        <p className="link">{link}</p>
-        <button className="secundario" onClick={copiar}>
-          {copiado ? "Copiado ✓" : "Copiar link"}
-        </button>
-        {ehLocal && (
-          <div className="aviso">
-            <p>Para celulares, abra pelo IP do PC na mesma rede.</p>
-            <label>
-              Base do link
-              <small>Use o IP do Wi-Fi do PC (ex.: 192.168.x.x). Evite 172.x (adaptador virtual).</small>
-              <input
-                value={base}
-                onChange={(e) => {
-                  setBase(e.target.value);
-                  gravarLocal(chaveBase, e.target.value);
-                }}
-                placeholder="http://192.168.0.10:8000"
-              />
-            </label>
-          </div>
+      <div className="qrcard">
+        {qr ? (
+          <img className="qr" src={qr} alt="QR code do convite da sala" width={132} height={132} />
+        ) : (
+          <div className="qr esqueleto" role="img" aria-label="Gerando o QR code" />
         )}
+        <div className="qrinfo">
+          <b>Chame a turma</b>
+          <small>Escaneie ou mande o link. Responder leva menos de 30 segundos, sem login.</small>
+          <button type="button" className="link-chip" onClick={copiar} aria-label="Copiar o link da sala">
+            <span>{link.replace(/^https?:\/\//, "")}</span>
+            <span className="link-chip-ic">{copiado ? <Icone nome="check" tamanho={14} /> : <Icone nome="copiar" tamanho={14} />}</span>
+          </button>
+          <span className="copiado" role="status">{copiado ? "Link copiado" : ""}</span>
+        </div>
       </div>
+      <p className="dica">Os celulares precisam estar no mesmo Wi-Fi do computador.</p>
+      <details className="avancado" open={ehLocal}>
+        <summary>O link não abre no celular?</summary>
+        <label className="campo">
+          <span>Base do link</span>
+          <input
+            value={base}
+            onChange={(e) => {
+              setBase(e.target.value);
+              gravarLocal(chaveBase, e.target.value);
+            }}
+            placeholder="http://192.168.0.10:8000"
+            inputMode="url"
+            autoComplete="off"
+          />
+          <small>
+            {ehLocal
+              ? "Está apontando para este computador. Use o IP do Wi-Fi do PC (ex.: 192.168.x.x); evite 172.x (adaptador virtual)."
+              : "Use o IP do Wi-Fi do PC (ex.: 192.168.x.x). Evite 172.x (adaptador virtual)."}
+          </small>
+        </label>
+      </details>
 
-      <div className="cartao">
-        <h2>
+      <h2 className="sec2">
+        Quem entrou
+        <span>
           {respondeu} de {total} {total === 1 ? "convidado respondeu" : "convidados responderam"}
-        </h2>
-        <ul className="lista-part">
-          {sala?.participantes.map((p) => (
-            <li key={p.id}>
-              <span>{p.nome}</span>
-              <span className={p.respondeu ? "ok" : "suave"}>{p.respondeu ? "✓ respondeu" : "⏳ aguardando"}</span>
+        </span>
+      </h2>
+      {!sala ? (
+        <EsqueletoCartoes n={2} rotulo="Carregando a sala…" />
+      ) : (
+        <ul className="roster">
+          {sala.participantes.map((p) => (
+            <li key={p.id} className={`rrow ${p.respondeu ? "resp" : ""}`}>
+              <Avatar nome={p.nome} tam="sm" />
+              <span className="rtxt">
+                <b>
+                  {p.nome}
+                  {p.id === pid && <span className="voce">você</span>}
+                </b>
+              </span>
+              <span className={`status-pag ${p.respondeu ? "pago" : "pend"}`}>
+                {p.respondeu ? "✓ respondeu" : "aguardando"}
+              </span>
             </li>
           ))}
-          {total === 0 && <li className="suave">Ninguém entrou ainda.</li>}
         </ul>
-      </div>
+      )}
+      {sala && total === 0 && (
+        <div className="vazio">
+          <strong>Ninguém entrou ainda</strong>
+          <p>Mostre o QR ou mande o link no grupo. Quem responder aparece aqui na hora.</p>
+        </div>
+      )}
 
       <button
         type="button"
-        className="secundario"
+        className="rrow add"
         aria-expanded={abrirDesejo}
         onClick={() => setAbrirDesejo((a) => !a)}
       >
-        {eu?.respondeu ? "Mudar meu desejo" : "Também quero pedir"} {abrirDesejo ? "▴" : "▾"}
+        <Icone nome={abrirDesejo ? "x" : "mais"} tamanho={18} />
+        {abrirDesejo ? "Fechar" : eu?.respondeu ? "Mudar meu desejo" : "Também quero pedir"}
       </button>
       {abrirDesejo && (
         <div>
-          <h2>Seu desejo</h2>
+          <h2 className="sec2">Seu desejo</h2>
           <FormDesejo
             salaId={salaId}
             nomeInicial={nomeOrg}
@@ -145,11 +208,17 @@ export default function Organizador({
         </div>
       )}
 
-      {erro && <p className="erro">{erro}</p>}
-      <button className="primario" disabled={respondeu < 1} onClick={rodar}>
-        Rodar Match ✨
-      </button>
-      {respondeu < 1 && <p className="suave centro-txt">Precisa de pelo menos 1 resposta.</p>}
+      <div className="rodape-acao">
+        {erro && (
+          <div className="alerta alerta-erro" role="alert">
+            {erro}
+          </div>
+        )}
+        <button className="primario" disabled={respondeu < 1} onClick={rodar}>
+          {erro ? "Tentar de novo" : "Rodar Match"}
+        </button>
+        {respondeu < 1 && <p className="dica">Precisa de pelo menos 1 resposta para rodar.</p>}
+      </div>
     </section>
   );
 }
