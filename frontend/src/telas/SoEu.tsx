@@ -4,7 +4,7 @@ import { Esqueleto } from "../componentes/Esqueleto";
 import Icone from "../componentes/Icone";
 import Selo from "../componentes/Selo";
 import StatusIfood from "../componentes/StatusIfood";
-import { PREFERENCIAS, RESTRICOES, chavePid } from "./Convidado";
+import { OndePedir, PREFERENCIAS, RESTRICOES, chavePid, semOnde } from "./Convidado";
 
 /** Marca a sala como "de uma pessoa só": o organizador esconde o convite (QR/link). */
 export const chaveSolo = (salaId: string) => `match.solo.${salaId}`;
@@ -30,7 +30,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
   const [nome, setNome] = useState(eu?.nome ?? "");
   const [texto, setTexto] = useState("");
   const [orcamento, setOrcamento] = useState("");
-  const [chips, setChips] = useState<string[]>(eu?.chips ?? []);
+  const [chips, setChips] = useState<string[]>(semOnde(eu?.chips ?? []));
   const [fase, setFase] = useState<"form" | "buscando" | "erro">("form");
   const [erro, setErro] = useState("");
   const [demo, setDemo] = useState<boolean | null>(null);
@@ -78,7 +78,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
         orcamento_max: Number.isFinite(valor) && valor > 0 ? valor : null,
         chips,
       });
-      gravarLocal(chaveEu, { nome: nome.trim(), chips });
+      gravarLocal(chaveEu, { nome: nome.trim(), chips: semOnde(chips) });
       await api.rodar(id, token);
       window.location.hash = `#/s/${encodeURIComponent(id)}/org`;
     } catch (x) {
@@ -230,6 +230,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
               />
             </span>
           </div>
+          <OndePedir chips={chips} setChips={setChips} id="soeu-ch-onde" />
           {grupo("Preferência", PREFERENCIAS)}
           {grupo("Restrição", RESTRICOES)}
         </article>

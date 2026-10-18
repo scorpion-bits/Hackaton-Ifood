@@ -54,6 +54,10 @@ CASOS: list[Caso] = [
     Caso("x-salada com fritas", [("Ana", {"texto": "quero um x-salada com fritas"})], ["loja-demo-burger"]),
     Caso("açaí e água", [("Ana", {"texto": "um açaí e uma água"})], ["loja-demo-acai"], {"ac-agua"}),
     Caso("orçamento curto", [("Ana", {"texto": "pizza, até R$ 5"})], sem_resultado=True),
+    # T16 / bug 40: prato feito é restaurante, não compra de mercado; "Onde pedir?" vai nos chips
+    Caso("marmita", [("Ana", {"texto": "arroz, feijão, salada e guarnição"})], ["loja-demo-caseira"]),
+    Caso("onde pedir: restaurante", [("Ana", {"texto": "arroz e feijão", "chips": ["onde:RESTAURANT"]})],
+         ["loja-demo-caseira"]),
     Caso("roteiro do grupo", [
         ("Milan", {"texto": "japonês e um sorvete, até R$ 45", "orcamento_max": 45}),
         ("Zenon", {"texto": "hambúrguer e sorvete, até R$ 50", "orcamento_max": 50}),
