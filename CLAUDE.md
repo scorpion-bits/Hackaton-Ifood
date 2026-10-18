@@ -31,7 +31,7 @@
   convidados entram por link/QR sem login; só o organizador usa o iFood. Pagamento "junto" ou "separado" (vaquinha:
   Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
   2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
-- **Plano vigente:** `docs/planos/etapa-03-mcp-real.md` (02 concluída: Match ponta a ponta em demonstração). Etapas 02–05: `docs/planos/README.md`.
+- **Plano vigente:** `docs/planos/etapa-04-leilao-e-entrega.md` (leilão de agentes por loja + MCP real + entrega; branch de integração `ccr-4c429dbb-lp7btg`, 1 branch por tarefa). Etapas: `docs/planos/README.md`.
 - ✅ Agente "IBits" **aprovado** (17/10). Portal: https://mcp-developer.ifood.com.br/pt-BR ("Faça login"). 3 contas de teste
   (`unique-`, `safe-`, `fair-thales@test.ifood.com.br`, expiram em ~16 dias; OTP no portal). Redirect URLs: `http://localhost:8000/oauth/callback` (app),
   `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).

@@ -42,6 +42,15 @@ Formato: data · decisão · por quê · quem aprovou · como reverter.
    o modo real troca só o transporte (etapa 03). Por quê: desenvolver sem credencial e ter plano B sem internet.
    Aprovação: operacional (Claude). Agente `jurado` criado (aprovado pela equipe).
 
+## 17/10/2026 — Etapa 04
+
+9. **Leilão de agentes por loja (com LLM).** Cada restaurante tem um agente vendedor que só vê o próprio cardápio
+   (vindo do MCP) e decide o que oferecer a cada pessoa; o IBits (agente comprador) otimiza entre os lances. Números
+   só do MCP; fala com número fora do lance cai no texto determinístico. Por quê: o tema é "Vendendo com Agentes" e
+   tira o Match do genérico ("grupo + IA" já existe). Aprovação: equipe. Reverter: `rodar_leilao` é uma etapa do motor.
+10. **"Patrocinado" é a única política da loja e só dá visibilidade** (lance aparece primeiro, com rótulo); nunca muda
+   nota nem escolha. Modelo de negócio no pitch. Aprovação: equipe delegou ao Claude. Reverter: `politica_lojas.json`.
+
 ## Pendentes (👥 decisão humana na abertura)
 
 - Provedor de IA da demo (Groq × Gemini × Ollama) depois de testar com a internet do evento.
