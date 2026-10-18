@@ -211,7 +211,7 @@ export function FormDesejo({
         {grupo("Restrição", RESTRICOES)}
       </article>
       <p className="dica">
-        O cardápio nem sempre informa alergia e restrição. Quando o IBits não tiver certeza, ele avisa. Em caso de
+        O cardápio nem sempre informa alergia e restrição. Quando o Match não tiver certeza, ele avisa. Em caso de
         alergia, confirme com a loja.
       </p>
       {botao}
@@ -253,7 +253,7 @@ export default function Convidado({ salaId, sala }: { salaId: string; sala: Esta
           </div>
         )}
         <h1 className="titulo">O que você quer?</h1>
-        <p className="sub">Escreva do seu jeito. O IBits entende preço, pressa, restrição e vontade. Leva menos de 30 segundos.</p>
+        <p className="sub">Escreva do seu jeito. O Match entende preço, pressa, restrição e vontade. Leva menos de 30 segundos.</p>
         <FormDesejo
           salaId={salaId}
           rodapeFixo

@@ -91,11 +91,11 @@ const CONVIDADOS = [
   await org.waitForTimeout(800);
   await foto(org, '05-pedido');
 
-  // Ajustar com o IBits
+  // Ajustar com o Match
   const campo = org.locator('.aj-pilula input, .aj-pilula textarea').first();
   await campo.scrollIntoViewIfNeeded();
   await campo.fill('troca o sorvete de Bruno por açaí');
-  await org.getByRole('button', { name: 'Enviar ajuste ao IBits' }).click();
+  await org.getByRole('button', { name: 'Enviar ajuste ao Match' }).click();
   await org.waitForTimeout(REAL ? 2000 : 6000);
   if (REAL) await org.waitForSelector('.ld-atualizado', { timeout: ESPERA }).catch(() => {});
   await org.locator('.aj').evaluate((el) => el.scrollIntoView({ block: 'center' }));

@@ -518,7 +518,7 @@ ONDE_PEDIR = ("RESTAURANT", "GROCERIES", "DRUGSTORE", "PETSTORE")
 
 
 def onde_pedir(chips: list[str] | None) -> str | None:
-    """Tipo de loja escolhido no chip `onde:X` (ou None = "IBits decide")."""
+    """Tipo de loja escolhido no chip `onde:X` (ou None = "Match decide")."""
     for c in chips or []:
         valor = str(c).strip()
         if valor.lower().startswith("onde:") and valor[5:].strip().upper() in ONDE_PEDIR:

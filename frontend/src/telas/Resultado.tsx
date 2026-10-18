@@ -52,8 +52,8 @@ function textoModos(nPedidos: number): { id: ModoPagamento; titulo: string; text
 }
 
 /**
- * match_pronto (C13): avaliação das lojas (1 vez por aparelho) -> o pedido que o IBits escolheu -> como pagar.
- * Mudar o pedido = "Ajustar com o IBits"; não há outras opções para passar. Convidado vê tudo só para leitura.
+ * match_pronto (C13): avaliação das lojas (1 vez por aparelho) -> o pedido que o Match escolheu -> como pagar.
+ * Mudar o pedido = "Ajustar com o Match"; não há outras opções para passar. Convidado vê tudo só para leitura.
  */
 export default function Resultado({
   salaId,
@@ -70,7 +70,7 @@ export default function Resultado({
 
   // C14: depois de "Ajustar", usa a resposta do servidor até a sala (polling de 2 s) trazer o mesmo resultado.
   const [local, setLocal] = useState<{ res: ResultadoMatch; base: string } | null>(null);
-  // Enquanto o IBits refaz o pedido, o cartão não muda por baixo da pessoa.
+  // Enquanto o Match refaz o pedido, o cartão não muda por baixo da pessoa.
   const [retido, setRetido] = useState<ResultadoMatch | null>(null);
   const res = retido ?? (local && sigSala === local.base ? local.res : resSala);
   const sig = assinatura(res);
@@ -81,7 +81,7 @@ export default function Resultado({
   const [montando, setMontando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // C14: conversa com o IBits, opções de antes do ajuste (para marcar o que mudou) e destaques.
+  // C14: conversa com o Match, opções de antes do ajuste (para marcar o que mudou) e destaques.
   const [troca, setTroca] = useState<Troca | null>(null);
   const [histLocal, setHistLocal] = useState<ItemHistorico[]>([]);
   const [ocupado, setOcupado] = useState(false);

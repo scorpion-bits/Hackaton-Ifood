@@ -189,8 +189,8 @@ function Cartao({
 }
 
 /**
- * Resultado (C13, sem "deck"): o IBits já escolheu a melhor combinação e ela aparece direto, num cartão só.
- * Mudar = "Ajustar com o IBits" (rodapé, só organizador); "Confirmar pedido" segue para como pagar.
+ * Resultado (C13, sem "deck"): o Match já escolheu a melhor combinação e ela aparece direto, num cartão só.
+ * Mudar = "Ajustar com o Match" (rodapé, só organizador); "Confirmar pedido" segue para como pagar.
  * Convidado vê só a própria parte, em leitura.
  */
 export default function Deck({
@@ -218,7 +218,7 @@ export default function Deck({
   meuPid: string | null;
   onConfirmar: () => void;
   onVerLeilao?: () => void;
-  /** C14: bloco abaixo do cartão (só o organizador recebe: "Ajustar com o IBits"). */
+  /** C14: bloco abaixo do cartão (só o organizador recebe: "Ajustar com o Match"). */
   rodape?: ReactNode;
   /** C14: um ajuste está sendo refeito; "Confirmar pedido" fica travado até terminar. */
   ocupado?: boolean;
@@ -251,11 +251,11 @@ export default function Deck({
   const sub = !organizador
     ? "Esta é a sua parte. O organizador confirma o pedido e escolhe como pagar."
     : solo
-      ? "O IBits escolheu o que mais combina com o que você pediu."
-      : "O IBits juntou o que cada um pediu e escolheu a melhor combinação.";
+      ? "O Match escolheu o que mais combina com o que você pediu."
+      : "O Match juntou o que cada um pediu e escolheu a melhor combinação.";
 
   return (
-    <section className="tela ld-raiz ld-resultado" aria-label="Pedido montado pelo IBits">
+    <section className="tela ld-raiz ld-resultado" aria-label="Pedido montado pelo Match">
       <div className="ld-top">
         <span className="ld-step">Resultado</span>
         {onVerLeilao && (
@@ -284,7 +284,7 @@ export default function Deck({
         <p>{sub}</p>
       </div>
 
-      <article className={`ld-cartao${atualizado ? " ld-atual" : ""}`} aria-label="Pedido escolhido pelo IBits">
+      <article className={`ld-cartao${atualizado ? " ld-atual" : ""}`} aria-label="Pedido escolhido pelo Match">
         <Cartao
           c={c}
           sala={sala}
@@ -313,7 +313,7 @@ export default function Deck({
           </button>
           <p className="ld-dica">
             {ocupado
-              ? "O IBits está refazendo o pedido. Já já ele aparece atualizado."
+              ? "O Match está refazendo o pedido. Já já ele aparece atualizado."
               : solo
                 ? "Você revisa o carrinho antes de qualquer envio ao iFood."
                 : "Depois você escolhe como pagar. Nada vai ao iFood sem o seu ok."}

@@ -34,7 +34,7 @@ class Caso:
     lojas: list[str] | None = None
     itens: set[str] | None = None
     sem_resultado: bool = False  # o certo é não achar (aviso honesto)
-    ajuste: str | None = None  # frase do "Ajustar com o IBits" depois do Match
+    ajuste: str | None = None  # frase do "Ajustar com o Match" depois do Match
 
 
 CASOS: list[Caso] = [

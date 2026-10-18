@@ -31,18 +31,18 @@ O cronômetro começa no **primeiro avanço**. A janela do apresentador segue a 
 ## Roteiro (dor geral, grupo como caso principal, ~4:45)
 | # | Slide | Até | Ideia |
 |---|---|---|---|
-| 1 | Capa | 0:10 | "Diga o que você precisa. O IBits resolve no iFood." |
+| 1 | Capa | 0:10 | "Diga o que você precisa. O Match resolve no iFood." |
 | 2 | A dor | 0:40 | Você sabe o que precisa, mas não o que buscar: 3 cenas (23h dor de cabeça · a turma com fome · a lista do mercado) + iFood 65 mi clientes / 180 mi pedidos (fonte no rodapé) |
 | 3 | O grupo | 1:05 | O caso mais difícil: a Ana, sexta 21h, o grupo do WhatsApp (as mensagens aparecem sozinhas) → "virou a gerente do pedido" |
 | 4 | Virada | 1:12 | "E se você só dissesse o que precisa?" |
 | 5 | Sozinho | 1:35 | "um remédio para dor de cabeça" → 8 farmácias reais do iFood, analgésico sem receita (MCP real). "Não receita nada: acha o que ela pediu e ela confirma." |
 | 6 | 1 · Cada um fala | 1:55 | Agora o grupo: QR, sem login, frase livre |
-| 7 | 2 · O IBits monta | 2:25 | 1 clique troca a tela: avaliação das lojas → pedido do grupo |
+| 7 | 2 · O Match monta | 2:25 | 1 clique troca a tela: avaliação das lojas → pedido do grupo |
 | 8 | 3 · Ajustar | 2:45 | "troca o sorvete de Bruno por açaí" |
 | 9 | 4 · Cada um paga | 3:10 | divisão ao centavo, Pix para a Ana, só sai com 100% pago |
-| 10 | Como funciona | 3:45 | IA conversa · código calcula · MCP executa; 1 clique: 3 telas do app no MCP real (Big Mac + McFritas na mesma loja) + conta R$ 50,98 |
+| 10 | Como funciona | 3:45 | IA conversa · código calcula · MCP executa; 1 clique: 3 telas do app no MCP real (hambúrguer + McFritas no mesmo McDonald's) + conta R$ 50,98 |
 | 11 | Quem ganha | 4:20 | quem pede (sozinho ou em grupo), as lojas (restaurante, farmácia, mercado e pet), o iFood; 2 cliques: piloto e feedback do MCP |
-| 12 | Fechamento | 4:45 | vinheta "iFood!" ao entrar; "A Ana voltou a ser só mais uma amiga com fome. Diga o que você precisa: o IBits acha, monta e divide pelo iFood." |
+| 12 | Fechamento | 4:45 | vinheta "iFood!" ao entrar; "A Ana voltou a ser só mais uma amiga com fome. Diga o que você precisa: o Match acha, monta e divide pelo iFood." |
 
 **Vídeo:** não tem. As telas no celular contam a demo sem risco de o iFood cair no palco. Se a banca pedir, a demo ao
 vivo fica para as perguntas (`docs/roteiro-demo.md`). **Números:** só os do iFood com fonte (rodapé do slide 3) e o

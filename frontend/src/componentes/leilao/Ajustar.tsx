@@ -3,7 +3,7 @@ import type { Participante } from "../../tipos";
 import { IconeCoracao, IconeEnviar, IconeFaisca } from "./visual";
 import { reduzirMovimento } from "./util";
 
-/** Uma ida e volta com o IBits (C14). O estado vive em `Resultado`, para não se perder quando o pedido some durante a avaliação curta. */
+/** Uma ida e volta com o Match (C14). O estado vive em `Resultado`, para não se perder quando o pedido some durante a avaliação curta. */
 export interface Troca {
   id: number;
   texto: string;
@@ -29,7 +29,7 @@ function exemplosDa(nomes: string[], solo: boolean): string[] {
   return [`troca o sorvete de ${n(0)} por açaí`, `mais barato para ${n(1)}`, `sem glúten para ${n(2)}`];
 }
 
-/** Bolha do IBits (esquerda) ou do organizador (direita). */
+/** Bolha do Match (esquerda) ou do organizador (direita). */
 function Bolha({ de, children, digitando }: { de: "org" | "ibits"; children?: React.ReactNode; digitando?: boolean }) {
   if (de === "org") {
     return (
@@ -46,7 +46,7 @@ function Bolha({ de, children, digitando }: { de: "org" | "ibits"; children?: Re
       <div className="aj-bolha ia">
         {children}
         {digitando && (
-          <span className="aj-digitando" role="img" aria-label="IBits está digitando">
+          <span className="aj-digitando" role="img" aria-label="Match está digitando">
             <i />
             <i />
             <i />
@@ -79,7 +79,7 @@ function TrocaBolhas({ t }: { t: Troca }) {
 }
 
 /**
- * "Ajustar com o IBits" (C14): campo em pílula + chips de sugestão + conversa em bolhas.
+ * "Ajustar com o Match" (C14): campo em pílula + chips de sugestão + conversa em bolhas.
  * Só o organizador vê. Não decide nada: manda a frase ao servidor e mostra o que ele entendeu.
  */
 export default function Ajustar({
@@ -140,7 +140,7 @@ export default function Ajustar({
         <span className="aj-ico" aria-hidden="true">
           <IconeFaisca tamanho={16} />
         </span>
-        <h2 id={`${idCampo}-t`}>Ajustar com o IBits</h2>
+        <h2 id={`${idCampo}-t`}>Ajustar com o Match</h2>
         {historico.length > 0 && (
           <button
             type="button"
@@ -165,7 +165,7 @@ export default function Ajustar({
         </ol>
       )}
 
-      <div className="aj-conversa" role="log" aria-live="polite" aria-label="Conversa com o IBits">
+      <div className="aj-conversa" role="log" aria-live="polite" aria-label="Conversa com o Match">
         {troca && (
           <>
             <TrocaBolhas t={troca} />
@@ -198,7 +198,7 @@ export default function Ajustar({
           <IconeCoracao tamanho={16} />
         </span>
         <label htmlFor={idCampo} className="aj-sr">
-          Diga ao IBits o que ajustar no pedido
+          Diga ao Match o que ajustar no pedido
         </label>
         <input
           id={idCampo}
@@ -214,7 +214,7 @@ export default function Ajustar({
           maxLength={280}
           aria-busy={ocupado}
         />
-        <button type="submit" className="aj-enviar" disabled={ocupado || vazio} aria-label="Enviar ajuste ao IBits">
+        <button type="submit" className="aj-enviar" disabled={ocupado || vazio} aria-label="Enviar ajuste ao Match">
           <IconeEnviar tamanho={20} />
         </button>
       </form>

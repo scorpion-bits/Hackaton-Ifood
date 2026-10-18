@@ -1,4 +1,4 @@
-"""Ajustar com o IBits (C14): intérprete do ajuste (fallback e validação do LLM) e a rota POST /ajustar."""
+"""Ajustar com o Match (C14): intérprete do ajuste (fallback e validação do LLM) e a rota POST /ajustar."""
 
 import pytest
 from fastapi.testclient import TestClient

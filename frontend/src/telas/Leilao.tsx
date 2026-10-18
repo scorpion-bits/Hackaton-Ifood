@@ -15,7 +15,7 @@ const MS_FALA = 820; // intervalo entre falas
 const MS_FECHAMENTO = 1400;
 const MS_DIGITANDO = 520;
 const MS_AUTO_CONVIDADO = 4000; // convidado segue sozinho; organizador toca em "Ver o pedido" (narra o fechamento)
-// Versão curta (C14, depois de "Ajustar com o IBits"): ~4 s, abertura + 2 lances/passes + fechamento, segue sozinha.
+// Versão curta (C14, depois de "Ajustar com o Match"): ~4 s, abertura + 2 lances/passes + fechamento, segue sozinha.
 const COMPACTO = { maxFalas: 4, lances: 2, msFala: 560, msFechamento: 900, msDigitando: 300, msAuto: 1200 };
 
 /**
@@ -189,7 +189,7 @@ export default function Leilao({
   }
 
   return (
-    <section className="tela ld-raiz ld-sala" aria-label="Como o IBits avaliou cada loja">
+    <section className="tela ld-raiz ld-sala" aria-label="Como o Match avaliou cada loja">
       <div className="ld-top">
         <span className="ld-step">
           {compacto ? "Refazendo o pedido" : "Avaliação das lojas"}
@@ -207,10 +207,10 @@ export default function Leilao({
       </div>
 
       <div>
-        <h1 className="ld-titulo">{compacto ? "O IBits avalia de novo" : "Como o IBits avaliou cada loja"}</h1>
+        <h1 className="ld-titulo">{compacto ? "O Match avalia de novo" : "Como o Match avaliou cada loja"}</h1>
         <p className="ld-subtitulo">
           {compacto
-            ? "Com o seu ajuste, o IBits avaliou cada loja de novo, com dados do iFood."
+            ? "Com o seu ajuste, o Match avaliou cada loja de novo, com dados do iFood."
             : "Um avaliador por loja, que só lê o cardápio dela. Preços e prazos vêm do iFood."}
         </p>
       </div>
@@ -285,7 +285,7 @@ export default function Leilao({
               )}
               <div>
                 <span className="ld-who">
-                  {ia ? "IBits" : (l?.loja_nome ?? "Loja")}
+                  {ia ? "Match" : (l?.loja_nome ?? "Loja")}
                   {l?.patrocinado && <EtiquetaPatrocinado demo={L.demonstracao} />}
                 </span>
                 {pronta ? (

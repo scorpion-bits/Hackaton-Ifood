@@ -94,7 +94,7 @@ def test_ia_que_le_o_prato_feito_como_mercado_cai_no_fallback():
 def test_onde_pedir_le_o_chip_e_ignora_valor_desconhecido():
     assert onde_pedir(["barato", "onde:GROCERIES"]) == "GROCERIES"
     assert onde_pedir(["onde:restaurant"]) == "RESTAURANT"
-    assert onde_pedir(["onde:SHOPPING", "barato"]) is None  # fora das 4 opções da tela: IBits decide
+    assert onde_pedir(["onde:SHOPPING", "barato"]) is None  # fora das 4 opções da tela: Match decide
     assert onde_pedir([]) is None
 
 

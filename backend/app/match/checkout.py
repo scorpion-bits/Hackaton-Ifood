@@ -719,7 +719,7 @@ def loja_indisponivel(e: BaseException | None) -> bool:
 def _erro_da_loja(loja_id: str, nome: str, e: ErroMCP) -> ErroCheckout:
     if getattr(e, "codigo", None) == "ITEM-001":
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
-                                     f"complementos que o iFood não informou ({e}). Troque o item com 'Ajustar com o IBits'.",
+                                     f"complementos que o iFood não informou ({e}). Troque o item com 'Ajustar com o Match'.",
                             codigo="complemento_obrigatorio")
     elif loja_indisponivel(e):
         # bug 36: MERCH-007 ("Could not retrieve merchant for id …") em inglês e com o id ia direto para a tela

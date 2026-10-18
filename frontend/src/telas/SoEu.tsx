@@ -241,7 +241,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
         </article>
 
         <p className="dica">
-          O cardápio nem sempre informa alergia e restrição. Quando o IBits não tiver certeza, ele avisa. Em caso de
+          O cardápio nem sempre informa alergia e restrição. Quando o Match não tiver certeza, ele avisa. Em caso de
           alergia, confirme com a loja.
         </p>
 
