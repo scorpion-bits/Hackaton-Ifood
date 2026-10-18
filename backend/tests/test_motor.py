@@ -9,6 +9,7 @@ import pytest
 from app.config import carregar
 from app.ifood_mcp import abrir_cliente, resetar_demo
 from app.ifood_mcp.demo_server import ARQUIVO_DADOS
+from app.match import busca as busca_mod
 from app.match import interprete, juiz, llm
 from app.match import motor as motor_mod
 from app.match.busca import buscar, buscar_detalhado, ler_endereco
@@ -113,7 +114,31 @@ async def test_nada_cabe_vira_aviso_e_lista_vazia():
     assert any("Não achei pizza até R$ 5 para Ana" in a for a in r["avisos"])
 
 
-async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada():
+@pytest.fixture
+def sem_consulta_livre(monkeypatch):
+    """Força o intérprete a não gerar consulta para item fora do dicionário (pedido vai para a exploração)."""
+    monkeypatch.setattr(interprete, "_consulta_livre", lambda *a, **k: "")
+
+
+async def test_item_fora_do_dicionario_busca_pelo_proprio_texto(monkeypatch):
+    # T17c: "feijoada completa" vira a consulta do searchOffers (no MCP real, é o que a pessoa pediu)
+    consultas: list[str] = []
+    original = busca_mod.buscar_detalhado
+
+    async def espiao(cliente, intencao, endereco):
+        consultas.append(intencao.consultas)
+        return await original(cliente, intencao, endereco)
+
+    monkeypatch.setattr(motor_mod, "buscar_detalhado", espiao)
+    r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
+                      Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    assert ["feijoada completa"] in consultas
+    # o demo não tem feijoada: o aviso é honesto e a pessoa que achou o que queria segue
+    assert "Não achei feijoada completa até R$ 60 para Ana." in r["avisos"]
+    assert r["combinacoes"]
+
+
+async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada(sem_consulta_livre):
     # Milan acha o que quer; a feijoada da Ana não existe nos cardápios do demo
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
                       Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
@@ -128,7 +153,7 @@ async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada():
     assert not any("Nada do que foi pedido" in a for a in r["avisos"])
 
 
-async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso():
+async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consulta_livre):
     r = await _rodar([Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
     assert r["combinacoes"] == []
     assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
@@ -337,12 +362,19 @@ def test_quantidade_vira_slots_repetidos_ate_3():
     assert [i.participante_id for i in duas] == ["a", "a#2", "a#3"]
 
 
-def test_quantidade_acima_do_limite_ou_sem_item_gera_aviso():
+def test_quantidade_acima_do_limite_ou_sem_item_gera_aviso(monkeypatch):
     desejo = Desejo("a", "Ana", "5 pizzas e um sorvete")
     intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
     assert [i.consultas[0] for i in intencoes] == ["pizza", "pizza", "pizza", "sorvete"]
     assert avisos == ["Ana pediu '5 pizzas': o Match põe 3 no pedido (até 3 iguais por pessoa); o resto foi ignorado."]
     desejo = Desejo("a", "Ana", "2 sorvetes e 3 coxinhas até 99")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    # "coxinhas" agora é um slot com consulta própria; o limite de 4 slots por pessoa corta a 3ª coxinha
+    assert [i.consultas[0] for i in intencoes] == ["sorvete", "sorvete", "coxinhas", "coxinhas"]
+    assert all(i.orcamento_max == 99 for i in intencoes)
+    assert avisos == ["Ana pediu '3 coxinhas': o Match põe 2 no pedido (até 3 iguais por pessoa); o resto foi ignorado."]
+    # sem consulta livre (comportamento antigo), item que o Match não separa continua avisando
+    monkeypatch.setattr(interprete, "_consulta_livre", lambda *a, **k: "")
     intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
     assert len(intencoes) == 2 and all(i.orcamento_max == 99 for i in intencoes)
     assert avisos == ["A quantidade em '3 coxinhas' (Ana) foi ignorada: o Match escolhe 1 item para esse pedido."]
@@ -356,7 +388,7 @@ def test_quantidade_e_idempotente_e_ignora_numero_do_nome_do_prato():
     assert interprete.aplicar_quantidades(pizza, interpretar_fallback(pizza)) == (interpretar_fallback(pizza), [])
 
 
-async def test_motor_avisa_quantidade_ignorada_e_monta_os_dois_itens():
+async def test_motor_avisa_quantidade_ignorada_e_monta_os_dois_itens(sem_consulta_livre):
     r = await _rodar([Desejo("a", "Ana", "2 sorvetes"), Desejo("b", "Bia", "duas coxinhas")])
     assert next(p for p in r["pessoas"] if p["participante_id"] == "a")["slots"] == ["a", "a#2"]
     assert any("'duas coxinhas' (Bia) foi ignorada" in a for a in r["avisos"])

@@ -158,6 +158,59 @@ def _palavras_livres(trecho: str) -> list[str]:
     ignorar.update({"barato", "rapido", "qualidade", "equilibrado"})
     return [p for p in re.findall(r"[a-z]+", trecho) if len(p) >= 4 and p not in ignorar]
 
+# ---------- consulta livre (item sem categoria conhecida: "coxinha", "feijoada completa") ----------
+MAX_PALAVRAS_CONSULTA = 4
+_CONECTIVOS = {"de", "da", "do", "das", "dos"}  # ficam só entre duas palavras ("pastel de queijo")
+# pedido genérico / ruído que não é nome de comida (normalizado)
+_RUIDO_CONSULTA = {
+    "surpreenda", "surpreender", "surpresa", "tanto", "faz", "escolha", "escolhe", "decide", "decidir", "voce",
+    "vc", "sugira", "sugestao", "indica", "indique", "recomenda", "recomende", "gostoso", "gostosa", "saboroso",
+    "saborosa", "delicioso", "deliciosa", "diferente", "novidade", "nada", "fome", "comida", "comidas", "prato",
+    "almoco", "janta", "jantar", "cafe", "lanchinho", "restaurante", "perto", "aqui", "chegue", "chegar", "logo",
+    "entrega", "entregar", "min", "minuto", "minutos", "hora", "horas", "pessoa", "pessoas", "tambem", "outro",
+    "outra", "esse", "essa", "isso", "ai", "la", "pode", "podem", "sera", "vai", "vou", "meu", "minha", "nosso",
+    "nossa", "tem", "ter", "oi", "ola", "obrigado", "obrigada", "ok",
+}
+
+
+def _palavras_ignoradas() -> set[str]:
+    ignorar = set(PALAVRAS_VAZIAS) | _RUIDO_CONSULTA | {"barato", "rapido", "qualidade", "equilibrado"}
+    for _, termos in PERFIL_GATILHOS:
+        for t in termos:
+            ignorar.update(normalizar(t).split())
+    for canonica, termos in RESTRICOES.items():
+        ignorar.update(normalizar(canonica).split())
+        for t in termos:
+            ignorar.update(normalizar(t).split())
+    return ignorar - _CONECTIVOS
+
+
+def _consulta_livre(trecho: str, acentos: dict[str, str]) -> str:
+    """Texto do trecho como termo de busca: sem valores, restrição/preferência, artigos nem conectivos soltos;
+    até `MAX_PALAVRAS_CONSULTA` palavras, com os acentos que a pessoa digitou. "" se o trecho é genérico."""
+    ignorar = _palavras_ignoradas()
+    palavras = re.findall(r"[a-z]+", trecho)
+    mantidas: list[str] = []
+    pular_proxima = False
+    for p in palavras:
+        if pular_proxima:  # "sem cebola": a exclusão não é termo de busca
+            pular_proxima = False
+            continue
+        if p == "sem":
+            pular_proxima = True
+            continue
+        if p in ignorar or (len(p) < 2):
+            continue
+        mantidas.append(p)
+    while mantidas and mantidas[0] in _CONECTIVOS:
+        mantidas.pop(0)
+    mantidas = mantidas[:MAX_PALAVRAS_CONSULTA]
+    while mantidas and mantidas[-1] in _CONECTIVOS:
+        mantidas.pop()
+    if not any(p not in _CONECTIVOS for p in mantidas):
+        return ""
+    return " ".join(acentos.get(p, p) for p in mantidas)
+
 
 def _dedup(lista: list[str]) -> list[str]:
     vistos, saida = set(), []
@@ -263,6 +316,9 @@ def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
 
     # "e", ",", "+", ";", "com" separam itens; "ou" junta alternativas no mesmo item.
     partes = re.split(r"\s*(,|;|\+|\be\b|\bcom\b|\bou\b)\s*", sem_orcamento)
+    acentos: dict[str, str] = {}
+    for tok in re.findall(r"[^\W\d_]+", (desejo.texto or "").lower()):
+        acentos.setdefault(normalizar(tok), tok)
     slots: list[dict] = []
     sobras: list[str] = []
     separador = None
@@ -272,7 +328,15 @@ def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
             continue
         cats = _categorias_do_trecho(parte)
         if not cats:
-            (slots[-1]["textos"] if slots else sobras).append(parte)
+            livre = _consulta_livre(parte, acentos)
+            if livre and separador == "ou" and slots:  # alternativa do mesmo item: "coxinha ou esfiha"
+                slots[-1]["livres"].append(livre)
+                slots[-1]["textos"].append(parte)
+            elif livre and separador != "com":
+                # item sem categoria conhecida: o próprio texto vira a consulta ("coxinha", "feijoada completa")
+                slots.append({"cats": [], "textos": [parte], "livres": [livre]})
+            else:
+                (slots[-1]["textos"] if slots else sobras).append(parte)
             continue
         for j, (cat, gatilhos) in enumerate(cats):
             mesma = next((s for s in slots if any(c["nome"] == cat["nome"] for c, _ in s["cats"])), None)
@@ -283,7 +347,7 @@ def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
                 slots[-1]["cats"].append((cat, gatilhos))
                 slots[-1]["textos"].append(parte)
             else:
-                slots.append({"cats": [(cat, gatilhos)], "textos": [parte]})
+                slots.append({"cats": [(cat, gatilhos)], "textos": [parte], "livres": []})
     slots = slots[:MAX_SLOTS]
 
     termos_restricao = [CONSULTA_RESTRICAO[r] for r in restricoes]
@@ -308,7 +372,11 @@ def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
             consultas += [g for g in gatilhos if normalizar(g) not in {normalizar(b) for b in base}][:1] + base
             vontades += cat["vontades"]
             verticais.append(cat["vertical"])
-        if termos_restricao:
+        if not slot["cats"]:
+            verticais.append("RESTAURANT")
+            vontades += [p for l in slot["livres"] for p in l.split() if p not in _CONECTIVOS]
+        consultas += slot["livres"]
+        if termos_restricao and consultas:
             consultas = [f"{consultas[0]} {termos_restricao[0]}", *consultas]
         texto_slot = " ".join(slot["textos"] + (sobras if k == 1 else []))
         intencoes.append(Intencao(
