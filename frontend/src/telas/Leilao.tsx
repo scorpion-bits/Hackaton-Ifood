@@ -26,7 +26,7 @@ function selecionarFalas(L: LeilaoDados): FalaLeilao[] {
   const venc = new Set(L.vencedoras);
   const patro = new Set(L.lojas.filter((l) => l.patrocinado).map((l) => l.loja_id));
   const prioridade = (x: FalaLeilao) =>
-    x.tipo === "lance" ? (venc.has(x.quem) ? 0 : patro.has(x.quem) ? 1 : 2) : 3;
+    x.tipo === "lance" ? (venc.has(x.quem) ? 0 : patro.has(x.quem) ? 1 : 2) : patro.has(x.quem) ? 1 : 3;
   const abertura = f.find((x) => x.tipo === "abertura");
   const fechamento = [...f].reverse().find((x) => x.tipo === "fechamento");
   const replica = f.find((x) => x.tipo === "replica");
@@ -210,7 +210,7 @@ export default function Leilao({
                 <AvatarLoja id={l.loja_id} nome={l.loja_nome} vertical={l.vertical} imagem={l.imagem_url} />
                 <small>{nomeCurto(l.loja_nome)}</small>
                 {l.patrocinado && <span className="ld-patro ld-patro-mini">Patrocinado</span>}
-                {fechou && !fora && l.afinidade > 0 && <em className="ld-pc">{Math.round(l.afinidade)}%</em>}
+                {fechou && !fora && l.afinidade > 0 && <em className="ld-pc" title="Afinidade da loja">{Math.round(l.afinidade)}% · afinidade</em>}
                 {lance && lance.quem === l.loja_id && (
                   <span key={lance.k} className="ld-bidtag">
                     {brl(lance.preco)}
@@ -220,6 +220,13 @@ export default function Leilao({
             );
           })}
         </div>
+      )}
+
+      {fechou && L.lojas.some((l) => l.afinidade > 0) && (
+        <p className="ld-patro-nota">
+          % = afinidade da loja: quanto os pratos dela combinam com quem ela atende. A afinidade do pedido inteiro
+          aparece no Match.
+        </p>
       )}
 
       {algumPatro && (
@@ -244,7 +251,7 @@ export default function Leilao({
           const ia = f.quem === "ibits";
           const l = ia ? undefined : lojaDe(f.quem);
           return (
-            <div key={i} className={`ld-msg${ia ? " ia" : ""}`}>
+            <div key={i} className={`ld-msg${ia ? " ia" : ""}${f.tipo === "passe" ? " ld-passe" : ""}`}>
               {ia ? (
                 <span className="ld-ab ld-iaav" aria-hidden>
                   <IconeCoracao tamanho={16} />
