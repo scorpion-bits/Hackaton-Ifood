@@ -57,3 +57,11 @@ def test_bug14_emoji_de_comida_vira_a_comida():
     assert [i.consultas[0] for i in duas] == ["hambúrguer", "sorvete"]
     assert all(i.orcamento_max == 40 for i in duas)
     assert normalizar("quero 🍣") == "quero  sushi "
+
+
+def test_ia_doce_ganha_a_consulta_da_categoria():
+    # ia-real-3: a IA devolveu só "doce" e a busca não achou nada; "sobremesa" casa com as sorveterias
+    from app.match.interprete import validar_resposta_llm
+    dados = {"itens": [{"consultas": ["doce"], "verticais": ["RESTAURANT"], "vontades": ["doce"]}]}
+    intencoes = validar_resposta_llm(dados, Desejo("p", "P", "doce qualquer, chega rápido", None, []))
+    assert intencoes[0].consultas == ["doce", "sobremesa"]
