@@ -63,6 +63,7 @@ async def test_monta_dois_carrinhos_com_valores_do_getcart():
             real["subtotal"], real["deliveryFee"], real["discount"], real["total"])
         assert c["loja_nome"] == real["merchantName"]
         assert c["pagamento"]["id"] == "pm-demo-credito" == real["paymentMethod"]["id"]  # 1º crédito
+        assert c["pagamento"]["tipo"] == "CREDIT_CARD" and c["pagamento"]["offline"] is False  # C16: campos novos
         assert c["eta_min"] == _lojas()[c["loja_id"]]["tempo_entrega_min"]
         assert c["demonstracao"] is True
         assert real["deliveryMethod"]["id"] == "DEFAULT"  # recomendado em agentHints

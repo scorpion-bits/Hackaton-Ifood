@@ -331,7 +331,9 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
                 for item in _itens_do_menu(menu):
                     guardar(item)
 
-    if not coletados and not intencao.consultas:  # pedido genérico ("qualquer coisa"): explora perto do endereço
+    # Pedido genérico ("qualquer coisa") OU as consultas do slot não trouxeram nenhum candidato válido (C16):
+    # explora perto do endereço, na vertical pedida. O juiz dá nota baixa e o motor avisa "a opção mais próxima é X".
+    if bons() == 0:
         args: dict[str, Any] = {"resultKind": "ITEM", "limit": LIMITE_BUSCA, **geo}
         if intencao.verticais:
             args["merchantType"] = intencao.verticais[0]
