@@ -571,3 +571,24 @@ async def test_sem_combo_na_loja_os_itens_continuam_avulsos():
     r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
     melhor = r["combinacoes"][0]
     assert melhor["cobertos"] == {} and len(melhor["escolhas"]) == 2
+
+
+async def test_busca_na_loja_vai_nas_lojas_de_melhor_nota_e_preco_do_primeiro_item(monkeypatch):
+    """Bug 30 (P8, MCP real): a pizza escolhida (a mais barata, nota igual) era de uma loja que vinha em 3º lugar na
+    busca; o refri nunca era procurado nela. Agora as lojas do 1º item são ordenadas por nota e preço."""
+    def c(slot, loja, preco, nota=0.9):
+        return Candidato(slot, loja, loja, f"{loja}-{slot}", "Pizza", preco, 40, "RESTAURANT", False, nota=nota)
+
+    principal = [c("ana", "L1", 40.0), c("ana", "L2", 35.0), c("ana", "L3", 30.0), c("ana", "L4", 8.99),
+                 c("ana", "L5", 5.0, nota=0.3)]
+    chamadas: list[str] = []
+
+    async def espiao(cliente, intencao, endereco, loja_id, vertical=""):
+        chamadas.append(loja_id)
+        return [], {}
+
+    monkeypatch.setattr(motor_mod, "buscar_na_loja", espiao)
+    slots = [(Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana", consultas=["pizza"])),
+             (Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana#2", consultas=["refri"]))]
+    await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
+    assert chamadas == ["L4", "L3", "L2"]
