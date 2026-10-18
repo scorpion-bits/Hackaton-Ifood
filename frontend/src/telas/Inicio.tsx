@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { chaveOrg, chaveUltimaSala, gravarLocal, lerLocal, chaveEu, ultimaSalaOrg, api, type Eu } from "../api";
 import BarraInferior from "../componentes/BarraInferior";
 import Icone from "../componentes/Icone";
@@ -111,6 +111,22 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
 
 export default function Inicio() {
   const [criando, setCriando] = useState(false);
+  // null = ainda não sei (a resposta de /api/saude não chegou ou falhou); só afirmo "Demonstração" quando o servidor diz.
+  const [demo, setDemo] = useState<boolean | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .saude()
+      .then((s) => {
+        if (vivo && typeof s.demonstracao === "boolean") setDemo(s.demonstracao);
+      })
+      .catch(() => {
+        /* sem resposta: o endereço fica genérico */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
   const salaSalva = ultimaSalaOrg();
   const [toast, avisar] = useToast();
   const fora = () => avisar(MSG_FORA_PROTOTIPO);
@@ -129,7 +145,8 @@ export default function Inicio() {
             <span>
               <small>Entregar em</small>
               <b>
-                Demonstração — São Carlos <Icone nome="baixo" tamanho={16} />
+                {demo === true ? "Demonstração — São Carlos" : demo === false ? "Endereço da sua conta iFood" : "Endereço de entrega"}{" "}
+                <Icone nome="baixo" tamanho={16} />
               </b>
             </span>
           </div>

@@ -38,7 +38,9 @@ export default function EhUmMatch({
   onContinuar: () => void;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
+  const raiz = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const antes = document.activeElement as HTMLElement | null;
     ref.current?.focus();
     try {
       navigator.vibrate?.([40, 40, 80]);
@@ -47,13 +49,34 @@ export default function EhUmMatch({
     }
     const f = (e: KeyboardEvent) => {
       if (e.key === "Escape") onContinuar();
+      if (e.key === "Tab") {
+        // trava de foco: Tab e Shift+Tab ficam entre os botões do diálogo
+        const bt = Array.from(raiz.current?.querySelectorAll<HTMLElement>("button:not([disabled])") ?? []);
+        if (!bt.length) return;
+        const primeiro = bt[0];
+        const ultimo = bt[bt.length - 1];
+        const atual = document.activeElement;
+        if (!raiz.current?.contains(atual)) {
+          e.preventDefault();
+          primeiro.focus();
+        } else if (e.shiftKey && atual === primeiro) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && atual === ultimo) {
+          e.preventDefault();
+          primeiro.focus();
+        }
+      }
     };
     window.addEventListener("keydown", f);
-    return () => window.removeEventListener("keydown", f);
+    return () => {
+      window.removeEventListener("keydown", f);
+      if (antes && document.contains(antes)) antes.focus?.();
+    };
   }, [onContinuar]);
 
   return (
-    <div className="ld-raiz ld-match" role="dialog" aria-modal="true" aria-labelledby="ld-match-titulo">
+    <div ref={raiz} className="ld-raiz ld-match" role="dialog" aria-modal="true" aria-labelledby="ld-match-titulo">
       <div className="ld-coracoes" aria-hidden="true">
         {CORACOES.map((c, i) => (
           <span key={i} className="ld-fh" style={{ left: `${c.esq}%`, animationDelay: `${c.atraso}s` }}>

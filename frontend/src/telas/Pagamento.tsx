@@ -24,7 +24,7 @@ const FORMA_ROTULO: Record<string, string> = {
   organizador: "Organizador cobre",
 };
 
-function PixQr({ codigo, organizadorNome }: { codigo: string; organizadorNome: string }) {
+function PixQr({ codigo, organizadorNome, demo }: { codigo: string; organizadorNome: string; demo: boolean }) {
   const [img, setImg] = useState("");
   const [copiado, setCopiado] = useState(false);
   useEffect(() => {
@@ -43,6 +43,12 @@ function PixQr({ codigo, organizadorNome }: { codigo: string; organizadorNome: s
   }
   return (
     <div className="pix centro">
+      {demo && (
+        <p className="alerta alerta-demo" role="alert">
+          <strong>Demonstração — não pague:</strong> o pedido é fictício. Este código Pix é real e pagável, use só para
+          mostrar como a vaquinha funciona.
+        </p>
+      )}
       {img ? (
         <img className="qr" src={img} alt="QR code do Pix" width={200} height={200} />
       ) : (
@@ -78,19 +84,23 @@ function MinhaParte({
   const [ocupado, setOcupado] = useState(false);
   const [trocando, setTrocando] = useState(false);
   const [pixLocal, setPixLocal] = useState("");
+  // Forma escolhida agora neste aparelho: aparece na hora, sem esperar o próximo polling (2 s).
+  const [formaLocal, setFormaLocal] = useState<FormaPagamento | null>(null);
   const [cartaoAberto, setCartaoAberto] = useState(false);
 
   const status = pag?.status ?? "pendente";
   const pago = status === "pago";
-  const mostrarFormas = !pago && (!pag?.forma || trocando);
+  const forma = formaLocal ?? pag?.forma;
+  const mostrarFormas = !pago && (!forma || trocando);
   const pix = pag?.pix ?? pixLocal;
 
-  async function pagar(forma: FormaPagamento) {
+  async function pagar(escolhida: FormaPagamento) {
     setOcupado(true);
     onErro("");
     try {
-      const r = await api.pagar(salaId, parte.participante_id, forma);
+      const r = await api.pagar(salaId, parte.participante_id, escolhida);
       if (r.pix_copia_e_cola) setPixLocal(r.pix_copia_e_cola);
+      setFormaLocal(escolhida);
       setTrocando(false);
       setCartaoAberto(false);
     } catch (x) {
@@ -117,15 +127,17 @@ function MinhaParte({
         </p>
       )}
 
-      {!pago && pag?.forma === "pix" && pix && !trocando && <PixQr codigo={pix} organizadorNome={nomeOrg} />}
-      {!pago && pag?.forma === "dinheiro" && !trocando && (
+      {!pago && forma === "pix" && pix && !trocando && (
+        <PixQr codigo={pix} organizadorNome={nomeOrg} demo={sala.demonstracao} />
+      )}
+      {!pago && forma === "dinheiro" && !trocando && (
         <p className="aviso">Entregue o dinheiro em mãos a {nomeOrg}. Ele confirma ao receber.</p>
       )}
-      {!pago && pag?.forma && status === "aguardando_confirmacao" && !trocando && (
+      {!pago && forma && status === "aguardando_confirmacao" && !trocando && (
         <p className="suave">Aguardando {nomeOrg} confirmar o recebimento.</p>
       )}
 
-      {!pago && pag?.forma && !trocando && (
+      {!pago && forma && !trocando && (
         <button type="button" className="secundario" onClick={() => setTrocando(true)}>
           Trocar forma de pagamento
         </button>
@@ -362,6 +374,24 @@ export default function Pagamento({
   const [erro, setErro] = useState("");
   const [confirmarEnvio, setConfirmarEnvio] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  // Conta de teste no modo real: o servidor avisa que o envio real está desligado (o pedido para no carrinho).
+  // Só `=== false` muda a tela; se o campo não vier, tudo segue como antes.
+  const [envioDesligado, setEnvioDesligado] = useState(false);
+  useEffect(() => {
+    if (!organizador || sala.demonstracao) return;
+    let vivo = true;
+    api
+      .saude()
+      .then((s) => {
+        if (vivo) setEnvioDesligado(s.envio_real_permitido === false);
+      })
+      .catch(() => {
+        /* sem resposta: não muda nada */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [organizador, sala.demonstracao]);
 
   const carrinhos = sala.carrinhos ?? [];
   const n = carrinhos.length;
@@ -479,7 +509,9 @@ export default function Pagamento({
           />
           <p className="consent">
             {podeEnviar
-              ? "Ao deslizar, você abre o resumo final. Nada é enviado antes do seu ok."
+              ? envioDesligado
+                ? "Conta de teste: o envio real está desligado; o pedido para no carrinho."
+                : "Ao deslizar, você abre o resumo final. Nada é enviado antes do seu ok."
               : "O pedido só sai depois que 100% estiver pago."}
           </p>
           {podeEnviar && (
@@ -499,6 +531,11 @@ export default function Pagamento({
       {confirmarEnvio && (
         <Folha titulo="Confirmar envio" onFechar={() => setConfirmarEnvio(false)} travada={enviando}>
           {sala.demonstracao && <p className="mini-selo selo-folha">DEMONSTRAÇÃO · nenhum pedido real</p>}
+          {envioDesligado && (
+            <p className="alerta alerta-demo" role="note">
+              <strong>Conta de teste</strong> O envio real está desligado; o pedido para no carrinho.
+            </p>
+          )}
           <ul className="resumo-env">
             {carrinhos.map((c) => (
               <li key={c.cart_id}>
@@ -513,7 +550,13 @@ export default function Pagamento({
           </ul>
           <div className="folha-acoes">
             <button type="button" className="primario" disabled={enviando} onClick={enviar}>
-              {enviando ? "Enviando…" : `Confirmo enviar ${n} ${n === 1 ? "pedido" : "pedidos"} ao iFood`}
+              {envioDesligado
+                ? enviando
+                  ? "Montando…"
+                  : "Ver como ficaria"
+                : enviando
+                  ? "Enviando…"
+                  : `Confirmo enviar ${n} ${n === 1 ? "pedido" : "pedidos"} ao iFood`}
             </button>
             <button type="button" className="secundario" disabled={enviando} onClick={() => setConfirmarEnvio(false)}>
               Recusar

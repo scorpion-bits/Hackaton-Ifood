@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, lerToken } from "../api";
 import type { EstadoSala, ModoPagamento } from "../tipos";
 import CartaoPessoa, { brl } from "../componentes/CartaoPessoa";
@@ -48,6 +48,11 @@ export default function Resultado({
   const [montando, setMontando] = useState(false);
   const [erro, setErro] = useState("");
 
+  // Trocou de fase interna (disputa -> opções -> como pagar): volta ao topo, sem herdar a rolagem anterior.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [fase]);
+
   const combinacoes = res?.combinacoes ?? [];
   const meuPid = lerPid(salaId);
 
@@ -74,7 +79,7 @@ export default function Resultado({
   }
 
   if (fase === "leilao" && leilao) {
-    return <Leilao leilao={leilao} rastro={sala.rastro} onFim={fimLeilao} />;
+    return <Leilao leilao={leilao} rastro={sala.rastro} organizador={organizador} onFim={fimLeilao} />;
   }
 
   const comb = combinacoes[Math.min(escolhida, Math.max(combinacoes.length - 1, 0))];
