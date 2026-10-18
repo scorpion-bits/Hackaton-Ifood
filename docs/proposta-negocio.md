@@ -35,20 +35,9 @@ noite, almoço do time no trabalho, jantar de família no domingo, jogo do Brasi
 | **Convidados** | Fila de mensagens, "tanto faz", alguém cede o restaurante que queria ou fica com o que não queria; quem tem restrição (vegetariano, sem lactose) sobra |
 
 **Não existe número público brasileiro** sobre pedido de delivery em grupo (frequência, tempo para decidir,
-desistência). Procuramos e não achamos (ver `docs/pesquisa-mercado.md` §4). Por isso fizemos nossa própria pesquisa.
-
-> **Pesquisa da equipe, SEMCOMP São Carlos, 17–18/10/2026, n = [preencher], n que já pediu em grupo = [preencher].**
-> Amostra de conveniência (participantes de um evento de computação), anônima, não representativa.
-> - Pediram delivery em grupo no último mês: [preencher]%
-> - Levaram **mais de 15 min** para decidir: [preencher]%
-> - **Cada um pediu separado** no próprio app: [preencher]%
-> - Tiveram **atrito** (alguém desistiu, ficou com o que não queria ou o grupo desistiu): [preencher]%
-> - Alguém **queria outro restaurante**: [preencher]%
-> - Alguém **adiantou e cobrou Pix depois** (ou ficou faltando dinheiro): [preencher]%
-> - Intenção de uso do Match: média [preencher] de 5; notas 4 ou 5: [preencher]%
-> - Principais objeções: [preencher]
->
-> (Se n < 20, trocar porcentagens por "X de Y pessoas".)
+desistência). Procuramos e não achamos (ver `docs/pesquisa-mercado.md` §4). Planejamos uma pesquisa rápida com os
+participantes do evento (roteiro em `docs/pesquisa-usuarios.md`), mas ela **não foi aplicada** a tempo: medir essa dor
+com usuários reais é o primeiro passo do piloto (§5). Por isso não citamos nenhum número brasileiro sobre pedido em grupo.
 
 **Apoio de fora (outros países, encomendados, não são do Brasil):** no Reino Unido, quase metade dos entrevistados diz
 que escolher onde comer em grupo leva em média 25 minutos (OnePoll para Meerkat Meals, 2018, amostra não informada;
@@ -99,8 +88,8 @@ Diferenciais em uma linha cada:
 
 **(a) Pedido de grupo que hoje não acontece ou vira pedidos picados.** *Hipótese a validar:* quando o grupo não se
 entende, ou ninguém pede, ou cada um pede separado (com N taxas e N entregas), ou o grupo vai comer fora. O Match
-transforma isso em um pedido organizado. Validação: indicadores de atrito e "cada um pediu separado" da nossa
-pesquisa (§2) e o piloto (§5).
+transforma isso em um pedido organizado. Validação: no piloto (§5), medir atrito e "cada um pediu separado" antes e
+depois do Match (a pesquisa planejada no evento não foi aplicada, §2).
 
 **(b) Mais lojas por sessão.** Um grupo com vontades diferentes pode fechar em 2 ou 3 lojas em vez de alguém ceder.
 *Hipótese:* mais lojas atendidas por ocasião, sobretudo lojas de nicho (vegana, sem glúten, sobremesa).

@@ -90,7 +90,7 @@ Complementa (não repete) `docs/planos/etapa-01b-match-estrategia.md` §10–11 
 | Na estreia do Brasil na Copa 2026, pedidos de bebida por delivery subiram 60%+ (dados iFood e 99Food via PEGN) | +60% | [Portal Tela](https://www.portaltela.com/noticias/2026/06/16/pedidos-de-bebidas-em-delivery-sobem-mais-de-60-na-estreia-do-brasil-na-copa/) | 16/06/2026 | resumo de busca (agregador; original da PEGN não lido) |
 | iFood testa "Combinar pagamentos" (2 formas no mesmo pedido); pedido em grupo no iFood não foi anunciado | — | [Tecnoblog](https://tecnoblog.net/noticias/ifood-testa-opcao-de-dividir-pagamento-com-outra-pessoa/) (já na 01b) | ~06/2026 | secundária |
 
-**Conclusão:** não existe número público brasileiro sobre pedido em grupo. Por isso a **pesquisa da equipe** (`docs/pesquisa-usuarios.md`) é a única fonte do problema no Brasil. Os dados de fora (25 min no Reino Unido, 20 min nos Emirados) só como apoio, citando país, ano e quem encomendou.
+**Conclusão:** não existe número público brasileiro sobre pedido em grupo. A **pesquisa da equipe** (`docs/pesquisa-usuarios.md`) foi planejada, mas **não foi aplicada** no evento; por isso não citamos número brasileiro do problema. Os dados de fora (25 min no Reino Unido, 20 min nos Emirados) só como apoio, citando país, ano e quem encomendou.
 
 ---
 
