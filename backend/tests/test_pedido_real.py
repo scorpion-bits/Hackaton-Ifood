@@ -83,18 +83,96 @@ async def test_real_escolhe_dinheiro_na_entrega_entre_pix_e_credito():
     cli = ClienteFalso("real", {"methods": [PIX, CREDITO_ONLINE, DINHEIRO]})
     [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")
     assert _pagamento_enviado(cli) == "pm-cash"
-    assert carrinho["pagamento"] == {"id": "pm-cash", "nome": "Dinheiro", "tipo": "CASH", "offline": True}
+    assert carrinho["pagamento"] == {"id": "pm-cash", "nome": "Dinheiro", "tipo": "CASH", "offline": True,
+                                     "teste": False}
     assert not carrinho["avisos"]
 
 
-async def test_real_sem_forma_sem_cobranca_para_antes_do_setcartpayment():
+async def test_real_sem_forma_aceitavel_monta_carrinho_e_bloqueia_so_o_envio():
+    """Bug 18: só Pix + cartão comum → carrinho montado até o getCart (taxa/total reais), sem setCartPayment."""
     cli = ClienteFalso("real", {"methods": [PIX, CREDITO]})
-    with pytest.raises(ErroCheckout) as erro:
-        await montar_carrinhos(cli, _comb(), "end-1")
-    assert erro.value.codigo == "sem_pagamento_sem_cobranca" and erro.value.loja_id == "loja-1"
-    assert erro.value.mensagem.startswith(MSG_SEM_PAGAMENTO_SEGURO) and "Loja Real" in erro.value.mensagem
-    assert "listPaymentMethods" in cli.tools
+    [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")  # não levanta
+    assert "listPaymentMethods" in cli.tools and "getCart" in cli.tools
     assert "setCartPayment" not in cli.tools and "submitOrder" not in cli.tools
+    assert (carrinho["subtotal"], carrinho["taxa"], carrinho["total"]) == (25.0, 5.0, 30.0)
+    pag = carrinho["pagamento"]
+    assert pag["codigo"] == "sem_pagamento_sem_cobranca" and pag["bloqueado"] is True
+    assert pag["offline"] is False and pag["teste"] is False and pag["id"] is None and pag["nome"]
+    assert any(MSG_SEM_PAGAMENTO_SEGURO in a for a in carrinho["avisos"])
+
+    pedidos = await enviar_pedidos(cli, [carrinho], consentimento=True)
+    assert pedidos == [{"loja_id": "loja-1", "loja_nome": "Loja Real", "status": "falhou",
+                        "erro": MSG_SEM_PAGAMENTO_SEGURO, "codigo": "sem_pagamento_sem_cobranca"}]
+    assert "submitOrder" not in cli.tools
+
+
+# ---------- cartão de teste da conta de teste (decisão do Milan, 18/10 01h45) ----------
+CARTAO_TESTE = {"id": "pm-teste", "name": "Cartão de Teste 1111", "type": "CREDIT_CARD", "brand": "VISA"}
+
+
+async def test_real_usa_cartao_de_teste_quando_nao_ha_forma_offline():
+    cli = ClienteFalso("real", {"methods": [PIX, CREDITO, CARTAO_TESTE], "agentHints": {"recommendedMethodId": "pm-pix"}})
+    [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")
+    assert _pagamento_enviado(cli) == "pm-teste"
+    pag = carrinho["pagamento"]
+    assert pag["teste"] is True and pag["offline"] is False and pag["id"] == "pm-teste"
+    assert pag["nome"] == "Cartão de Teste 1111 (conta de teste do iFood, sem cobrança real)"
+    assert "codigo" not in pag
+    # envio liberado (com consentimento; no cliente real ainda exige IFOOD_MCP_PERMITIR_ENVIO=true)
+    pedidos = await enviar_pedidos(cli, [carrinho], consentimento=True)
+    assert pedidos[0]["status"] == "enviado"
+
+
+async def test_real_dinheiro_ganha_do_cartao_de_teste():
+    cli = ClienteFalso("real", {"methods": [CARTAO_TESTE, PIX, DINHEIRO]})
+    [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")
+    assert _pagamento_enviado(cli) == "pm-cash" and carrinho["pagamento"]["teste"] is False
+
+
+@pytest.mark.parametrize("forma, esperado", [
+    (CARTAO_TESTE, True),
+    ({"id": "a", "name": "Test card 4242", "method": "CREDIT"}, True),
+    ({"id": "a", "description": "Cartão de teste", "type": "DEBIT_CARD"}, True),
+    (CREDITO, False),                                                  # cartão comum: proibido
+    ({"id": "a", "name": "Pix de teste", "type": "PIX"}, False),       # Pix nunca
+    ({"id": "a", "name": "Teste", "type": "MEAL_VOUCHER"}, False),     # não é cartão
+    ({"id": "a", "name": "Cartão Testemunha", "type": "CREDIT_CARD"}, False),  # "teste" tem que ser palavra
+])
+def test_reconhece_so_cartao_de_teste(forma, esperado):
+    assert checkout.cartao_de_teste(forma) is esperado
+
+
+async def test_real_cartao_de_teste_nao_envia_se_o_getcart_mostra_outro_cartao():
+    cli = ClienteFalso("real", {"methods": [PIX, CARTAO_TESTE]})
+    carrinhos = await montar_carrinhos(cli, _comb(), "end-1")
+    cli.carrinho_extra = {"paymentMethod": {"id": "pm-cred2", "name": "Visa •••• 9999", "type": "CREDIT_CARD"}}
+    pedidos = await enviar_pedidos(cli, carrinhos, consentimento=True)
+    assert pedidos[0]["status"] == "falhou" and pedidos[0]["erro"] == MSG_ENVIO_SEM_GARANTIA
+    cli.carrinho_extra = {"paymentMethod": {"id": "pm-teste", "type": "CREDIT_CARD"}}  # o mesmo cartão (pelo id)
+    pedidos = await enviar_pedidos(cli, carrinhos, consentimento=True)
+    assert pedidos[0]["status"] == "enviado"
+
+
+async def test_real_cartao_comum_marcado_teste_false_continua_barrado():
+    cli = ClienteFalso("real", {"methods": [PIX, CARTAO_TESTE]})
+    [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")
+    adulterado = {**carrinho, "pagamento": {**carrinho["pagamento"], "teste": False}}
+    pedidos = await enviar_pedidos(cli, [adulterado], consentimento=True)
+    assert pedidos[0]["erro"] == MSG_ENVIO_SEM_GARANTIA and "submitOrder" not in cli.tools
+
+
+def test_demo_nao_muda_com_cartao_de_teste_na_lista():
+    m, aviso, offline = _ler_pagamento({"methods": [PIX, CARTAO_TESTE, CREDITO]}, None, "demo")
+    assert m["id"] == "pm-teste" and offline is False  # 1º crédito, como sempre
+
+
+async def test_getcart_com_summary_no_formato_real_suposto():
+    """Bug 20: valores do getCart final; aceita `summary.subtotalAmount/totalAmount` (nomes do addItemToCart real)."""
+    cli = ClienteFalso("real", {"methods": [DINHEIRO]})
+    cli.carrinho_extra = {"subtotal": None, "deliveryFee": None, "discount": None, "total": None,
+                          "summary": {"subtotalAmount": 25.0, "deliveryFeeAmount": 9.99, "totalAmount": 34.99}}
+    [carrinho] = await montar_carrinhos(cli, _comb(), "end-1")
+    assert (carrinho["subtotal"], carrinho["taxa"], carrinho["desconto"], carrinho["total"]) == (25.0, 9.99, 0.0, 34.99)
 
 
 async def test_real_ignora_recomendacao_de_pix():
@@ -297,3 +375,77 @@ async def test_browseoffers_com_erro_nao_quebra_a_busca():
 
     cli = Quebrada()
     assert await buscar_detalhado(cli, Intencao("ana", consultas=["feijoada"]), ENDERECO) == ([], {})
+
+
+# ---------- bug 18 pela API da sala: escolher devolve o carrinho; só o envio é barrado (409, não 502) ----------
+def test_api_sem_pagamento_aceitavel_mostra_carrinho_e_envio_da_409(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app import rotas_match
+    from app.main import app
+    from test_salas import Sala
+
+    monkeypatch.setenv("IFOOD_MCP_MODO", "demo")
+    original = rotas_match.checkout.montar_carrinhos
+    vistos: list[dict] = []
+
+    async def sem_forma(cliente, combinacao, endereco_id, pagamento_id=None):
+        vistos.append(combinacao)
+        carrinhos = await original(cliente, combinacao, endereco_id, pagamento_id)
+        bloqueado = checkout._info_pagamento(None, {})
+        return [{**c, "pagamento": bloqueado} for c in carrinhos]
+
+    async def envio_barrado(cliente, carrinhos, consentimento, ja_enviados=None):
+        c = carrinhos[0]
+        return [{"loja_id": c["loja_id"], "loja_nome": c["loja_nome"], "status": "falhou",
+                 "erro": MSG_SEM_PAGAMENTO_SEGURO, "codigo": "sem_pagamento_sem_cobranca"}]
+
+    monkeypatch.setattr(rotas_match.checkout, "montar_carrinhos", sem_forma)
+    monkeypatch.setattr(rotas_match.checkout, "enviar_pedidos", envio_barrado)
+    with TestClient(app) as c:
+        s = Sala(c)
+        s.pronta_para_escolher()
+        r = s.escolher("junto")
+        assert r.status_code == 200, r.text
+        carrinhos = r.json()["carrinhos"]
+        assert carrinhos and all(k["total"] > 0 and k["taxa"] >= 0 for k in carrinhos)
+        assert all(k["pagamento"]["codigo"] == "sem_pagamento_sem_cobranca" for k in carrinhos)
+        assert vistos[0]["geo"] == {}  # demo: sem getItem, o roteiro não muda
+        from app.match import salas
+        assert "geo" not in salas.obter(s.id)["combinacao_escolhida"]  # não vai para a sala
+
+        r = s.enviar()
+        assert r.status_code == 409 and MSG_SEM_PAGAMENTO_SEGURO in r.json()["detail"]
+        assert s.estado()["pedidos"] == []
+
+
+async def test_geo_do_checkout_no_real_vem_do_mock_ou_do_listaddresses():
+    from types import SimpleNamespace as NS
+
+    from app import rotas_match
+    from app.match.motor import ID_ENDERECO_MOCK
+
+    class Cli:
+        modo = "real"
+
+        def __init__(self, resp):
+            self.resp, self.chamadas = resp, []
+
+        async def chamar(self, tool, **args):
+            self.chamadas.append(tool)
+            return self.resp
+
+    sala_mock = {"resultado": {"endereco": {"id": ID_ENDERECO_MOCK}}}
+    cli = Cli({})
+    geo = await rotas_match._geo(sala_mock, NS(ifood_mcp_endereco_mock="-22.01,-47.89"), cli)
+    assert geo == {"latitude": -22.01, "longitude": -47.89} and cli.chamadas == []
+
+    enderecos = {"addresses": [{"addressId": "end-9", "coordinates": {"latitude": -22.1, "longitude": -47.8}}]}
+    cli = Cli(enderecos)
+    sala = {"resultado": {"endereco": {"id": "end-9"}}}
+    assert await rotas_match._geo(sala, NS(ifood_mcp_endereco_mock=""), cli) == {"latitude": -22.1, "longitude": -47.8}
+    assert await rotas_match._geo({"resultado": {"endereco": {"id": "outro"}}}, NS(ifood_mcp_endereco_mock=""),
+                                  Cli(enderecos)) == {}
+    demo = Cli(enderecos)
+    demo.modo = "demo"
+    assert await rotas_match._geo(sala, NS(ifood_mcp_endereco_mock=""), demo) == {} and demo.chamadas == []

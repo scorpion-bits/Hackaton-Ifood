@@ -47,6 +47,14 @@ GLUTEN = ["pão", "trigo", "massa", "macarrão", "empanado", "empanada", "crouto
           "espaguete", "farinha", "cerveja"]
 PERECIVEIS = ["sorvete", "gelato", "açaí", "picolé", "sundae", "milkshake", "sorbet"]
 
+# Bug 19: o browseOffers real trouxe "Rodeio R$ 0,90" (molho do BK) como prato. Item abaixo deste preço não é
+# oferecido como prato (o mais barato do demo custa R$ 4,49; uma esfiha real, R$ 6,00).
+PRECO_MIN_PRATO = 2.50
+# Seção/categoria do cardápio (ou começo do nome) que indica adicional, não prato. "molho" sozinho NÃO entra: o demo
+# tem "Molho de tomate 340 g" (mercado) na categoria "Molhos".
+SECOES_ADICIONAL = ("adicional", "adicionais", "extra", "extras", "complemento", "complementos", "sache", "saches",
+                    "turbine", "turbinar", "monte seu", "personalize")
+
 
 # ---------- leitura de campos ----------
 _CHAVES_LISTA_ENDERECO = ("addresses", "enderecos", "items", "results", "data", "content", "userAddresses")
@@ -203,6 +211,51 @@ def _ler_loja(r: dict) -> dict:
     }
 
 
+def _parece_adicional(nome: str, categoria: str, preco: float) -> bool:
+    """Bug 19: molho/adicional barato não é prato. Preço muito baixo, seção de adicionais ou nome "Adicional …"."""
+    if preco < PRECO_MIN_PRATO:
+        return True
+    secao = normalizar(categoria).strip()
+    if secao and any(secao == p or secao.startswith(p + " ") for p in SECOES_ADICIONAL):
+        return True
+    return normalizar(nome).strip().startswith(("adicional ", "extra "))
+
+
+def opcoes_obrigatorias(r: dict) -> dict | None:
+    """Grupos de opção obrigatórios de um item (`optionGroups` do getItem real, conferido em docs/mcp-real/getItem.json).
+
+    Preenche cada grupo com `minSelections >= 1` com as opções MAIS BARATAS (`additionalPrice`) até o mínimo, no
+    formato de `addItemToCart.options[]` do schema real (`{optionId, quantity}`, docs/mcp-real/tools.json).
+    Devolve None se a resposta não traz `optionGroups` (não dá para saber). Saída:
+    {"opcoes": [...], "extra": soma dos additionalPrice ou None se algum faltar, "nomes": [...], "completo": bool}.
+    """
+    grupos = r.get("optionGroups")
+    if not isinstance(grupos, list):
+        return None
+    opcoes: list[dict] = []
+    nomes: list[str] = []
+    extra: float | None = 0.0
+    completo = True
+    for g in grupos:
+        if not isinstance(g, dict):
+            continue
+        minimo = g.get("minSelections")
+        if isinstance(minimo, bool) or not isinstance(minimo, (int, float)) or minimo < 1:
+            continue
+        validas = [o for o in g.get("options") or [] if isinstance(o, dict) and o.get("optionId")]
+        validas.sort(key=lambda o: _numero(o.get("additionalPrice")) if _numero(o.get("additionalPrice")) is not None
+                     else float("inf"))
+        escolhidas = validas[:int(minimo)]
+        if len(escolhidas) < int(minimo):
+            completo = False
+        for o in escolhidas:
+            opcoes.append({"optionId": str(o["optionId"]), "quantity": 1})
+            nomes.append(str(o.get("name") or o["optionId"]))
+            preco = _numero(o.get("additionalPrice"))
+            extra = None if preco is None or extra is None else round(extra + preco, 2)
+    return {"opcoes": opcoes, "extra": extra, "nomes": nomes, "completo": completo}
+
+
 def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
     """Item normalizado a partir de um resultado ITEM do searchOffers/browseOffers ou do menu do getMerchant."""
     loja = loja or _ler_loja(r)
@@ -215,6 +268,14 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         return None
     descricao = r.get("description") or r.get("itemDescription") or ""
     categoria = r.get("category") or r.get("menuSection") or r.get("categoria") or ""
+    if _parece_adicional(str(nome), str(categoria), preco):
+        return None
+    obrigatorias = opcoes_obrigatorias(r)
+    # Bug 17: com os grupos à vista (a busca real não traz; getItem traz), item cuja opção obrigatória custa a mais
+    # (ou de preço desconhecido) sai: o preço mostrado não seria o do carrinho. Opção obrigatória grátis fica (o
+    # checkout preenche).
+    if obrigatorias and obrigatorias["opcoes"] and (not obrigatorias["completo"] or obrigatorias["extra"] != 0):
+        return None
     texto = normalizar(" ".join([nome, descricao, categoria]))
     perecivel = r.get("perecivel")
     if not isinstance(perecivel, bool):  # campo do demo; no real, inferido do texto da própria tool

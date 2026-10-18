@@ -4,9 +4,15 @@ ATENÇÃO: `submitOrder` faz o pedido de verdade (no modo real). Por isso `envia
 `consentimento=True`, que a API só passa depois da confirmação humana na tela (e 100% pago no modo separado).
 
 Modo real = conta de teste (C16): o pedido não vai ao restaurante, mas um Pix pago NÃO tem reembolso. Por isso, no
-modo real, o carrinho só recebe forma de pagamento que não cobra online (dinheiro / pagamento na entrega / offline);
-Pix e cartão online nunca são escolhidos, nem se o `agentHints` recomendar. Sem forma assim, a montagem para antes do
-`setCartPayment` com `ErroCheckout` legível, e `enviar_pedidos` recusa carrinho sem essa garantia.
+modo real, o carrinho só recebe: (1) forma que não cobra online (dinheiro / na entrega / offline); senão (2) o
+"Cartão de Teste" da conta de teste do iFood (decisão do Milan, 18/10 01h45: cartão cujo nome diz "teste"/"test";
+cartão comum continua proibido); senão (3) nenhuma — o carrinho é montado até o `getCart` (subtotal/taxa/total reais
+na tela) sem `setCartPayment`, e só o envio fica bloqueado (`pagamento.codigo = "sem_pagamento_sem_cobranca"`).
+Pix nunca, nem se o `agentHints` recomendar. `enviar_pedidos` recusa carrinho sem essa garantia, e o `submitOrder`
+real continua exigindo IFOOD_MCP_PERMITIR_ENVIO=true (no cliente) + consentimento na tela.
+
+Itens com grupo de opção obrigatório (bug 17): no modo real, 1 `getItem` por item escolhido; cada grupo com
+`minSelections >= 1` recebe as opções mais baratas, no formato `options[{optionId, quantity}]` do schema real.
 
 Este é o ÚNICO lugar que lê os campos das tools de carrinho/pedido (cartId, cartItemId, deliveryFee,
 agentHints, ...). Argumentos conferidos com o schema real (docs/mcp-real/tools.json): createCart com `items`,
@@ -23,10 +29,14 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from ..ifood_mcp.cliente import ErroMCP
+from .busca import opcoes_obrigatorias
 from .modelos import Candidato, Combinacao
 
 TIPOS_CREDITO = ("CREDIT", "CREDIT_CARD")
 MSG_SEM_PAGAMENTO_SEGURO = "A conta de teste não tem forma de pagamento sem cobrança; o pedido para no carrinho."
+MSG_SEM_PAGAMENTO_CURTO = "Nenhuma forma sem cobrança na conta de teste: envio bloqueado"
+SUFIXO_CARTAO_TESTE = " (conta de teste do iFood, sem cobrança real)"
+CODIGO_SEM_PAGAMENTO = "sem_pagamento_sem_cobranca"
 MSG_ENVIO_SEM_GARANTIA = ("Pedido não enviado: a forma de pagamento deste carrinho pode cobrar online "
                           "(só enviamos com pagamento na entrega na conta de teste).")
 
@@ -111,9 +121,13 @@ def _agrupar_por_loja(linhas: list[_Linha]) -> dict[str, list[_Linha]]:
 # ---------- leitura dos campos das tools ----------
 # Schemas conferidos com docs/mcp-real/tools.json (18/10). Respostas de carrinho de SUCESSO do MCP real ainda não
 # têm amostra (o createCart falhou por falta de `items`): os leitores aceitam o formato do demo e variações próximas.
-def _item_do_carrinho(linha: _Linha) -> dict:
-    """1 item no formato de `createCart.items[]` do MCP real (obrigatórios: itemId, quantity)."""
-    return {"itemId": linha.item_id, "quantity": 1}
+def _item_do_carrinho(linha: _Linha, opcoes: list[dict] | None = None) -> dict:
+    """1 item no formato de `createCart.items[]` do MCP real (obrigatórios: itemId, quantity; `options` só quando o
+    item tem grupo obrigatório — sem opção, vai como sempre foi, formato que o real já aceitou)."""
+    item = {"itemId": linha.item_id, "quantity": 1}
+    if opcoes:
+        item["options"] = opcoes
+    return item
 
 
 def _corpo_carrinho(resp: dict) -> dict:
@@ -265,6 +279,27 @@ def sem_cobranca_online(m: dict, contexto: dict | None = None) -> bool:
     return c["offline"] and not c["pix"] and not c["online"]
 
 
+_CHAVES_NOME_CARTAO = ("name", "displayName", "title", "label", "description", "alias", "nickname", "card")
+_PALAVRAS_TESTE = ("TESTE", "TEST")
+_PALAVRAS_CARTAO = ("CREDIT", "CREDITO", "DEBIT", "DEBITO", "CARD", "CARTAO", "CREDIT CARD", "DEBIT CARD")
+
+
+def _e_cartao(m: dict, contexto: dict | None = None) -> bool:
+    textos = _textos_pag(m, _CHAVES_TEXTO_PAG) + _textos_pag(contexto or {}, _CHAVES_TEXTO_PAG)
+    return _tem(_norm_pag(textos), _PALAVRAS_CARTAO)
+
+
+def cartao_de_teste(m: dict, contexto: dict | None = None) -> bool:
+    """True só para cartão cujo NOME/descrição diz "teste"/"test" (ex.: "Cartão de Teste 1111"), nunca Pix.
+
+    Decisão humana (Milan, 18/10 01h45): na conta de teste do iFood esse cartão não cobra de verdade. Cartão comum
+    ("Visa •••• 9999") continua proibido.
+    """
+    if _classificar_pagamento(m, contexto)["pix"] or not _e_cartao(m, contexto):
+        return False
+    return _tem(_norm_pag(_textos_pag(m, _CHAVES_NOME_CARTAO)), _PALAVRAS_TESTE)
+
+
 def _nome_pagamento(m: dict) -> str:
     for chave in ("name", "displayName", "title", "label", "description"):
         if isinstance(m.get(chave), str) and m[chave].strip():
@@ -285,7 +320,8 @@ def _ler_pagamento(resp: dict, pagamento_id: str | None, modo: str | None = "dem
 
     Demo: `pagamento_id` se existir na lista; senão o 1º crédito; senão o 1º (comportamento de sempre).
     Real (qualquer modo ≠ "demo"): só forma sem cobrança online — `pagamento_id` se for uma delas; senão dinheiro;
-    senão a recomendada em `agentHints` se for uma delas; senão a 1ª delas. Nenhuma → `SemPagamentoSemCobranca`.
+    senão a recomendada em `agentHints` se for uma delas; senão a 1ª delas. Nenhuma → `SemPagamentoSemCobranca`
+    (o cartão de teste é escolhido à parte, em `_escolher_pagamento`).
     """
     lista = _lista_pagamentos(resp)
     if not lista:
@@ -322,39 +358,107 @@ def _ler_pagamento(resp: dict, pagamento_id: str | None, modo: str | None = "dem
     return escolhido, aviso, True
 
 
-def _pagamento_do_carrinho_cobra(resp_carrinho: dict) -> bool:
-    """getCart: a forma gravada no carrinho é Pix ou online? (Sem forma ou sem como saber → False.)"""
-    pm = resp_carrinho.get("paymentMethod") or resp_carrinho.get("payment")
+def _escolher_pagamento(resp: dict, pagamento_id: str | None, modo: str | None) -> tuple[dict | None, str | None, dict]:
+    """(forma ou None, aviso, marcas {offline, teste}). Prioridade no real: offline/dinheiro → cartão de teste → nada."""
+    try:
+        m, aviso, offline = _ler_pagamento(resp, pagamento_id, modo)
+        return m, aviso, {"offline": offline, "teste": False}
+    except SemPagamentoSemCobranca:
+        teste = next((m for m, ctx in _lista_pagamentos(resp) if cartao_de_teste(m, ctx)), None)
+        if teste is None:
+            return None, None, {"offline": False, "teste": False}
+        return teste, None, {"offline": False, "teste": True}
+
+
+def _pagamento_do_carrinho_cobra(resp_carrinho: dict, esperado: dict | None = None) -> bool:
+    """getCart: a forma gravada no carrinho pode cobrar de verdade? (Sem forma ou sem como saber → False.)
+
+    Pix → sempre True. Se o carrinho foi montado com o cartão de teste (`esperado.teste`), só esse cartão passa:
+    outro cartão (ou forma online) → True.
+    """
+    corpo = _corpo_carrinho(resp_carrinho)
+    pm = (resp_carrinho.get("paymentMethod") or resp_carrinho.get("payment")
+          or corpo.get("paymentMethod") or corpo.get("payment"))
     if not isinstance(pm, dict):
         return False
     c = _classificar_pagamento(pm)
-    return c["pix"] or c["online"]
+    if c["pix"]:
+        return True
+    if (esperado or {}).get("teste"):
+        if _id_pagamento(pm) and _id_pagamento(pm) == esperado.get("id"):
+            return False
+        if cartao_de_teste(pm):
+            return False
+        return c["online"] or _e_cartao(pm)
+    return c["online"]
+
+
+def _valor(v: Any) -> float | None:
+    """Número de um campo de valor: 12.5, "12,50" ou {"value"/"amount": ...}. Sem número → None."""
+    if isinstance(v, bool) or v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    if isinstance(v, str):
+        try:
+            return float(v.replace(",", "."))
+        except ValueError:
+            return None
+    if isinstance(v, dict):
+        for k in ("value", "amount", "finalValue"):
+            if k in v:
+                return _valor(v[k])
+    return None
+
+
+def _primeiro_valor(fontes: list[dict], chaves: tuple[str, ...]) -> float | None:
+    for fonte in fontes:
+        for chave in chaves:
+            achado = _valor(fonte.get(chave))
+            if achado is not None:
+                return achado
+    return None
+
+
+def _preco_de_linha(i: dict) -> float | None:
+    """Preço unitário de 1 linha do getCart, já com opções se a loja somou (unitPrice / totalPrice÷qtd)."""
+    qtd = int(i.get("quantity") or 1)
+    unit = _primeiro_valor([i], ("unitPrice", "unitAmount", "price"))
+    if unit is None:
+        total = _primeiro_valor([i], ("totalPrice", "totalAmount", "total"))
+        unit = round(total / qtd, 2) if total is not None else None
+    return unit
 
 
 def _ler_itens_carrinho(resp: dict) -> list[dict]:
     """[{cartItemId, itemId, nome, preco (unitário), quantidade}] do getCart."""
     itens = []
-    for i in resp.get("items") or []:
-        qtd = int(i.get("quantity") or 1)
-        unit = i.get("unitPrice")
-        if unit is None and i.get("totalPrice") is not None:
-            unit = round(float(i["totalPrice"]) / qtd, 2)
+    for i in _corpo_carrinho(resp).get("items") or resp.get("items") or []:
+        if not isinstance(i, dict):
+            continue
+        unit = _preco_de_linha(i)
         itens.append({
             "cartItemId": i.get("cartItemId"),
             "itemId": i.get("itemId"),
-            "nome": i.get("name"),
+            "nome": i.get("name") or i.get("itemName"),
             "preco": float(unit) if unit is not None else None,
-            "quantidade": qtd,
+            "quantidade": int(i.get("quantity") or 1),
         })
     return itens
 
 
 def _ler_totais(resp: dict) -> dict:
+    """Totais do getCart (bug 20: nunca do `summary` do addItemToCart). Aceita o formato do demo (`subtotal`,
+    `deliveryFee`, `discount`, `total` na raiz) e, como suposição a confirmar no real, um `summary`/`totals` com os
+    nomes que o addItemToCart real usa (`subtotalAmount`, `totalAmount`)."""
+    corpo = _corpo_carrinho(resp)
+    fontes = [resp, corpo] + [d for d in (resp.get("summary"), corpo.get("summary"), resp.get("totals"),
+                                           corpo.get("totals")) if isinstance(d, dict)]
     return {
-        "subtotal": float(resp.get("subtotal") or 0),
-        "taxa": float(resp.get("deliveryFee") or 0),
-        "desconto": float(resp.get("discount") or 0),
-        "total": float(resp.get("total") or 0),
+        "subtotal": _primeiro_valor(fontes, ("subtotal", "subtotalAmount", "itemsAmount")) or 0.0,
+        "taxa": _primeiro_valor(fontes, ("deliveryFee", "deliveryFeeAmount", "deliveryAmount")) or 0.0,
+        "desconto": _primeiro_valor(fontes, ("discount", "discountAmount", "discountsAmount")) or 0.0,
+        "total": _primeiro_valor(fontes, ("total", "totalAmount")) or 0.0,
     }
 
 
@@ -398,14 +502,63 @@ def _ler_rastreio(resp: dict) -> dict:
 
 
 # ---------- montar ----------
+async def _opcoes_dos_itens(cliente, loja_id: str, linhas: list[_Linha], geo: dict | None,
+                            avisos: list[str]) -> dict[str, list[dict]]:
+    """Modo real (bug 17): 1 `getItem` por item distinto; item com grupo obrigatório → opções mais baratas.
+
+    Demo ou sem coordenadas: não chama nada (o roteiro não muda). getItem com erro → segue sem opções (o
+    addItemToCart dirá se faltar).
+    """
+    coords = {k: (geo or {}).get(k) for k in ("latitude", "longitude") if (geo or {}).get(k) is not None}
+    if getattr(cliente, "modo", None) == "demo" or len(coords) < 2:  # getItem real exige userLocation
+        return {}
+    saida: dict[str, list[dict]] = {}
+    for linha in linhas:
+        if linha.item_id in saida:
+            continue
+        saida[linha.item_id] = []
+        try:
+            detalhe = await cliente.chamar("getItem", merchantId=loja_id, itemId=linha.item_id, **coords)
+        except ErroMCP:
+            continue
+        obrig = opcoes_obrigatorias(detalhe if isinstance(detalhe, dict) else {})
+        if not obrig or not obrig["opcoes"]:
+            continue
+        saida[linha.item_id] = obrig["opcoes"]
+        escolhidas = ", ".join(obrig["nomes"])
+        if obrig["extra"] is None:
+            avisos.append(f"{linha.item_nome} exige complemento ({escolhidas}); o valor vem do carrinho do iFood.")
+        elif obrig["extra"] > 0:
+            avisos.append(f"{linha.item_nome} exige complemento: escolhemos o mais barato ({escolhidas}, "
+                          f"+ R$ {obrig['extra']:.2f}); o valor de cada pessoa vem do carrinho do iFood.")
+        else:
+            avisos.append(f"{linha.item_nome} exige complemento: escolhemos {escolhidas} (sem custo extra).")
+        if not obrig["completo"]:
+            avisos.append(f"{linha.item_nome}: um grupo obrigatório tem menos opções que o mínimo pedido.")
+    return saida
+
+
+def _info_pagamento(metodo: dict | None, marcas: dict) -> dict:
+    """Campo `pagamento` do carrinho (C16; o front lê `nome` e `offline`)."""
+    if metodo is None:
+        return {"id": None, "nome": MSG_SEM_PAGAMENTO_CURTO, "tipo": None, "offline": False, "teste": False,
+                "bloqueado": True, "codigo": CODIGO_SEM_PAGAMENTO}
+    nome = _nome_pagamento(metodo)
+    if marcas.get("teste"):
+        nome += SUFIXO_CARTAO_TESTE
+    return {"id": _id_pagamento(metodo), "nome": nome, "tipo": _tipo_pagamento(metodo),
+            "offline": bool(marcas.get("offline")), "teste": bool(marcas.get("teste"))}
+
+
 async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id: str,
-                       pagamento_id: str | None) -> dict:
+                       pagamento_id: str | None, geo: dict | None = None) -> dict:
     avisos: list[str] = []
+    opcoes = await _opcoes_dos_itens(cliente, loja_id, linhas, geo, avisos)
     # MCP real: sem orderId, o createCart exige addressId + merchantId + items (MISSING_REQUIRED_FIELDS).
     # Vai o 1º item já na criação; os outros entram por addItemToCart.
     primeira, resto = linhas[0], linhas[1:]
     carrinho = await cliente.chamar("createCart", merchantId=loja_id, addressId=endereco_id,
-                                    items=[_item_do_carrinho(primeira)])
+                                    items=[_item_do_carrinho(primeira, opcoes.get(primeira.item_id))])
     cart_id = _ler_cart_id(carrinho)
 
     # 1 linha por slot (mesmo item pedido por 2 pessoas = 2 linhas), para saber de quem é cada uma.
@@ -421,7 +574,8 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
     anotar_dono(primeira, _ler_cart_item_id(carrinho, primeira.item_id, set()))
     for linha in resto:
         # MCP real: sem `options` o addItemToCart quebra no servidor ("parameter options ... is null"); vazio funciona.
-        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1, options=[])
+        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1,
+                                    options=opcoes.get(linha.item_id) or [])
         anotar_dono(linha, _ler_cart_item_id(resp, linha.item_id, set(dono_por_linha)))
 
     entregas = await cliente.chamar("getCartDeliveryMethods", cartId=cart_id)
@@ -430,11 +584,16 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
 
     # MCP real: listPaymentMethods só aceita merchantId (obrigatório); não recebe cartId.
     pagamentos = await cliente.chamar("listPaymentMethods", merchantId=loja_id)
-    # modo real: nunca Pix/online; sem forma segura levanta aqui, ANTES do setCartPayment
-    metodo_pag, aviso_pag, pag_offline = _ler_pagamento(pagamentos, pagamento_id, getattr(cliente, "modo", None))
+    # modo real: nunca Pix/online; offline → cartão de teste → nenhuma (sem setCartPayment; envio bloqueado)
+    metodo_pag, aviso_pag, marcas = _escolher_pagamento(pagamentos, pagamento_id, getattr(cliente, "modo", None))
     if aviso_pag:
         avisos.append(aviso_pag)
-    await cliente.chamar("setCartPayment", cartId=cart_id, paymentMethodId=_id_pagamento(metodo_pag))
+    if metodo_pag is not None:
+        await cliente.chamar("setCartPayment", cartId=cart_id, paymentMethodId=_id_pagamento(metodo_pag))
+        if marcas["teste"]:
+            avisos.append(f"Pagamento: {_nome_pagamento(metodo_pag)}{SUFIXO_CARTAO_TESTE}.")
+    else:
+        avisos.append(f"{MSG_SEM_PAGAMENTO_SEGURO} O carrinho está montado; só o envio fica bloqueado.")
 
     final = await cliente.chamar("getCart", cartId=cart_id)
     avisos.extend(str(w) for w in final.get("warnings") or [])
@@ -470,28 +629,34 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
         "eta_min": _ler_eta(final, metodo_entrega),
         "entrega": {"id": _id_entrega(metodo_entrega),
                     "nome": metodo_entrega.get("name") or metodo_entrega.get("deliveryMethodMode")},
-        "pagamento": {"id": _id_pagamento(metodo_pag), "nome": _nome_pagamento(metodo_pag),
-                      "tipo": _tipo_pagamento(metodo_pag), "offline": pag_offline},
+        "pagamento": _info_pagamento(metodo_pag, marcas),
         "avisos": avisos,
         "demonstracao": bool(final.get("demonstracao")),
     }
 
 
 async def montar_carrinhos(cliente, combinacao: Combinacao | dict, endereco_id: str,
-                           pagamento_id: str | None = None) -> list[dict]:
-    """1 carrinho por loja da combinação, na sequência obrigatória do MCP. Falha → `ErroCheckout`."""
+                           pagamento_id: str | None = None, geo: dict | None = None) -> list[dict]:
+    """1 carrinho por loja da combinação, na sequência obrigatória do MCP. Falha → `ErroCheckout`.
+
+    `geo` ({latitude, longitude} do endereço; ou `combinacao["geo"]`): o getItem real exige `userLocation` (bug 17).
+    Sem forma de pagamento aceitável o carrinho volta montado, com `pagamento.codigo = "sem_pagamento_sem_cobranca"`.
+    """
+    if geo is None:  # a rota manda as coordenadas dentro da combinação (campo "geo")
+        geo = _campo(combinacao, "geo") if isinstance(combinacao, dict) else None
     grupos = _agrupar_por_loja(_linhas_da_combinacao(combinacao))
     if not grupos:
         raise ValueError("A combinação não tem nenhum item.")
     carrinhos = []
     for loja_id, linhas in grupos.items():
         try:
-            carrinhos.append(await _montar_loja(cliente, loja_id, linhas, endereco_id, pagamento_id))
-        except SemPagamentoSemCobranca as e:
-            nome = linhas[0].loja_nome
-            raise ErroCheckout(loja_id, f"{e} (Loja: {nome}.)", codigo="sem_pagamento_sem_cobranca") from e
+            carrinhos.append(await _montar_loja(cliente, loja_id, linhas, endereco_id, pagamento_id, geo))
         except ErroMCP as e:
             nome = linhas[0].loja_nome
+            if getattr(e, "codigo", None) == "ITEM-001":
+                raise ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
+                                            f"complementos que o iFood não informou ({e}). Escolha outra combinação.",
+                                   codigo="complemento_obrigatorio") from e
             raise ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {e}") from e
     return carrinhos
 
@@ -513,13 +678,19 @@ async def enviar_pedidos(cliente, carrinhos: list[dict], consentimento: bool,
         loja_id = carrinho["loja_id"]
         if cart_id in enviados:
             continue
-        if real and (carrinho.get("pagamento") or {}).get("offline") is not True:
+        pagamento = carrinho.get("pagamento") or {}
+        if real and pagamento.get("codigo") == CODIGO_SEM_PAGAMENTO:
+            resultado.append({"loja_id": loja_id, "loja_nome": carrinho.get("loja_nome"), "status": "falhou",
+                              "erro": MSG_SEM_PAGAMENTO_SEGURO, "codigo": CODIGO_SEM_PAGAMENTO})
+            break
+        # real: só forma offline OU o cartão de teste da conta de teste (marcado na montagem); cartão comum nunca
+        if real and pagamento.get("offline") is not True and pagamento.get("teste") is not True:
             resultado.append({"loja_id": loja_id, "loja_nome": carrinho.get("loja_nome"),
                               "status": "falhou", "erro": MSG_ENVIO_SEM_GARANTIA})
             break
         try:
             bruto = await cliente.chamar("getCart", cartId=cart_id)
-            if real and _pagamento_do_carrinho_cobra(bruto):  # alguém trocou a forma por fora: não envia
+            if real and _pagamento_do_carrinho_cobra(bruto, pagamento):  # trocaram a forma por fora: não envia
                 resultado.append({"loja_id": loja_id, "loja_nome": carrinho.get("loja_nome"),
                                   "status": "falhou", "erro": MSG_ENVIO_SEM_GARANTIA})
                 break

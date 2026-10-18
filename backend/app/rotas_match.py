@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from . import config
 from .ifood_mcp.cliente import MSG_ENVIO_DESLIGADO, ErroMCP, abrir_cliente
-from .match import checkout, motor, salas
+from .match import busca, checkout, motor, salas
 from .match.ajuste import interpretar_ajuste
 from .match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from .match.modelos import Candidato, Desejo, para_dict
@@ -149,6 +149,28 @@ def _texto_limpo(valor: str | None, rotulo: str, maximo: int) -> str:
     if len(texto) > maximo:
         raise ErroSala(400, f"{rotulo[0].upper() + rotulo[1:]} passou de {maximo} caracteres.")
     return texto
+
+
+async def _geo(sala: dict, cfg, cliente) -> dict:
+    """Coordenadas do endereço do Match para o checkout (o getItem real exige `userLocation`; bug 17). Vão no campo
+    `geo` da combinação passada ao checkout (não é gravado na sala).
+
+    O `resultado.endereco` da sala não guarda coordenadas; no modo real elas vêm do mock do `.env` (mesmo id) ou de
+    1 `listAddresses`. Demo: nada (o checkout do demo não usa getItem; o roteiro não muda)."""
+    endereco = (sala.get("resultado") or {}).get("endereco") or {}
+    geo = {k: endereco[k] for k in ("latitude", "longitude") if endereco.get(k) is not None}
+    if len(geo) == 2 or getattr(cliente, "modo", "demo") == "demo":
+        return geo
+    mock = motor.endereco_mock(cfg)
+    if mock and mock["id"] == endereco.get("id"):
+        return {"latitude": mock["latitude"], "longitude": mock["longitude"]}
+    try:
+        achado = busca.ler_endereco(await cliente.chamar("listAddresses")) or {}
+    except ErroMCP:
+        return {}
+    if achado.get("id") != endereco.get("id"):
+        return {}
+    return {k: achado[k] for k in ("latitude", "longitude") if achado.get(k) is not None}
 
 
 def _candidato_de_dict(d: dict) -> Candidato:
@@ -453,7 +475,8 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
                            "O Match não achou um endereço de entrega; rode o Match de novo.")
 
         async def operacao(cfg, cliente):
-            return await checkout.montar_carrinhos(cliente, combinacao, endereco_id)
+            geo = await _geo(sala, cfg, cliente)
+            return await checkout.montar_carrinhos(cliente, {**combinacao, "geo": geo}, endereco_id)
 
         carrinhos = await _usar_cliente(sala_id, operacao)
 
@@ -571,7 +594,8 @@ async def resolver(sala_id: str, pid: str, corpo: CorpoResolver, x_organizador: 
         nome = salas.participante(sala, pid)["nome"]
 
         async def operacao(cfg, cliente):
-            return await checkout.montar_carrinhos(cliente, filtrada, endereco_id)
+            geo = await _geo(sala, cfg, cliente)
+            return await checkout.montar_carrinhos(cliente, {**filtrada, "geo": geo}, endereco_id)
 
         carrinhos = await _usar_cliente(sala_id, operacao)
 
@@ -631,6 +655,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
         problema = next((r for r in resultados if r["status"] in ("falhou", "total_mudou")), None)
         # conta de teste com `submitOrder` desligado: não é falha para "tentar de novo"; os carrinhos ficam prontos
         desligado = bool(problema and problema["status"] == "falhou" and problema.get("erro") == MSG_ENVIO_DESLIGADO)
+        # bug 18: conta de teste sem forma de pagamento aceitável → envio bloqueado (409, não "tente de novo")
+        sem_pagamento = bool(problema and problema.get("codigo") == checkout.CODIGO_SEM_PAGAMENTO)
 
         def gravar(s: dict) -> None:
             for r in resultados:
@@ -658,6 +684,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
 
         if desligado:
             raise ErroSala(409, MSG_ENVIO_DESLIGADO_SALA)
+        if sem_pagamento:
+            raise ErroSala(409, f"{problema.get('erro')} Os carrinhos ficaram montados no iFood; nada foi enviado.")
         loja = problema.get("loja_nome") or problema.get("loja_id")
         ficou = f"{feitos} de {total} pedidos já foram enviados e foram mantidos."
         if problema["status"] == "falhou":
@@ -679,7 +707,8 @@ async def _remontar_loja(sala_id: str, loja_id: str) -> None:
     endereco_id = sala["resultado"]["endereco"]["id"]
 
     async def operacao(cfg, cliente):
-        return await checkout.montar_carrinhos(cliente, filtrada, endereco_id)
+        geo = await _geo(sala, cfg, cliente)
+        return await checkout.montar_carrinhos(cliente, {**filtrada, "geo": geo}, endereco_id)
 
     try:
         novos = await _usar_cliente(sala_id, operacao)

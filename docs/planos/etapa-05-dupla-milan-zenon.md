@@ -77,14 +77,19 @@
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
-- **Sem retorno do Thales:** fazer o A1 do `docs/plano-nota-maxima.md` (CI no GitHub: pytest + build a cada push,
-  selo no README) → **Sonnet**.
+- **01h50:** A3, A6 (CI) e bugs 12–20 ✅. Esperando o Thales: **P5** (IA com reserva) e **P6** (carrinho real com Cartão de
+  Teste, sem enviar). Com o P6 ok → P7: `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**.
+  Zenon: B9 (Z1) até 05h → integrar e smoke (qa-testador, Sonnet). Depois: PR `ccr` → `main`.
 - **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
   `leilao.py`, `ajuste.py`), comparar com a linha de base do registro de 00h41 → **Sonnet**; depois I3 (custo/tempo).
 - **Quando chegar o P4 (amostras de carrinho com sucesso):** ajuste fino do `checkout.py` → **Opus**.
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 01h50 — Bugs 17–20 (dev-mcp-ifood, Opus): opção obrigatória preenchida com a mais barata via `getItem` no checkout
+  (`options` = `[{optionId, quantity}]` do schema real), adicional < R$ 2,50/seção de extras não vira prato, carrinho com
+  taxa/total mesmo sem forma aceitável (escolher 200, enviar 409), Cartão de Teste (nome com "teste", nunca Pix) libera a
+  trava. 454 testes, build ok, roteiro demo igual. 5 suposições a confirmar → P6 do Thales. Opus foi adequado.
 - 18/10 01h44 — A3 integrada (dev-backend, Sonnet, worktree): reserva de modelo no 429, 11→9 chamadas, ~26k→13k tokens
   contados por Match (ainda >8k/min num só modelo: a reserva é obrigatória), bugs 12/13/14; 14b (aviso duplo) feito por
   mim no `motor.py`. 427 testes; roteiro no fallback igual. P5 para o Thales. Sonnet foi adequado. Obs.: o worktree saiu
