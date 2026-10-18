@@ -57,10 +57,11 @@ qualquer campo com `token`. Imprime um resumo (nº de tools, nomes que diferem d
 
 | ID | Tarefa | Agente | Modelo | Esforço | Arquivos (só estes) | Depende de | Pronto quando | Status |
 |---|---|---|---|---|---|---|---|---|
-| 03.1 | OAuth + cliente MCP real + diagnóstico (C9, C10) | dev-mcp-ifood | opus | high | `backend/app/ifood_mcp/oauth.py`, `cliente.py`, `diagnostico.py`, `backend/app/rotas_oauth.py`, `backend/app/main.py` (só incluir router), `backend/app/config.py` (`ifood_mcp_redirect`), `.gitignore`, `.env.example`, `backend/tests/test_oauth.py` | — | testes com HTTP falso: PKCE S256 correto, state inválido → 400, troca/refresh, token nunca aparece em resposta/log, 401 → refresh 1×; `IFOOD_MCP_MODO=demo` inalterado; diagnóstico sanitiza (teste com payload falso cheio de dados pessoais) | 🔄 |
+| 03.1 | OAuth + cliente MCP real + diagnóstico (C9, C10) | dev-mcp-ifood | opus | high | `backend/app/ifood_mcp/oauth.py`, `cliente.py`, `diagnostico.py`, `backend/app/rotas_oauth.py`, `backend/app/main.py` (só incluir router), `backend/app/config.py` (`ifood_mcp_redirect`), `.gitignore`, `.env.example`, `backend/tests/test_oauth.py` | — | testes com HTTP falso: PKCE S256 correto, state inválido → 400, troca/refresh, token nunca aparece em resposta/log, 401 → refresh 1×; `IFOOD_MCP_MODO=demo` inalterado; diagnóstico sanitiza (teste com payload falso cheio de dados pessoais) | ✅ |
+| 03.1b | Achados do QA na 03.1: sanitização por lista branca/substring (getUser inteiro, pagamentos, endereço fora de objeto, "terminado em 4321"), aviso se `searchOffers` vier vazio + `--args-busca`, sem traceback cru, erros de login → 401, `os.replace` no Windows | dev-mcp-ifood | opus | high | `ifood_mcp/diagnostico.py`, `rotas_match.py` (`_erro_do_ifood`), `ifood_mcp/oauth.py`, testes | 03.1 | payloads do QA (`/tmp/claude-0/qa03/san.py`) viram testes e nada pessoal escapa; suíte passa | 🔄 |
 | 03.2 | Front: "Conectar iFood", selo real × demonstração + polimento do QA | dev-frontend | sonnet | medium | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `Resultado.tsx`, `frontend/src/componentes/Selo.tsx`, `frontend/src/componentes/StatusIfood.tsx` (novo), `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/estilo.css`, `frontend/src/App.tsx` | C9 (contrato) | build ok; no modo real o organizador vê "Conectar iFood"/"Conectado"; selo "iFood real · conta de teste"; itens do QA abaixo resolvidos | ✅ |
 | 03.3 | Robustez do motor e do Pix (QA 02.9 #2, #7) | dev-backend | sonnet | high | `backend/app/match/motor.py`, `backend/app/match/pix.py`, `backend/tests/test_motor.py`, `backend/tests/test_acerto_pix.py` | — | pedido fora do cardápio ("feijoada") gera aviso "Não achei X; a opção mais próxima é Y" ou 409 se nota < 0,5 para todos; chave Pix normalizada (CPF/CNPJ só dígitos, telefone +55…, e-mail minúsculo, aleatória intacta) com testes | ✅ |
-| 03.4 | 👥 Rodar login + diagnóstico no PC e dar push das amostras | equipe | — | — | `docs/mcp-real/*.json` | 03.1 | `docs/mcp-real/tools.json` e amostras no git; responder "2 carrinhos abertos?" | ⬜ |
+| 03.4 | 👥 Rodar login + diagnóstico no PC e dar push das amostras | equipe | — | — | `docs/mcp-real/*.json` | 03.1b (login já pode) | `docs/mcp-real/tools.json` e amostras no git; responder "2 carrinhos abertos?" | ⬜ |
 | 03.5 | Adaptar busca e checkout ao formato real + feedback do MCP | dev-mcp-ifood | opus | high | `backend/app/match/busca.py`, `backend/app/match/checkout.py`, `backend/tests/test_formato_real.py` (fixtures = amostras sanitizadas), `docs/feedback-mcp.md`, `docs/mcp-ifood.md` | 03.4 | testes com as amostras reais passam; Match roda no PC com dados reais até o `getCart`; diferenças doc × real registradas | ⬜ |
 | 03.6 | Revisão da etapa | qa-testador | opus | high | (só leitura) | 03.1–03.5 | nada "bloqueia a demo"; modo demo intacto; nenhum dado pessoal nas amostras/commits | ⬜ |
 
@@ -102,6 +103,14 @@ honestidade (aviso de "não achei"). 03.5 opus/high: mapear formato real sem que
   (mesmo prompt do contrato C9/C10) dizendo para **continuar** a partir dos arquivos existentes.
 - Pendências menores: front pode destacar `motivo` que começa com "Opção aproximada:"; juiz sugere bebida como
   "opção mais próxima" em empate (ex.: pizza sem glúten → refrigerante) — ajustar `juiz.py` na etapa 04.
+
+- 18/10 ~00h15 (relógio do container) — 03.1 ✅ (3247a5d, ab86ea0 + 5abf188: secrets com `repr=False`,
+  conftest zera credenciais e isola `.tokens_ifood.json`, `conta_teste` na sala, erro "Conecte o iFood" → 401).
+  QA da 03.1: OAuth, tokens e "nunca gastar" ok; **sanitização vaza** com nomes de chave plausíveis → 03.1b.
+  Bug visto pela equipe (f74c883): "pizza sem glúten" sugeria refrigerante como opção mais próxima e repetia
+  "Quer mudar o pedido?" → bebida nunca é "mais próxima" de comida; pergunta 1× só. 150 testes.
+  Equipe viu "Preencha IFOOD_MCP_CLIENT_ID" com as variáveis no `.env` → suspeita: app não reiniciado ou linha
+  repetida vazia mais abaixo (vale a última); mensagem agora diz isso.
 
 ## Fechamento
 (preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)
