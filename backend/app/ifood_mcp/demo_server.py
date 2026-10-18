@@ -328,11 +328,14 @@ def criar_servidor_demo() -> MCPServer:
         resultKind: Literal["MERCHANT", "ITEM"] = "MERCHANT",
         refinements: dict | None = None,
         sortBy: Literal["relevance", "rating", "distance", "deliveryTime", "price"] = "relevance",
+        pageSize: int | None = None,
     ) -> dict:
         """Busca lojas (resultKind=MERCHANT) ou itens (resultKind=ITEM) por termo descritivo.
 
         Demonstração: `refinements` aceita `merchantType` e `maxPrice` (nomes não verificados no MCP real).
+        `pageSize` é o nome do MCP real (`limit` continua aceito).
         """
+        limit = pageSize if pageSize is not None else limit
         termos = _termos(query)
         if not termos:
             raise ErroDemo("Informe um termo descritivo em 'query' (ex.: 'sorvete', 'pizza').")
@@ -379,8 +382,10 @@ def criar_servidor_demo() -> MCPServer:
         resultKind: Literal["MERCHANT", "ITEM"] = "MERCHANT",
         limit: int = 20,
         offset: int = 0,
+        pageSize: int | None = None,
     ) -> dict:
-        """Explora lojas ou itens perto do endereço, sem termo de busca."""
+        """Explora lojas ou itens perto do endereço, sem termo de busca (`pageSize` = nome do MCP real)."""
+        limit = pageSize if pageSize is not None else limit
         lojas = [l for l in _lojas() if merchantType is None or l["merchantType"] == merchantType]
         if resultKind == "MERCHANT":
             todos = [_loja_resumo(l) for l in sorted(lojas, key=lambda l: l["distancia_km"])]
@@ -396,8 +401,10 @@ def criar_servidor_demo() -> MCPServer:
         longitude: float | None = None,
         contentMode: str | None = None,
         limit: int = 5,
+        pageSize: int | None = None,
     ) -> dict:
         """Lista curada para o usuário (demonstração: lojas mais bem avaliadas)."""
+        limit = pageSize if pageSize is not None else limit
         lojas = sorted(_lojas(), key=lambda l: -l["rating"])[: max(1, min(int(limit), 20))]
         return _selo({"contentMode": contentMode, "results": [_loja_resumo(l) for l in lojas]})
 
@@ -441,7 +448,10 @@ def criar_servidor_demo() -> MCPServer:
     @mcp.tool(name="createCart", annotations=ESCRITA)
     @_erros_legiveis
     def criar_carrinho(merchantId: str, addressId: str, items: list[dict] | None = None) -> dict:
-        """Cria um NOVO carrinho (não é idempotente): 1 carrinho = 1 loja + 1 endereço."""
+        """Cria um NOVO carrinho (não é idempotente): 1 carrinho = 1 loja + 1 endereço.
+
+        `items` ([{itemId, quantity, options?}]) é o formato do MCP real, que o exige na criação; aqui é opcional.
+        """
         loja = _loja(merchantId)
         _endereco(addressId)
         cart_id = f"cart-demo-{uuid.uuid4().hex[:10]}"

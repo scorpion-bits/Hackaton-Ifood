@@ -77,8 +77,11 @@ async def test_monta_dois_carrinhos_com_valores_do_getcart():
     assert all(i["preco"] and i["quantidade"] == 1 for i in jp["itens"] + sv["itens"])
 
     ferramentas = [c.tool for c in cli.rastro]
-    esperado_loja = lambda n: SEQUENCIA_LOJA[:2] + ["addItemToCart"] * (n - 1) + SEQUENCIA_LOJA[2:]
+    # MCP real: o createCart já leva o 1º item (`items`); os outros vão por addItemToCart
+    esperado_loja = lambda n: ["createCart"] + ["addItemToCart"] * (n - 1) + SEQUENCIA_LOJA[2:]
     assert ferramentas[:-2] == esperado_loja(2) + esperado_loja(2)
+    assert all("merchantId=" in c.resumo and "cartId" not in c.resumo
+               for c in cli.rastro if c.tool == "listPaymentMethods")
     assert "submitOrder" not in ferramentas
 
 

@@ -319,6 +319,15 @@ def registrar_desejo(sala_id: str, pid: str, corpo: CorpoDesejo):
 
 # ---------- Match ----------
 MSG_AJUSTE_NAO_ENTENDIDO = 'Não entendi quem ou o quê. Ex.: "troca o sorvete do Milan por açaí"'
+MSG_AJUSTE_NAO_ENTENDIDO_1 = 'Não entendi o quê. Ex.: "troca o sorvete por açaí"'  # sala de 1 pessoa: sem nome
+
+
+def _msg_ajuste_nao_entendido(participantes: list[dict]) -> str:
+    respondidos = [p for p in participantes if p["respondeu"]]
+    if len(respondidos) == 1:
+        return MSG_AJUSTE_NAO_ENTENDIDO_1
+    nome = respondidos[0]["nome"] if respondidos else "Milan"
+    return f'Não entendi quem ou o quê. Ex.: "troca o sorvete do {nome} por açaí"'
 MAX_TEXTO_AJUSTE = 200
 
 
@@ -342,7 +351,8 @@ async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
         raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
     if not resultado.get("combinacoes"):
         avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
-        raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+        para_quem = "para você" if len({d.participante_id for d in desejos}) == 1 else "que sirva para todos"
+        raise ErroSala(409, f"O Match não encontrou um pedido {para_quem}. {avisos}")
     return resultado
 
 
@@ -393,7 +403,7 @@ async def ajustar(sala_id: str, corpo: CorpoAjuste, x_organizador: str | None = 
         ]
         mudancas = await interpretar_ajuste(config.carregar(), texto, participantes)
         if not mudancas:
-            raise ErroSala(422, MSG_AJUSTE_NAO_ENTENDIDO)
+            raise ErroSala(422, _msg_ajuste_nao_entendido(participantes))
 
         por_id = {m.participante_id: m for m in mudancas}
         nomes = {p["id"]: p["nome"] for p in sala["participantes"]}

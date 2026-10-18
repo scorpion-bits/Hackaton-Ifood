@@ -32,7 +32,7 @@ const EQUIPE = 'Thales Miguel Hajes · Milan · Zenon · Antonio';
 const DATA = '18 de outubro de 2026';
 const AVISO = 'Protótipo de hackathon · não afiliado ao iFood. Dados simulados aparecem com o selo DEMONSTRAÇÃO.';
 
-const TELAS_CAPA = ['pitch/img/f1-inicio.png', 'pitch/img/f4-disputa.png', 'pitch/img/f8-pagamento.png'];
+const TELAS_CAPA = ['docs/entrega/telas/01-inicio.png', 'docs/entrega/telas/07-ajustar-conversa.png', 'docs/entrega/telas/10-confira.png'];
 
 const ler = (rel) => fs.readFileSync(path.join(RAIZ, rel), 'utf8').replace(/\r\n/g, '\n');
 const tirarH1 = (md) => md.replace(/^\s*# [^\n]*\n/, '');
@@ -63,7 +63,7 @@ const ENTREGAVEIS = [
   { n: '03', titulo: 'Racional da Experiência', fonte: 'docs/racional-ux.md',
     desc: 'Princípios, jornadas do organizador e do convidado, leilão e deck, confiança, acessibilidade e estados.',
     md: tirarH1(ler('docs/racional-ux.md')), base: 'docs' },
-  { n: '04', titulo: 'Interface Visual', fonte: 'docs/entrega/04-interface.md · pitch/img/',
+  { n: '04', titulo: 'Interface Visual', fonte: 'docs/entrega/04-interface.md · docs/entrega/telas/',
     desc: 'Linguagem visual, tokens e galeria com as capturas reais das telas do protótipo.',
     md: tirarH1(ler('docs/entrega/04-interface.md')), base: 'docs/entrega' },
   { n: '05', titulo: 'Documento Técnico Resumido', fonte: 'docs/tecnico.md §5–12',

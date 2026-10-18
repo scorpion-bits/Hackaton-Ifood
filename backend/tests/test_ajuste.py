@@ -375,3 +375,20 @@ def test_troca_sem_nome_acha_o_dono_do_item():
     ]
     m = interpretar_fallback("troca o sorvete por açaí", participantes)
     assert len(m) == 1 and "açaí" in m[0].novo_texto and "sorvete" not in m[0].novo_texto
+
+
+def test_sala_de_1_pessoa_nao_usa_nome_de_outro_no_exemplo_nem_para_todos(c, monkeypatch):
+    r = c.post("/api/salas", json={"organizador_nome": "Thales"}).json()
+    sid, org = r["sala_id"], {"X-Organizador": r["token_organizador"]}
+    pid = c.post(f"/api/salas/{sid}/participantes", json={"nome": "Ana"}).json()["participante_id"]
+    assert c.put(f"/api/salas/{sid}/participantes/{pid}/desejo", json=DESEJOS["Milan"]).status_code == 200
+    assert c.post(f"/api/salas/{sid}/rodar", headers=org).status_code == 200
+    r = c.post(f"/api/salas/{sid}/ajustar", json={"texto": "bom dia"}, headers=org)
+    assert r.status_code == 422 and r.json() == {"detail": rotas_match.MSG_AJUSTE_NAO_ENTENDIDO_1}
+
+    async def nada(cfg, cliente, desejos):
+        return {"combinacoes": [], "avisos": ["Nada serve."], "rastro": []}
+
+    monkeypatch.setattr(rotas_match.motor, "rodar_match", nada)
+    r = c.post(f"/api/salas/{sid}/ajustar", json={"texto": "troca o sorvete por açaí"}, headers=org)
+    assert r.status_code == 409 and r.json()["detail"].startswith("O Match não encontrou um pedido para você.")

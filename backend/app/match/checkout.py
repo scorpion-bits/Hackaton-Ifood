@@ -9,7 +9,8 @@ Pix e cartão online nunca são escolhidos, nem se o `agentHints` recomendar. Se
 `setCartPayment` com `ErroCheckout` legível, e `enviar_pedidos` recusa carrinho sem essa garantia.
 
 Este é o ÚNICO lugar que lê os campos das tools de carrinho/pedido (cartId, cartItemId, deliveryFee,
-agentHints, ...). Se o MCP real usar outro formato, a etapa 03 ajusta só as funções `_ler_*` daqui.
+agentHints, ...). Argumentos conferidos com o schema real (docs/mcp-real/tools.json): createCart com `items`,
+listPaymentMethods por `merchantId`.
 Valores (subtotal, taxa, desconto, total) vêm sempre do `getCart`; nada é recalculado aqui.
 """
 
@@ -107,26 +108,60 @@ def _agrupar_por_loja(linhas: list[_Linha]) -> dict[str, list[_Linha]]:
     return grupos
 
 
-# ---------- leitura dos campos das tools (ajustar aqui na etapa 03) ----------
+# ---------- leitura dos campos das tools ----------
+# Schemas conferidos com docs/mcp-real/tools.json (18/10). Respostas de carrinho de SUCESSO do MCP real ainda não
+# têm amostra (o createCart falhou por falta de `items`): os leitores aceitam o formato do demo e variações próximas.
+def _item_do_carrinho(linha: _Linha) -> dict:
+    """1 item no formato de `createCart.items[]` do MCP real (obrigatórios: itemId, quantity)."""
+    return {"itemId": linha.item_id, "quantity": 1}
+
+
+def _corpo_carrinho(resp: dict) -> dict:
+    """O carrinho pode vir na raiz ou dentro de `cart`/`data` (formato de sucesso do real ainda sem amostra)."""
+    for chave in ("cart", "data"):
+        if isinstance(resp.get(chave), dict) and (resp[chave].get("cartId") or resp[chave].get("items")):
+            return resp[chave]
+    return resp
+
+
 def _ler_cart_id(resp: dict) -> str:
-    cart_id = resp.get("cartId") or resp.get("id")
+    corpo = _corpo_carrinho(resp)
+    cart_id = resp.get("cartId") or corpo.get("cartId") or resp.get("id") or corpo.get("id")
     if not cart_id:
         raise ErroMCP("createCart não devolveu cartId.")
     return str(cart_id)
 
 
-def _ler_cart_item_id(resp: dict) -> str | None:
-    return resp.get("cartItemId") or (resp.get("item") or {}).get("cartItemId")
+def _ler_cart_item_id(resp: dict, item_id: str | None = None, conhecidos: set[str] | None = None) -> str | None:
+    """cartItemId da linha recém-adicionada: campo direto (`cartItemId`, `item.cartItemId`) ou, se a tool devolveu
+    o carrinho inteiro, o único/último `items[]` com esse itemId que ainda não conhecíamos. Sem certeza → None
+    (o checkout casa pelo itemId depois, no getCart)."""
+    direto = resp.get("cartItemId") or (resp.get("item") or {}).get("cartItemId")
+    if direto:
+        return str(direto)
+    if item_id is None:
+        return None
+    conhecidos = conhecidos or set()
+    novos = [str(i["cartItemId"]) for i in _corpo_carrinho(resp).get("items") or []
+             if isinstance(i, dict) and i.get("cartItemId") and str(i.get("itemId")) == str(item_id)
+             and str(i["cartItemId"]) not in conhecidos]
+    return novos[-1] if len(novos) == 1 else None
+
+
+def _id_entrega(m: dict) -> str | None:
+    valor = m.get("id") or m.get("deliveryMethodId")
+    return str(valor) if valor not in (None, "") else None
 
 
 def _ler_metodo_entrega(resp: dict) -> dict:
     """Método recomendado em agentHints (se estiver na lista) ou o primeiro. Nunca inventa id."""
-    metodos = resp.get("methods") or resp.get("deliveryMethods") or []
+    metodos = [m for m in (resp.get("methods") or resp.get("deliveryMethods") or []) if isinstance(m, dict)]
+    metodos = [m for m in metodos if _id_entrega(m)]
     if not metodos:
         raise ErroMCP("A loja não ofereceu nenhum método de entrega para este endereço.")
     recomendado = (resp.get("agentHints") or {}).get("recommendedMethodId")
     for m in metodos:
-        if recomendado and m.get("id") == recomendado:
+        if recomendado and _id_entrega(m) == recomendado:
             return m
     return metodos[0]
 
@@ -324,10 +359,15 @@ def _ler_totais(resp: dict) -> dict:
 
 
 def _ler_eta(resp_carrinho: dict, metodo_entrega: dict) -> int | None:
+    """estimatedTime (demo) ou estimatedMinutes {min, max} (formato do MCP real na busca): pega o máximo."""
     metodo = resp_carrinho.get("deliveryMethod") or metodo_entrega or {}
     eta = metodo.get("estimatedTime")
+    if eta is None:
+        eta = metodo.get("estimatedMinutes")
+    if isinstance(eta, dict):
+        eta = eta.get("max") or eta.get("min")
     try:
-        return int(eta) if eta is not None else None
+        return int(eta) if eta is not None and not isinstance(eta, bool) else None
     except (TypeError, ValueError):
         return None
 
@@ -361,25 +401,34 @@ def _ler_rastreio(resp: dict) -> dict:
 async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id: str,
                        pagamento_id: str | None) -> dict:
     avisos: list[str] = []
-    carrinho = await cliente.chamar("createCart", merchantId=loja_id, addressId=endereco_id)
+    # MCP real: sem orderId, o createCart exige addressId + merchantId + items (MISSING_REQUIRED_FIELDS).
+    # Vai o 1º item já na criação; os outros entram por addItemToCart.
+    primeira, resto = linhas[0], linhas[1:]
+    carrinho = await cliente.chamar("createCart", merchantId=loja_id, addressId=endereco_id,
+                                    items=[_item_do_carrinho(primeira)])
     cart_id = _ler_cart_id(carrinho)
 
     # 1 linha por slot (mesmo item pedido por 2 pessoas = 2 linhas), para saber de quem é cada uma.
     dono_por_linha: dict[str, _Linha] = {}
     sem_id: list[_Linha] = []
-    for linha in linhas:
-        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1)
-        cart_item_id = _ler_cart_item_id(resp)
+
+    def anotar_dono(linha: _Linha, cart_item_id: str | None) -> None:
         if cart_item_id:
             dono_por_linha[cart_item_id] = linha
         else:
             sem_id.append(linha)
 
+    anotar_dono(primeira, _ler_cart_item_id(carrinho, primeira.item_id, set()))
+    for linha in resto:
+        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1)
+        anotar_dono(linha, _ler_cart_item_id(resp, linha.item_id, set(dono_por_linha)))
+
     entregas = await cliente.chamar("getCartDeliveryMethods", cartId=cart_id)
     metodo_entrega = _ler_metodo_entrega(entregas)
-    await cliente.chamar("setCartDelivery", cartId=cart_id, deliveryMethodId=metodo_entrega["id"])
+    await cliente.chamar("setCartDelivery", cartId=cart_id, deliveryMethodId=_id_entrega(metodo_entrega))
 
-    pagamentos = await cliente.chamar("listPaymentMethods", cartId=cart_id)
+    # MCP real: listPaymentMethods só aceita merchantId (obrigatório); não recebe cartId.
+    pagamentos = await cliente.chamar("listPaymentMethods", merchantId=loja_id)
     # modo real: nunca Pix/online; sem forma segura levanta aqui, ANTES do setCartPayment
     metodo_pag, aviso_pag, pag_offline = _ler_pagamento(pagamentos, pagamento_id, getattr(cliente, "modo", None))
     if aviso_pag:
@@ -418,7 +467,8 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
         "itens": itens,
         **_ler_totais(final),
         "eta_min": _ler_eta(final, metodo_entrega),
-        "entrega": {"id": metodo_entrega.get("id"), "nome": metodo_entrega.get("name")},
+        "entrega": {"id": _id_entrega(metodo_entrega),
+                    "nome": metodo_entrega.get("name") or metodo_entrega.get("deliveryMethodMode")},
         "pagamento": {"id": _id_pagamento(metodo_pag), "nome": _nome_pagamento(metodo_pag),
                       "tipo": _tipo_pagamento(metodo_pag), "offline": pag_offline},
         "avisos": avisos,
