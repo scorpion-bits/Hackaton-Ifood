@@ -11,7 +11,7 @@ lojas que agradem todo mundo, caber no bolso de cada um, montar o carrinho e dep
 | Quem | O que sente hoje | O que o Match entrega |
 |---|---|---|
 | **Organizador** (o único com conta no iFood) | Trabalho de logística e de cobrança, sozinho | Cria a sala, toca em "Rodar Match", confere e dá o ok |
-| **Convidados** (sem login) | Fila de mensagens, "tanto faz", ficam sem o que queriam | Escrevem uma frase em ≤ 30 s e recebem o prato com o motivo |
+| **Convidados** (sem login) | Fila de mensagens, "tanto faz", ficam sem o que queriam | Escrevem uma frase (meta de ≤ 30 s, não medida) e recebem o prato com o motivo |
 
 **Insight central:** ninguém quer ser o gerente do pedido. Então o trabalho chato vai para a IA e para os agentes das
 lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e dar o ok final.
@@ -21,7 +21,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 1. **Dentro do app do iFood.** O Match é uma entrada na home ("Pedir em grupo? Dê um Match"), não um app novo.
    Familiaridade reduz o que a pessoa precisa aprender.
 2. **Um só login.** Só o organizador entra no iFood. Convidado entra por link ou QR, sem cadastro.
-3. **30 segundos para o convidado.** Nome, uma frase livre e chips opcionais (sem glúten, sem lactose...). Nada mais.
+3. **30 segundos para o convidado (meta, não medida).** Nome, uma frase livre e chips opcionais (sem glúten, sem lactose...). Nada mais.
 4. **Escreva do seu jeito.** Frase livre ("japonês e um sorvete, até 45") em vez de formulário. A IA entende preço,
    pressa, restrição e vontade.
 5. **Todo número é explicado e vem do iFood.** Preço, taxa e prazo vêm das tools do MCP. A IA nunca escreve um número
@@ -54,7 +54,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Passo | Objetivo | Decisão de design | Por quê |
 |---|---|---|---|
 | Lê o QR | Entrar | Abre no navegador, sem app e sem login | Barreira zero |
-| "O que você quer?" | Dizer a vontade | Nome + frase livre + chips de 1 toque + orçamento opcional; "Lembrar de mim neste aparelho" | Cabe em 30 s; a preferência fica no celular dele |
+| "O que você quer?" | Dizer a vontade | Nome + frase livre + chips de 1 toque + orçamento opcional; "Lembrar de mim neste aparelho" | Meta de caber em 30 s (não medida); a preferência fica no celular dele |
 | Espera | Saber o que acontece | "Aguarde o organizador rodar o Match"; pode mudar o desejo | Sem ansiedade, sem refazer |
 | Leilão e deck | Ver o seu prato e o motivo | Mesmo leilão do organizador; deck só leitura | Todos veem a mesma coisa; só um decide |
 | Sua parte | Pagar a sua parte | Valor por pessoa (itens + rateio da taxa só das lojas dele); Pix, cartão ou dinheiro | Cada um paga só o que consumiu |
@@ -68,9 +68,12 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 - **Confiança por transparência.** Cada lance mostra preço e afinidade. Loja que não atende diz "Passo". O fechamento
   explica quem venceu e avisa que as taxas aparecem no carrinho, antes do ok.
 - **Números honestos.** A fala da loja só pode citar números do próprio lance (preço, prazo, avaliação, contagens).
-  Fala com número inventado cai no texto pronto.
+  Fala com número inventado (também por extenso), contagem errada, "todo mundo" sem atender todos, restrição que a
+  tag do item não confirma, promessa (frete, cupom…) ou superlativo cai no texto pronto, e a tela mostra a origem
+  ("agente da loja (IA)" ou "texto conferido").
 - **Patrocinado rotulado e sem poder de compra.** A loja patrocinada aparece primeiro e com selo "Patrocinado", mas
-  nunca muda nota, filtro ou escolha. Na demo, a patrocinada **não** vence: mostra que pagar não compra o pedido.
+  nunca muda nota, filtro ou escolha, e não garante vaga entre as lojas consultadas. Na demo, a patrocinada **não**
+  vence: mostra que pagar não compra o pedido.
   No modo real, nenhuma loja é patrocinada.
 - **Respeita o tempo.** Uma fala por vez (~0,8 s), botão **Pular** sempre visível, e o aparelho só vê o leilão uma vez
   por sala.
