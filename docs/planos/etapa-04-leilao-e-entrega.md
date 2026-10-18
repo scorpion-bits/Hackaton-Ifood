@@ -138,6 +138,53 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
   submissão; revezar o sono (1 pessoa acordada com o PC).
 - Até 07h: `iniciar.bat` no PC do Thales. 07h–10h: vídeo do plano B, 3 ensaios cronometrados.
 
+## Rodada 3 — aderência ao regulamento oficial (aprovada pela equipe 17/10 ~23h45)
+
+O regulamento (`index-v2.html` da organização) pede **"um agente que faz pedidos de verdade usando o MCP do iFood"**,
+"da escolha do restaurante ao fechamento do carrinho", explorando **"agentes conversacionais e ferramentas
+determinísticas trabalhando juntos"**; critério de Design = "fluidez da interação com o agente". Equipe aprovou:
+pedido real na conta de teste, "Ajustar com o IBits", "Só eu" e pacote de entrega; UI no nível do app do iFood.
+
+### C14. Ajustar com o IBits (conversa depois do resultado)
+- `POST /api/salas/{id}/ajustar` 🔒 `{texto}` — só em `match_pronto`. Novo módulo `backend/app/match/ajuste.py`:
+  `async def interpretar_ajuste(cfg, texto, participantes: list[{id, nome, texto, orcamento_max, chips}]) ->
+  list[Mudanca]` com `Mudanca(participante_id, novo_texto, novo_orcamento: float|None, resumo: str)`.
+  LLM com saída JSON + fallback determinístico (nome da pessoa sem acento/caixa; padrões: "troca X do Fulano por Y",
+  "Fulano quer Y", "mais barato para Fulano"/"pra todo mundo", "sem X para Fulano", "tira o X do Fulano", "até N
+  para Fulano"; 1 pessoa só → ela). Validação: participante existe; texto ≤ 140; orçamento > 0.
+- A rota aplica as mudanças nos desejos, roda o Match de novo (mesmo `rodar_match`, leilão incluído) e devolve
+  `{entendido: [{participante_id, nome, resumo}], resultado}`; guarda `ajustes: [{texto, entendido, em}]` na sala
+  (o `GET` devolve). Não entendeu → 422 `{"detail": "Não entendi quem ou o quê. Ex.: \"troca o sorvete do Milan
+  por açaí\""}`; Match sem combinação → 409 legível e a sala **mantém** o resultado anterior.
+- Front (deck do organizador): campo "Ajustar com o IBits" + chips de exemplo; mostra a conversa (bolhas: o que o
+  organizador pediu → "Entendi: …"), toca uma disputa curta do novo resultado e volta ao deck. Convidado vê
+  "O organizador ajustou o pedido" e o novo deck.
+
+### C15. Só eu (pedido de 1 pessoa em ~20 s)
+- Home → "Fazer um match" → folha "Quem vai comer?" **Só eu** | **Em grupo**. "Só eu": tela única "O que você quer?"
+  (nome lembrado, frase, orçamento, chips) → "Encontrar meu pedido" = `POST /api/salas` → `PUT desejo` do
+  organizador (`participante_id` devolvido) → `POST rodar` → disputa → deck → "É um Match!" → pagamento **junto**
+  direto (sem vaquinha/QR). Só front; usa a API existente.
+
+### C16. Pedido de verdade na conta de teste
+- `checkout._ler_pagamento` no **modo real**: nunca Pix; prefere forma que não cobra online (dinheiro/na entrega/
+  offline — por `type`/`name`); sem forma assim → `ErroCheckout` legível "A conta de teste não tem forma de
+  pagamento sem cobrança; o pedido para no carrinho". Carrinho devolve `pagamento: {nome, tipo, offline}` (a tela
+  mostra "Pagamento: Dinheiro na entrega"). Envio real só com `IFOOD_MCP_PERMITIR_ENVIO=true` (já existe).
+- `busca.py`: se a consulta específica não trouxer nada, cai em `browseOffers` perto do endereço (volta o aviso
+  "a opção mais próxima é X"). (A T8 ajusta campos quando chegarem as amostras.)
+
+### Tarefas da rodada 3
+| ID | Branch | Tarefa | Agente | Modelo | Esforço | Arquivos | Status |
+|---|---|---|---|---|---|---|---|
+| T18 | `match/04-ajustar-back` | C14 backend | dev-backend | opus | high | `match/ajuste.py` (novo), `rotas_match.py` (rota nova), `match/salas.py` (campo `ajustes`), testes | 🔄 |
+| T19 | `match/04-ajustar-front` | C14 front + deck | dev-frontend | sonnet | high | `telas/Deck.tsx`, `telas/Resultado.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts`, `App.tsx` | 🔄 |
+| T20 | `match/04-so-eu` | C15 | dev-frontend | sonnet | high | `telas/Inicio.tsx`, `telas/Organizador.tsx`, `telas/Convidado.tsx`, `telas/SoEu.tsx` (novo), `componentes/Folha.tsx`, `estilo.css` | 🔄 |
+| T21 | `match/03-pedido-real` | C16 | dev-mcp-ifood | opus | high | `match/checkout.py`, `match/busca.py`, testes | 🔄 |
+| T22 | `match/05-pacote-entrega` | `docs/ENTREGA.md` + gerador do PDF único dos 6 entregáveis (Mermaid renderizado, galeria de telas) | arquiteto | opus | medium | `docs/ENTREGA.md`, `docs/entrega/*` | 🔄 |
+| T23 | `match/04-polimento-ui` | Passada de design em todas as telas (nível app do iFood) com capturas | dev-frontend | opus | high | front inteiro | ⬜ (depois de T19/T20) |
+| T24 | `match/05-pitch-final` | Pitch ~5 min com as palavras do regulamento, Ajustar, Só eu, pedido real | pitch-demo | opus | medium | `pitch/*`, roteiros, banca | ⬜ (depois de T18–T21) |
+
 ## Riscos e plano B
 - MCP real não fecha → demo no modo demonstração (pronto) + rastro real gravado no pitch.
 - Leilão no front não fecha até 04h → sai da demo, vira slide com o protótipo; o motor com agentes continua.
