@@ -8,7 +8,7 @@
 /* ---------- tema ---------- */
 :root {
   --marca: #ea1d2c; --marca-escura: #b3121f; --marca-suave: #fde8ea;
-  --bg: #f6f4f2; --bg-fora: #e9e5e1; --card: #ffffff; --texto: #1d1b1a; --suave: #6b6461; --linha: #e4dfdb;
+  --bg: #ffffff; --bg-fora: #f2f2f2; --card: #ffffff; --texto: #1d1b1a; --suave: #6b6461; --linha: #e4dfdb;
   --ok: #0b7a4b; --ok-fundo: #e3f4ea; --roxo: #6c3ad1; --roxo-suave: #efe8fc;
   --zap: #e7ffdb; --zap-outro: #ffffff; --zap-fundo: #efe7de;
   --sombra: 0 18px 50px rgba(40, 20, 10, .14);
@@ -59,8 +59,8 @@ em { font-style: normal; color: var(--marca); }
 #cantos:hover { opacity: 1; }
 #cantos button { font: 600 13px/1 inherit; font-family: inherit; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--linha);
   background: var(--card); color: var(--texto); cursor: pointer; }
-#marca-canto { position: absolute; top: 34px; right: 46px; font-weight: 800; font-size: 22px; color: var(--marca); display: flex;
-  align-items: center; gap: 8px; z-index: 4; transition: opacity .4s; }
+#marca-canto { position: absolute; top: 26px; right: 40px; z-index: 4; transition: opacity .4s; }
+#marca-canto img { height: 52px; width: auto; display: block; }
 #marca-canto.oculto { opacity: 0; }
 
 /* ---------- celular ---------- */
@@ -79,11 +79,10 @@ em { font-style: normal; color: var(--marca); }
 @keyframes flutua { 50% { transform: translateY(-10px); } }
 
 /* ---------- capa e fechamento ---------- */
-.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 45%, #a80f1b 100%); color: #fff; }
+.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 50%, #c8101e 100%); color: #fff; }
 .capa .rotulo, .capa em { color: #ffe1e3; }
-.logo { display: flex; align-items: center; gap: 22px; font-size: 140px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
-.coracao { display: inline-block; animation: bate 1.6s ease-in-out infinite; }
-@keyframes bate { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.14); } 30% { transform: scale(1); } 45% { transform: scale(1.08); } }
+.logo { display: flex; align-items: center; }
+.logo img { height: 210px; width: auto; display: block; margin-left: -10px; filter: drop-shadow(0 10px 24px rgba(80, 0, 0, .25)); }
 .capa .comidas { position: absolute; right: 90px; top: 50%; transform: translateY(-50%); font-size: 120px; display: grid;
   grid-template-columns: 1fr 1fr; gap: 28px; }
 .capa .comidas span { animation: flutua 5s ease-in-out infinite; }
@@ -171,7 +170,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   #palco { position: static; transform: none !important; height: auto; overflow: visible; background: none; }
   .slide { position: relative; width: 1600px; height: 900px; opacity: 1; visibility: visible; transform: none; page-break-after: always;
     background: var(--bg); }
-  .slide.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 45%, #a80f1b 100%); }
+  .slide.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 50%, #c8101e 100%); }
   .a, .f { opacity: 1 !important; transform: none !important; animation: none !important; }
   .cel .tela img.f { opacity: 0 !important; }
   .cel .tela img.f:last-child { opacity: 1 !important; }
@@ -181,12 +180,12 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
 </head>
 <body>
 <div id="palco">
-  <div id="marca-canto"><span>❤</span> match</div>
+  <div id="marca-canto"><img src="img/match-vermelha.png" alt="Match"></div>
 
   <!-- 1 · CAPA -->
   <section class="slide capa" data-titulo="Capa" data-tempo="0:15">
     <div class="rotulo a">Hackathon SEMCOMP × iFood · Vendendo com Agentes</div>
-    <div class="logo a" style="--d:.15s"><span class="coracao">❤</span>match</div>
+    <div class="logo a" style="--d:.15s"><img src="img/match-branca.png" alt="Match"></div>
     <h2 class="a" style="--d:.35s; margin-top: 30px; font-size: 54px; max-width: 900px;">Ninguém mais vira <em>o gerente do pedido</em>.</h2>
     <p class="a" style="--d:.55s; max-width: 860px; opacity: .92;">Pedido em grupo montado por um agente que opera o MCP do iFood.</p>
     <p class="equipe a" style="--d:.75s">Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
@@ -370,7 +369,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   <section class="slide capa" data-titulo="Fechamento" data-tempo="4:50">
     <div class="persona a"><div class="avatar" style="background:rgba(255,255,255,.18)">👩🏽‍🎓</div>
       <p style="font-size:32px">A Ana voltou a ser só<br><b>mais uma amiga com fome.</b></p></div>
-    <div class="logo a" style="--d:.3s; margin-top: 30px"><span class="coracao">❤</span>match</div>
+    <div class="logo a" style="--d:.3s; margin-top: 30px"><img src="img/match-branca.png" alt="Match"></div>
     <h2 class="a" style="--d:.5s; margin-top: 24px; font-size: 52px;">Cada um fala o que quer.<br><em>O IBits monta, divide e pede pelo iFood.</em></h2>
     <p class="equipe a" style="--d:.7s">Obrigado! · Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
     <div class="comidas" aria-hidden="true"><span>🍦</span><span>🍣</span><span>🥗</span><span>🍔</span></div>
