@@ -1,8 +1,11 @@
 # Pitch do Match (máximo 5 min)
 
 Um arquivo só (`index.html`), sem internet e sem instalar nada: **dois cliques no `index.html`** (Edge/Chrome).
-PDF de reserva: `pitch.pdf` (claro). Telas do app: `img/app/` (visual atual com a logo Match; modo demonstração, persona Ana).
-Fotos dos pratos: URLs reais do iFood (amostras do MCP em `docs/mcp-real/`) postas por cima da demonstração só na captura; preços e lojas são simulados (selo "demonstração" visível). Prato sem foto parecida fica sem foto.
+PDF de reserva: `pitch.pdf` (claro). Telas do app: `img/app/` (visual atual com a logo Match):
+- `01`–`08`: história da persona Ana no **modo demonstração** (selo "demonstração" visível), **sem foto colada** (antes as
+  fotos de amostra caíam em prato errado; agora só `FOTOS_AMOSTRA=1` as liga).
+- `real-avaliacao`, `real-pedido`, `real-prontos`: o app no **MCP real** (conta de teste, endereço em SP, IA Gemini),
+  18/10 ~09h: logos, fotos, preços e carrinho do iFood. Aparecem no clique da prova do slide "Como funciona".
 
 ## Teclas
 | Tecla | Ação |
@@ -27,7 +30,7 @@ O cronômetro começa no **primeiro avanço**. A janela do apresentador segue a 
 | 6 | 2 · O IBits monta | 2:30 | 1 clique troca a tela: avaliação das lojas → pedido do grupo |
 | 7 | 3 · Ajustar | 2:50 | "troca o sorvete de Bruno por açaí" |
 | 8 | 4 · Cada um paga | 3:20 | divisão ao centavo, Pix para a Ana, só sai com 100% pago |
-| 9 | Como funciona | 3:55 | IA conversa · código calcula · MCP executa; 1 clique: prova no MCP real (R$ 50,98) |
+| 9 | Como funciona | 3:55 | IA conversa · código calcula · MCP executa; 1 clique: 3 telas do app no MCP real (Big Mac + McFritas na mesma loja) + conta R$ 50,98 |
 | 10 | Quem ganha | 4:30 | turma, lojas, iFood; 2 cliques: piloto e feedback do MCP |
 | 11 | Fechamento | 4:50 | "A Ana voltou a ser só mais uma amiga com fome." |
 
@@ -37,4 +40,6 @@ carrinho real de `docs/mcp-real/bug25-whopper-carrinho.json`. A pesquisa com usu
 
 ## Regerar
 - Telas: `bash pitch/scripts/capturar_telas.sh` (Linux/container; sobe o app em modo demonstração e grava `img/app/`).
+- Telas do MCP real: com o app já rodando no modo real, `REAL=1 SAIDA=<pasta> node pitch/scripts/capturar_telas.cjs`
+  (Playwright em `NODE_PATH`); as 3 `real-*` vieram do fluxo Só eu "um hambúrguer e uma batata frita".
 - PDF: `cd pitch && npm install && npm run pdf` (escuro: `node exportar-pdf.mjs escuro`).

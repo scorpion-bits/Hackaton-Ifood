@@ -144,9 +144,13 @@ em { font-style: normal; color: var(--marca); }
 .prova { display: flex; align-items: center; gap: 26px; margin-top: 34px; padding: 22px 28px; border-radius: 22px; background: var(--card);
   border: 2px dashed var(--marca); font-size: 23px; }
 .prova-cels { display: flex; gap: 14px; flex: none; }
-.cel.mini { width: 150px; height: 325px; border-radius: 26px; padding: 6px; }
-.cel.mini::before { top: 10px; width: 44px; height: 11px; margin-left: -22px; }
-.cel.mini .tela { inset: 6px; border-radius: 20px; }
+.cel.mini { width: 232px; height: 502px; border-radius: 34px; padding: 8px; }
+.cel.mini::before { top: 14px; width: 64px; height: 16px; margin-left: -32px; }
+.cel.mini .tela { inset: 8px; border-radius: 27px; }
+/* "Como funciona": no clique da prova, os 3 quadros dão lugar às telas do app no MCP real */
+.slide:has(.prova.on) .fluxo { display: none; }
+.prova-txt { flex: 1; min-width: 0; font-size: 23px; line-height: 1.45; }
+.prova .prova-txt .conta { white-space: normal; font-size: 21px; }
 .prova .conta { font: 700 24px/1.3 Consolas, "Cascadia Mono", monospace; color: var(--marca); white-space: nowrap; }
 
 /* ---------- impacto ---------- */
@@ -178,6 +182,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   .a, .f { opacity: 1 !important; transform: none !important; animation: none !important; }
   .cel .tela img.f { opacity: 0 !important; }
   .cel .tela img.f:last-child { opacity: 1 !important; }
+  .slide:has(.prova) .fluxo { display: none; }  /* PDF: no "Como funciona" vale a prova (telas do MCP real) */
   #cantos, #progresso, #marca-canto { display: none; }
 }
 </style>
@@ -350,11 +355,13 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
     <div class="prova f">
       <div class="prova-cels">
         <div class="cel mini"><div class="tela"><img src="img/app/real-avaliacao.png" alt="Avaliação das lojas no MCP real, com as logos das lojas"></div></div>
-        <div class="cel mini"><div class="tela"><img src="img/app/real-prontos.png" alt="Carrinhos prontos no iFood, no MCP real"></div></div>
+        <div class="cel mini"><div class="tela"><img src="img/app/real-pedido.png" alt="Pedido no MCP real: Big Mac e McFritas no mesmo McDonald's, com as fotos do iFood"></div></div>
+        <div class="cel mini"><div class="tela"><img src="img/app/real-prontos.png" alt="Carrinho pronto no iFood, no MCP real"></div></div>
       </div>
-      <div><b>✅ Testado no MCP real.</b> Lojas, logos, preços e carrinhos de verdade (conta de teste do iFood):<br>
-        <span class="conta">39,99 + entrega 9,99 + serviço 1,00 = R$ 50,98</span> <span class="suave">— igual ao iFood, ao centavo.</span></div></div>
-    <aside class="nota">"Por baixo: a IA faz o que precisa de IA, entender as frases e avaliar as lojas. A conta é código, sem chute. E tudo que é loja, preço, taxa e carrinho vem do MCP do iFood: nenhum número é inventado pela IA." (clique) "Testamos no MCP real: um carrinho no Burger King daqui de São Carlos bateu com o iFood ao centavo, inclusive a taxa de serviço."</aside>
+      <div class="prova-txt"><b>✅ No iFood de verdade.</b> MCP real, conta de teste: lojas, logos, fotos, preços e carrinho vêm do iFood.<br>
+        <span class="suave">"Um hambúrguer e uma batata frita" → Big Mac + McFritas na mesma loja, 1 entrega.</span><br>
+        E a conta fecha com o iFood ao centavo (Burger King):<br><span class="conta">39,99 + entrega 9,99 + serviço 1,00 = R$&nbsp;50,98</span></div></div>
+    <aside class="nota">"Por baixo: a IA faz o que precisa de IA, entender as frases e avaliar as lojas. A conta é código, sem chute. E tudo que é loja, preço, taxa e carrinho vem do MCP do iFood: nenhum número é inventado pela IA." (clique: aparecem as telas reais) "E isso roda no iFood de verdade: lojas, logos, fotos e preços vêm do MCP real. Pedi um hambúrguer e uma batata frita, e o IBits juntou Big Mac e McFritas no mesmo McDonald's, uma entrega só. E a conta bate com o iFood ao centavo, inclusive a taxa de serviço."</aside>
   </section>
 
   <!-- 10 · IMPACTO -->
