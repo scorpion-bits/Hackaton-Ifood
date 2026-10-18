@@ -4,13 +4,17 @@ import { Esqueleto } from "../componentes/Esqueleto";
 import Icone from "../componentes/Icone";
 import Selo from "../componentes/Selo";
 import StatusIfood from "../componentes/StatusIfood";
-import { PREFERENCIAS, RESTRICOES, chavePid } from "./Convidado";
+import { OndePedir, PREFERENCIAS, RESTRICOES, chavePid, semOnde } from "./Convidado";
 
 /** Marca a sala como "de uma pessoa só": o organizador esconde o convite (QR/link). */
 export const chaveSolo = (salaId: string) => `match.solo.${salaId}`;
 export const salaSolo = (salaId: string) => lerLocal<boolean>(chaveSolo(salaId)) === true;
 
-const EXEMPLOS = ["japonês até 40", "um lanche rápido e um sorvete", "pizza sem lactose", "algo leve e barato"];
+// comida e também compras de farmácia, mercado e pet shop (A′F5: cada produto vai para a loja da categoria certa)
+const EXEMPLOS = ["uma pizza e uma coca", "japonês até 40", "dipirona e protetor solar", "ração de cachorro e um petisco",
+  "arroz, feijão e detergente"];
+// exemplos de mercado/farmácia/pet: tocar neles já liga "Compras" (regras_pedido.json); os de comida desligam
+const EXEMPLOS_DE_COMPRAS = new Set(EXEMPLOS.slice(2));
 const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 interface SalaSolo {
@@ -21,14 +25,14 @@ interface SalaSolo {
 
 /**
  * "Só eu": tela única para pedir sozinho. Cria a sala, grava o desejo do organizador, roda o Match e
- * abre a sala (que já chega em `match_pronto`: disputa e deck). Sem vaquinha, sem QR, sem chave Pix.
+ * abre a sala (que já chega em `match_pronto`: avaliação e pedido). Sem vaquinha, sem QR, sem chave Pix.
  */
 export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
   const eu = lerLocal<Eu>(chaveEu);
   const [nome, setNome] = useState(eu?.nome ?? "");
   const [texto, setTexto] = useState("");
   const [orcamento, setOrcamento] = useState("");
-  const [chips, setChips] = useState<string[]>(eu?.chips ?? []);
+  const [chips, setChips] = useState<string[]>(semOnde(eu?.chips ?? []));
   const [fase, setFase] = useState<"form" | "buscando" | "erro">("form");
   const [erro, setErro] = useState("");
   const [demo, setDemo] = useState<boolean | null>(null);
@@ -76,7 +80,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
         orcamento_max: Number.isFinite(valor) && valor > 0 ? valor : null,
         chips,
       });
-      gravarLocal(chaveEu, { nome: nome.trim(), chips });
+      gravarLocal(chaveEu, { nome: nome.trim(), chips: semOnde(chips) });
       await api.rodar(id, token);
       window.location.hash = `#/s/${encodeURIComponent(id)}/org`;
     } catch (x) {
@@ -134,7 +138,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
           </div>
           <div role="status" aria-live="polite">
             <h1 className="titulo">Procurando nas lojas perto de você…</h1>
-            <p className="sub">A IA lê o seu pedido, consulta os cardápios e monta as melhores opções.</p>
+            <p className="sub">A IA lê o seu pedido, consulta os cardápios e monta o melhor pedido.</p>
           </div>
           <div className="soeu-esq" aria-hidden="true">
             <div className="soeu-esq-linha">
@@ -203,12 +207,15 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             rows={3}
-            placeholder="Ex.: um lanche rápido e um sorvete, até R$ 40"
+            placeholder="Ex.: um lanche e um refri, até R$ 40 — mercado ou farmácia? marque “Compras” abaixo"
             required
           />
           <div className="soeu-exemplos" role="group" aria-label="Exemplos para preencher">
             {EXEMPLOS.map((x) => (
-              <button key={x} type="button" className="chip chip-exemplo" onClick={() => setTexto(x)}>
+              <button key={x} type="button" className="chip chip-exemplo" onClick={() => {
+                  setTexto(x);
+                  setChips((l) => (EXEMPLOS_DE_COMPRAS.has(x) ? [...semOnde(l), "modo:compras"] : semOnde(l)));
+                }}>
                 {x}
               </button>
             ))}
@@ -228,6 +235,7 @@ export default function SoEu({ onCancelar }: { onCancelar: () => void }) {
               />
             </span>
           </div>
+          <OndePedir chips={chips} setChips={setChips} id="soeu-ch-onde" />
           {grupo("Preferência", PREFERENCIAS)}
           {grupo("Restrição", RESTRICOES)}
         </article>

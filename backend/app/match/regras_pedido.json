@@ -1,0 +1,18 @@
+{
+  "_sobre": "Regras que o Match aplica em cima do que cada pessoa escreve. Dá para ajustar aqui sem mexer no código; os testes em backend/tests/test_regras_pedido.py conferem o comportamento (rode o pytest depois de mudar).",
+
+  "compras": {
+    "_sobre": "Mercado, farmácia, pet shop e adega só com o botão 'Compras' ligado. Sem ele, todo item é de restaurante e refeição ('arroz, feijão e bife') vira prato feito, nunca lista de mercado. Item que só existe nessas lojas ('dipirona', 'ração') sai do pedido com um aviso.",
+    "chip": "modo:compras",
+    "tipos_de_loja": ["GROCERIES", "DRUGSTORE", "PETSTORE", "LIQUORSTORE", "SHOPPING"],
+    "nomes": {"GROCERIES": "mercado", "DRUGSTORE": "farmácia", "PETSTORE": "pet shop", "LIQUORSTORE": "adega",
+              "SHOPPING": "loja"},
+    "aviso_sem_botao": "{item} para {pessoa} é de {tipo}: ligue \"Compras\" para pedir em mercado, farmácia ou pet shop."
+  },
+
+  "mesma_loja": {
+    "_sobre": "Os itens de uma mesma pessoa saem do mesmo restaurante sempre que der: cada loja a mais no pedido de uma pessoa tira estes pontos da combinação (a nota de um item vai de 0 a 1). E o 2º item da pessoa é procurado também dentro das lojas mais baratas do 1º (onde o otimizador costuma escolher).",
+    "peso_por_loja_a_mais_da_pessoa": 0.25,
+    "lojas_mais_baratas_na_busca_da_loja": 2
+  }
+}

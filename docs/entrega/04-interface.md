@@ -1,7 +1,9 @@
 # Interface visual — Match
 
-> Capturas reais do protótipo rodando no modo demonstração (celular, 390 × 780). Os dados das lojas são simulados
-> e aparecem com o selo **DEMONSTRAÇÃO**. Imagens em `pitch/img/`. Racional de cada escolha: entregável 03.
+> Capturas reais do protótipo rodando no modo demonstração (celular, 390 × 780), tiradas nos smokes de 18/10 (B6; telas
+> 5 a 9 refeitas no B9, quando o resultado passou a mostrar direto o pedido escolhido pelo IBits) com o fluxo completo
+> passando pela interface. Os dados das lojas são simulados e aparecem com o selo **DEMONSTRAÇÃO**.
+> Imagens em `docs/entrega/telas/`. Racional de cada escolha: entregável 03.
 
 ## Linguagem visual
 
@@ -24,13 +26,25 @@ Detalhes e fontes: `docs/design-ifood.md` §5 e `docs/racional-ux.md` §6–7.
 
 ## Telas
 
+### Em grupo
 <div class="galeria">
-<figure><img src="../../pitch/img/f1-inicio.png" alt="Home"><figcaption><b>1 · Início.</b> Home no padrão do app: "Entregar em", busca, verticais com <i>Match</i> (selo "novo"), banner "Fazer um match" e aba central Match.</figcaption></figure>
-<figure><img src="../../pitch/img/f2-org.png" alt="Sala do organizador"><figcaption><b>2 · Sala do organizador.</b> QR e link para chamar a turma, sem login; lista "quem entrou" com status; botão "Rodar Match".</figcaption></figure>
-<figure><img src="../../pitch/img/f3-convidado.png" alt="Convidado"><figcaption><b>3 · Convidado.</b> Entra pelo link, escreve o que quer numa frase, orçamento opcional e chips de preferência (barato, rápido, leve).</figcaption></figure>
-<figure><img src="../../pitch/img/f4-disputa.png" alt="Disputa das lojas"><figcaption><b>4 · Disputa das lojas.</b> Agentes vendedores fazem lances com preço vindo do MCP; selo PATROCINADO não muda a nota; contador de chamadas MCP.</figcaption></figure>
-<figure><img src="../../pitch/img/f5-deck.png" alt="Fim da rodada"><figcaption><b>5 · Fim da rodada.</b> Coroas nas lojas escolhidas e afinidade por loja; o IBits (agente comprador) explica a melhor combinação e avisa as taxas.</figcaption></figure>
-<figure><img src="../../pitch/img/f6-match.png" alt="É um Match"><figcaption><b>6 · É um Match!</b> Celebração com a afinidade do grupo, as pessoas e as lojas da combinação.</figcaption></figure>
-<figure><img src="../../pitch/img/f7-escolha.png" alt="Como pagar"><figcaption><b>7 · Opção escolhida.</b> Resumo (3 lojas = 3 pedidos, 3 taxas, 3 entregas), item por pessoa com o motivo e a nota de combinação.</figcaption></figure>
-<figure><img src="../../pitch/img/f8-pagamento.png" alt="Confira antes do ok"><figcaption><b>8 · Confira antes do ok.</b> Carrinho por loja com subtotal, taxa e total do iFood; o pedido só sai com 100% pago e consentimento.</figcaption></figure>
+<figure><img src="telas/01-inicio.png" alt="Início"><figcaption><b>1 · Início.</b> Home no padrão do app: "Entregar em", busca, verticais com <i>Match</i> (selo "novo"), banner "Fazer um match" e aba central Match. Itens fora do protótipo avisam em vez de parecer quebrados.</figcaption></figure>
+<figure><img src="telas/02-quem-vai-comer.png" alt="Quem vai comer"><figcaption><b>2 · Quem vai comer?</b> Folha inferior com duas portas: <i>Só eu</i> (a IA acha o pedido em segundos) ou <i>Em grupo</i> (a turma entra por link ou QR, sem login).</figcaption></figure>
+<figure><img src="telas/03-sala.png" alt="Sala do organizador"><figcaption><b>3 · Sala do organizador.</b> QR e link com o IP da rede (os celulares abrem direto); lista "quem entrou" com status em palavra; "3 de 3 convidados responderam"; botão Rodar Match fixo no pé.</figcaption></figure>
+<figure><img src="telas/04-convidado.png" alt="Convidado"><figcaption><b>4 · Convidado.</b> Sem cadastro: nome, uma frase do seu jeito, orçamento opcional e chips de preferência e restrição, com aviso honesto sobre alergias.</figcaption></figure>
+<figure><img src="telas/05-avaliacao-lojas.png" alt="Avaliação das lojas"><figcaption><b>5 · Como o IBits avaliou cada loja.</b> Um avaliador por loja, que só lê o cardápio dela; preço e prazo vêm do MCP; contador de chamadas ao MCP; botão Pular e, no fim, "Ver o pedido".</figcaption></figure>
+<figure><img src="telas/06-pedido-do-grupo.png" alt="O pedido do grupo"><figcaption><b>6 · O pedido do grupo.</b> O IBits já escolheu a melhor combinação e ela aparece direto, num cartão só: lojas, item de cada pessoa com o motivo, total só de itens ("taxa no carrinho"), número de entregas; afinidade explicada em uma linha. Mudar = "Ajustar com o IBits"; "Confirmar pedido" fica fixo embaixo. O convidado vê só a parte dele.</figcaption></figure>
+<figure><img src="telas/07-ajustar-conversa.png" alt="Ajustar com o IBits"><figcaption><b>7 · Ajustar com o IBits.</b> Conversa depois do resultado: "troca o sorvete do Milan por açaí" → "Entendi: Milan: açaí no lugar do sorvete. Pronto, atualizei o pedido.". Sugestões geradas a partir de quem respondeu.</figcaption></figure>
+<figure><img src="telas/08-ajustar-atualizado.png" alt="Pedido atualizado"><figcaption><b>8 · Pedido atualizado.</b> O Match roda de novo só com a mudança; o cartão ganha o selo "Atualizado" e o item novo, "NOVO". Os convidados veem "O organizador ajustou o pedido".</figcaption></figure>
+<figure><img src="telas/09-como-pagar.png" alt="Como pagar"><figcaption><b>9 · Como pagar?</b> Depois de "Confirmar pedido": resumo do pedido com os avisos honestos (ex.: o item que ficou de fora para caber em 3 lojas) e a escolha entre pagar tudo de uma vez ou a vaquinha.</figcaption></figure>
+<figure><img src="telas/10-confira.png" alt="Confira antes do ok"><figcaption><b>10 · Confira antes do ok.</b> "São 3 pedidos: 3 cobranças e 3 entregas"; carrinho por loja com subtotal, taxa e total lidos do carrinho; forma de pagamento de cada carrinho.</figcaption></figure>
+<figure><img src="telas/11-vaquinha-pix.png" alt="Vaquinha"><figcaption><b>11 · Vaquinha.</b> Cada um paga a sua parte (taxa dividida só entre quem pediu da loja); Pix direto para o organizador com aviso "Demonstração — não pague"; prazo visível; o pedido só sai com 100% pago.</figcaption></figure>
+<figure><img src="telas/12-confirmar-envio.png" alt="Confirmar envio"><figcaption><b>12 · Confirmar envio.</b> "Deslize para enviar" (com alternativa por botão) abre a folha de resumo; nada é enviado sem "Confirmo enviar".</figcaption></figure>
+<figure><img src="telas/13-pedidos.png" alt="Pedidos"><figcaption><b>13 · Pedidos.</b> Um cartão por loja com a linha do tempo do acompanhamento (confirmado → em preparo → saiu → entregue), vinda do <code>trackOrder</code>.</figcaption></figure>
+</div>
+
+### Só eu
+<div class="galeria">
+<figure><img src="telas/14-so-eu.png" alt="Só eu"><figcaption><b>14 · Só eu.</b> Uma tela: "O que você quer?" com exemplos para tocar, orçamento e chips; "Encontrar meu pedido".</figcaption></figure>
+<figure><img src="telas/15-so-eu-confira.png" alt="Só eu: confira"><figcaption><b>15 · Só eu: confira.</b> Sem vaquinha nem QR: "É 1 pedido: 1 cobrança e 1 entrega", carrinho e "Deslize para enviar".</figcaption></figure>
 </div>

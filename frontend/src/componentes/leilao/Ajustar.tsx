@@ -3,7 +3,7 @@ import type { Participante } from "../../tipos";
 import { IconeCoracao, IconeEnviar, IconeFaisca } from "./visual";
 import { reduzirMovimento } from "./util";
 
-/** Uma ida e volta com o IBits (C14). O estado vive em `Resultado`, para não se perder quando o deck some durante a disputa curta. */
+/** Uma ida e volta com o IBits (C14). O estado vive em `Resultado`, para não se perder quando o pedido some durante a avaliação curta. */
 export interface Troca {
   id: number;
   texto: string;
@@ -25,7 +25,8 @@ function exemplosDa(nomes: string[], solo: boolean): string[] {
   if (solo) return ["troca o sorvete por açaí", "mais barato", "sem glúten"];
   const n = (i: number) => nomes[i % Math.max(nomes.length, 1)];
   if (nomes.length === 0) return EXEMPLOS_PADRAO;
-  return [`troca o sorvete do ${n(0)} por açaí`, `mais barato pro ${n(1)}`, `sem glúten pra ${n(2)}`];
+  // "de"/"para" servem para qualquer nome (o smoke achou "do Ana"); o Ajustar do back entende os dois
+  return [`troca o sorvete de ${n(0)} por açaí`, `mais barato para ${n(1)}`, `sem glúten para ${n(2)}`];
 }
 
 /** Bolha do IBits (esquerda) ou do organizador (direita). */
@@ -69,7 +70,7 @@ function TrocaBolhas({ t }: { t: Troca }) {
       )}
       {t.estado === "pronto" && (
         <Bolha de="ibits">
-          {entendeu} Pronto, atualizei as opções.
+          {entendeu} Pronto, atualizei o pedido.
         </Bolha>
       )}
       {t.estado === "erro" && <Bolha de="ibits">{t.erro}</Bolha>}

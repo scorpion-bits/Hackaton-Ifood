@@ -276,3 +276,23 @@ def test_slot_extra_entra_quando_ha_folga_no_limite_de_lojas():
     dois = otimizar(candidatos, pesos, max_lojas=2, orcamentos={"milan": 45.0, "zenon": 50.0},
                     pessoa_de={"milan": "milan", "milan#2": "milan", "zenon": "zenon"})
     assert "milan#2" not in dois[0].escolhas
+
+
+# ---------- combos (Trilha A′, etapa 05: A′F3) ----------
+def test_combo_cobre_os_itens_da_pessoa_e_nunca_vem_junto_com_os_avulsos():
+    import dataclasses
+    combo = dataclasses.replace(cand("ana", "B", "combo", 42.9, 0.9), cobre=["ana#2", "ana#3"])
+    candidatos = {
+        "ana": [cand("ana", "B", "smash", 29.9, 0.9), combo],
+        "ana#2": [cand("ana#2", "B", "batata", 16.9, 0.9)],
+        "ana#3": [cand("ana#3", "C", "suco", 12.9, 0.6)],
+    }
+    pessoa_de = {"ana": "ana", "ana#2": "ana", "ana#3": "ana"}
+    combos = otimizar(candidatos, Pesos(), max_lojas=3, top=3, pessoa_de=pessoa_de)
+    melhor = combos[0]
+    assert [c.item_id for c in melhor.escolhas.values()] == ["combo"]
+    assert melhor.cobertos == {"ana#2": "ana", "ana#3": "ana"}
+    assert melhor.componentes["slots_fora"] == 0 and melhor.componentes["custo_total"] == 42.9
+    for c in combos:  # nenhuma combinação leva o combo e um avulso do que ele já cobre
+        ids = {x.item_id for x in c.escolhas.values()}
+        assert not ("combo" in ids and ids & {"batata", "suco"})

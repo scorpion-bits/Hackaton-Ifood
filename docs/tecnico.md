@@ -63,7 +63,7 @@ flowchart LR
 
 | Componente | Arquivo | Papel |
 |---|---|---|
-| Frontend | `frontend/src/` | React 19 + TypeScript (Vite). Rotas por hash: `#/` (início estilo app), `#/s/{id}` (convidado), `#/s/{id}/org` (organizador), `#/conectado` (volta do login). Polling de 2 s em `GET /api/salas/{id}`. Compilado e servido pelo próprio FastAPI (uma URL na demo). Telas do Match: `telas/Leilao.tsx` (disputa) e `telas/Deck.tsx` (deck de combinações), com peças em `componentes/leilao/` (seção 5). |
+| Frontend | `frontend/src/` | React 19 + TypeScript (Vite). Rotas por hash: `#/` (início estilo app), `#/s/{id}` (convidado), `#/s/{id}/org` (organizador), `#/conectado` (volta do login). Polling de 2 s em `GET /api/salas/{id}`. Compilado e servido pelo próprio FastAPI (uma URL na demo). Telas do Match: `telas/Leilao.tsx` (disputa) e `telas/Deck.tsx` (o pedido escolhido pelo IBits), com peças em `componentes/leilao/` (seção 5). |
 | API da sala | `backend/app/rotas_match.py` | Criar sala, entrar, desejo, rodar, escolher, pagar, enviar, acompanhar. Ações do organizador exigem o header `X-Organizador`. |
 | Sala | `backend/app/match/salas.py` | Estado inteiro da sala em JSON numa tabela SQLite própria. Escrita atômica (trava + transação). Chamadas ao MCP ficam fora da trava de gravação e o estado é revalidado depois. |
 | Motor | `match/motor.py` | `listAddresses` → interpretar (+ quantidades) → buscar → julgar → leilão → otimizar → fechar o leilão → avisos. `MATCH_LEILAO=off` no `.env` pula o leilão (o otimizador volta a ver todos os candidatos). |
@@ -152,16 +152,34 @@ flowchart TD
   A[listAddresses] -->|sem endereço| X1[aviso: cadastre um endereço]
   A --> B[interpretar cada desejo em slots<br/>IA ou regras + quantidades]
   B --> C[buscar candidatos por slot<br/>searchOffers / getMerchant / browseOffers]
-  C --> D[juiz: nota 0–1 + motivo<br/>IA ou regras]
+  C --> C2[2º item em diante: buscar também DENTRO<br/>da loja do 1º item - refinements.merchantId]
+  C2 --> D[juiz: nota 0–1 + motivo<br/>IA ou regras]
   D --> E{melhor nota do slot ≥ 0,5?}
   E -->|não| F[opção aproximada + aviso<br/>bebida nunca substitui comida]
   E -->|sim| G
   F --> G[leilão por loja<br/>MATCH_LEILAO=off pula]
-  G --> H[otimizar: top 3, até 3 lojas<br/>só itens ofertados]
+  G --> G2[combos: combo/kit que cita 2+ itens<br/>da pessoa vira 1 candidato]
+  G2 --> H[otimizar: top 3, até 3 lojas<br/>custo com a taxa da busca]
   H --> J[fechar leilão: vencedoras,<br/>réplica, fechamento do IBits]
   J --> I
-  I[avisos: N lojas = N pedidos, N taxas, N entregas<br/>taxa só aparece no carrinho]
+  I[avisos: N lojas = N pedidos, N taxas, N entregas<br/>taxa estimada pela busca; valor final no carrinho]
 ```
+
+**Pedido completo** (etapa 05, Trilha A′): cada pessoa pode pedir até 4 itens ("uma pizza e uma coca", "hambúrguer
+com batata e refri"). (1) Bebida pela marca ("coca", "guaraná") também busca "refrigerante". (2) O 2º item em diante
+é procurado também **dentro das 2 melhores lojas do 1º item**, com `searchOffers` + `refinements.merchantId` — o
+caminho que o próprio `getMerchant` real indica em `catalogSummary.navigationHint`; assim o refri vem da pizzaria da
+pizza, não de outra loja (+1 taxa, +1 entrega). (3) Um combo/kit da loja que cita 2+ itens da pessoa vira um
+candidato só (`Candidato.cobre`), que o otimizador compara com os itens avulsos — nunca os dois juntos
+(`Combinacao.cobertos` diz quais itens o combo atende). (4) A taxa de entrega e o pedido mínimo vêm do
+`merchant{}` de cada resultado do `searchOffers` e entram no custo; quando juntar itens reduz lojas, a tela diz quanto
+o pedido paga a menos de taxa do que se cada item viesse da loja com a melhor nota.
+
+**Só eu além de restaurante:** lista de compras de mercado, farmácia, pet shop ou adega ("preciso fazer compras: arroz,
+feijão e detergente", "dipirona e protetor solar") vira 1 item por produto, cada um buscado com o `merchantType` da
+categoria. O lugar ("fazer compras", "na farmácia") não vira item; item sem categoria segue o anterior; no varejo,
+produto diferente não ganha por ser mais barato (só concorrem itens perto da melhor nota) e não há "opção
+aproximada". Lojas diferentes continuam sendo carrinhos e entregas diferentes: o Match não junta entregas.
 
 Regras de relevância já no código: item com nota < 0,25 sai se houver opção melhor; slot cujo melhor item fica
 abaixo de 0,5 vira "Opção aproximada: …" com aviso "Não achei X; a opção mais próxima é Y"; se ninguém tem item
@@ -224,10 +242,10 @@ Como funciona:
   nota do juiz em cada slot da loja; fala por template a partir dos números. Rede de segurança: um slot que tinha
   opção válida nunca fica sem oferta (se todos os agentes o esqueceram, entra o top 2 por template).
 - **Garantia:** com `LLM_PROVIDER=mock` o resultado do roteiro da demo não muda (`test_leilao.py`).
-- **Roteiro exibido:** abertura do IBits, até 2 passes, até 5 lances (o Patrocinado primeiro, o mais forte por
-  último; toda vencedora tem o lance mostrado), a réplica da vencedora que agrupa mais pessoas e o fechamento do
-  IBits ("N de M bem atendidos"; com mais de 1 loja, "São N pedidos, e as taxas aparecem no carrinho antes do seu
-  ok"). A taxa de entrega **não** aparece nas falas: ela só existe no carrinho.
+- **Roteiro exibido:** abertura do IBits, até 2 passes, até 5 lances (o Patrocinado primeiro, quando houver; o mais
+  forte por último; toda vencedora tem o lance mostrado), a réplica da vencedora que agrupa mais pessoas e o
+  fechamento do IBits ("N de M bem atendidos"; com mais de 1 loja, "São N pedidos, e as taxas aparecem no carrinho
+  antes do seu ok"). A taxa de entrega **não** aparece nas falas: ela só existe no carrinho.
 - **Medições** no bloco `leilao.medicoes`: `ms_total`, `ms_por_loja` e `chamadas_llm` (só conta resposta JSON
   válida). `leilao.llm` só é `true` se ao menos uma resposta do LLM foi usada. Na tela, cada fala diz a origem:
   "agente da loja (IA)" ou "texto conferido".
@@ -235,17 +253,19 @@ Como funciona:
 
 **Patrocinado = só visibilidade.** A loja patrocinada tem o lance **mostrado primeiro** entre os lances e o rótulo
 "Patrocinado" (em texto). Não garante vaga entre as lojas consultadas no leilão e **nunca** muda nota, filtro ou
-escolha do otimizador. No demo, 1 loja patrocinada (`loja-demo-poke`) que não vence: mostra que pagar não compra o
-pedido. No modo real nenhuma loja é patrocinada. Configuração em `match/politica_lojas.json`.
+escolha do otimizador. Desligado desde 18/10: hoje nenhuma loja é patrocinada, nem na demo nem no modo real; o
+mecanismo segue coberto por `test_leilao.py`. Configuração em `match/politica_lojas.json`.
 
 No front:
-- `telas/Leilao.tsx` — "A disputa pelo seu pedido": falas uma a uma (~0,8 s cada, até 6 na tela; se o roteiro for
-  maior, ficam abertura, vencedoras e patrocinada, 1 réplica e o fechamento, sem mudar texto nem número), botão
-  **Pular** sempre visível, legenda do Patrocinado, origem de cada fala e o tempo da disputa (`medicoes`). No aparelho
-  do organizador a tela não avança sozinha (ele narra); no do convidado avança cerca de 4 s depois do fechamento.
-- `telas/Deck.tsx` — até 3 combinações em cartões: afinidade, "N de M bem atendidos", lojas e, por pessoa, item ·
-  loja · preço · motivo. Deslizar ou botões equivalentes ("Ver próxima" / "Dar match"); depois "É um Match!"
-  (`componentes/leilao/EhUmMatch.tsx`, com confete que respeita "reduzir movimento"). Convidado vê o deck só leitura.
+- `telas/Leilao.tsx` — "Como o IBits avaliou cada loja": falas uma a uma (~0,8 s cada, até 6 na tela; se o roteiro for
+  maior, ficam abertura, vencedoras (e patrocinada, quando houver), 1 réplica e o fechamento, sem mudar texto nem
+  número), botão **Pular** sempre visível, origem de cada fala e o tempo da avaliação (`medicoes`); no fim, "Ver o
+  pedido". No aparelho do organizador a tela não avança sozinha (ele narra); no do convidado avança cerca de 4 s
+  depois do fechamento.
+- `telas/Deck.tsx` (o nome ficou da versão com deck) — "O pedido do grupo": só a melhor combinação, num cartão sem gesto:
+  afinidade, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo. "Ajustar com o IBits" logo
+  abaixo; "Confirmar pedido" fixo no rodapé leva a "Como pagar?" (`Resultado.tsx`; com 1 pessoa, monta o carrinho
+  direto). O `escolher` continua recebendo o índice da combinação, sempre 0. Convidado vê só a própria parte, em leitura.
 
 ## 6. Otimizador
 
@@ -267,8 +287,11 @@ S(C) = média_p(sat_p) + α·mín_p(sat_p) − β·(custo_total / orçamento_ref
 - **Perecível:** ε só se um sorvete/açaí de restaurante vier de loja com ETA diferente em mais de 15 min.
 - **Enumeração exaustiva** por conjunto de lojas, com ≤ 8 candidatos por slot, poda acima de 50 mil combinações por
   conjunto e 120 mil no total. Desempate determinístico (score, depois custo, depois chave estável).
-- Taxa de entrega: a busca não traz taxa; o otimizador roda "sem taxa" (`taxa_conhecida: false`) e a tela avisa que a
-  taxa aparece no carrinho, antes do "ok".
+- Taxa de entrega: vem do `searchOffers` (`merchant.deliveryMethod.promotionalFee`/`fee`) e entra no custo
+  (`taxa_conhecida: true`); é estimativa — o valor final é o do `getCart`, mostrado antes do "ok". Loja sem taxa na
+  busca → a combinação roda "sem taxa" e a tela avisa.
+- **Combos:** opção da pessoa com um combo que cobre outros slots dela; esses slots não levam outro item, não contam
+  como de fora, e a nota do combo vale para cada slot coberto.
 - Cada combinação traz os componentes do score e uma explicação curta ("3 lojas · todos com nota ≥ 0,7 · R$ … sem
   taxa · chega em até … min").
 
@@ -350,6 +373,8 @@ Máximo de 6 participantes (limite do otimizador). Envio parcial (falha no 2º p
 |---|---|
 | `listAddresses` primeiro | O motor chama `listAddresses` antes de qualquer busca; sem endereço, para com aviso. |
 | `query` só descritivo; preço/distância em `refinements` | A busca manda o termo descritivo ("sushi", "sorvete"), `resultKind`, `limit` e as coordenadas do endereço; orçamento e restrições são filtrados no nosso código, não na `query`. |
+| Buscar dentro de uma loja com `refinements.merchantId` (`getMerchant` → `catalogSummary.navigationHint`) | O 2º item em diante de cada pessoa é procurado também dentro das lojas do 1º item (`busca.buscar_na_loja`); o rastro mostra `refinements={merchantId}`. |
+| `merchantType` restringe a vertical | Itens de varejo (mercado, farmácia, pet, adega) buscam com o `merchantType` da categoria. |
 | 1 carrinho = 1 restaurante + 1 endereço | `checkout.py` agrupa a combinação por loja e monta 1 carrinho por loja. |
 | `createCart` não é idempotente | Uma trava por sala serializa as ações do organizador que falam com o MCP; a máquina de estados só aceita "escolher" em `match_pronto`, então clique duplo não cria carrinho em dobro. |
 | Não confundir `itemId`, `cartItemId`, `cartId` | O checkout guarda o dono de cada `cartItemId` e confere o `getCart` contra o que foi adicionado. |
@@ -380,6 +405,9 @@ Limites hoje:
 - O MCP não junta pedidos de lojas diferentes: N lojas = N pedidos, N taxas, N entregas (o app avisa antes).
 - Vouchers (`listVouchers`/`setVoucher`), `scheduledTime` e endereço novo (`createAddress`) não são usados.
 - Até 6 pessoas por sala; o login OAuth só volta para o `localhost` do PC que roda o app.
+- Até 4 itens por pessoa (o otimizador enumera as opções de cada pessoa; 5+ fica lento). Lista maior → aviso com o que
+  ficou de fora.
+- Pedido mínimo da loja é lido da busca, mas ainda não vira regra (o carrinho real é quem recusa).
 
 Próximos passos:
 - Ajustar `busca.py`/`checkout.py` às amostras reais; rodar o Match real até o `getCart` com taxa real.

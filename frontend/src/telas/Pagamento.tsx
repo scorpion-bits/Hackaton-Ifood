@@ -23,6 +23,14 @@ const FORMA_ROTULO: Record<string, string> = {
   dinheiro: "Dinheiro",
   organizador: "Organizador cobre",
 };
+/** Mesmo prefixo de `PREFIXO_LOJA_FORA` em `rotas_match.py` (bug 21: loja que o iFood recusou no escolher). */
+const PREFIXO_LOJA_FORA = "Não consegui montar o carrinho em ";
+// Começo do 409 do /enviar com IFOOD_MCP_PERMITIR_ENVIO=false (rotas_match.MSG_ENVIO_DESLIGADO_SALA).
+const PREFIXO_ENVIO_DESLIGADO = "Conta de teste: o envio real está desligado";
+
+function juntarNomes(nomes: string[]): string {
+  return nomes.length <= 1 ? (nomes[0] ?? "") : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+}
 
 function PixQr({ codigo, organizadorNome, demo }: { codigo: string; organizadorNome: string; demo: boolean }) {
   const [img, setImg] = useState("");
@@ -93,6 +101,10 @@ function MinhaParte({
   const forma = formaLocal ?? pag?.forma;
   const mostrarFormas = !pago && (!forma || trocando);
   const pix = pag?.pix ?? pixLocal;
+  // Sem chave do organizador o servidor recusa o Pix (409); a opção já aparece desabilitada. Sem o campo, nada muda.
+  const semChavePix = sala.tem_chave_pix === false;
+  // O cartão simulado só existe no modo de demonstração; no modo real o servidor recusa (409, bug 27).
+  const semCartao = !sala.demonstracao;
 
   async function pagar(escolhida: FormaPagamento) {
     setOcupado(true);
@@ -147,21 +159,21 @@ function MinhaParte({
         <div className="formas">
           <p className="formas-titulo">Como você quer pagar?</p>
           {!ehOrganizador && (
-            <button type="button" className="forma" disabled={ocupado} onClick={() => pagar("pix")}>
+            <button type="button" className="forma" disabled={ocupado || semChavePix} onClick={() => pagar("pix")}>
               <span className="forma-ico" aria-hidden>
                 <Icone nome="raio" tamanho={22} />
               </span>
               <span>
                 <strong>Pix</strong>
-                <small>Vai direto para {nomeOrg}</small>
+                <small>{semChavePix ? `${nomeOrg} não cadastrou chave Pix` : `Vai direto para ${nomeOrg}`}</small>
               </span>
             </button>
           )}
           <button
             type="button"
             className="forma"
-            disabled={ocupado}
-            aria-expanded={cartaoAberto}
+            disabled={ocupado || semCartao}
+            aria-expanded={cartaoAberto && !semCartao}
             onClick={() => setCartaoAberto((v) => !v)}
           >
             <span className="forma-ico" aria-hidden>
@@ -171,10 +183,10 @@ function MinhaParte({
               <strong>
                 Cartão <span className="mini-selo">DEMONSTRAÇÃO</span>
               </strong>
-              <small>Simulado: nenhuma cobrança real</small>
+              <small>{semCartao ? "Só no modo de demonstração: use Pix ou dinheiro" : "Simulado: nenhuma cobrança real"}</small>
             </span>
           </button>
-          {cartaoAberto && (
+          {cartaoAberto && !semCartao && (
             <div className="aviso">
               <p>Isto é uma simulação de demonstração. Nenhuma cobrança real será feita.</p>
               <button type="button" className="primario" disabled={ocupado} onClick={() => pagar("cartao_simulado")}>
@@ -349,6 +361,12 @@ function CartaoLoja({ c }: { c: Carrinho }) {
           <dt>Taxa de entrega</dt>
           <dd>{brl(c.taxa)}</dd>
         </div>
+        {!!c.servico && (
+          <div>
+            <dt>Taxa de serviço</dt>
+            <dd>{brl(c.servico)}</dd>
+          </div>
+        )}
         <div>
           <dt>Desconto</dt>
           <dd>{brl(c.desconto)}</dd>
@@ -384,6 +402,8 @@ export default function Pagamento({
   // Conta de teste no modo real: o servidor avisa que o envio real está desligado (o pedido para no carrinho).
   // Só `=== false` muda a tela; se o campo não vier, tudo segue como antes.
   const [envioDesligado, setEnvioDesligado] = useState(false);
+  // Bug 28 (decisão T8): com o envio real desligado, o fim é "carrinhos prontos no iFood", não uma caixa de erro.
+  const [prontosNoIfood, setProntosNoIfood] = useState(false);
   useEffect(() => {
     if (!organizador || sala.demonstracao) return;
     let vivo = true;
@@ -427,12 +447,22 @@ export default function Pagamento({
       await api.enviar(salaId, token);
       setConfirmarEnvio(false);
     } catch (x) {
-      setErro(x instanceof Error ? x.message : "Não consegui enviar os pedidos.");
+      const msg = x instanceof Error ? x.message : "";
+      if (envioDesligado || msg.startsWith(PREFIXO_ENVIO_DESLIGADO)) {
+        setProntosNoIfood(true);
+      } else {
+        setErro(msg || "Não consegui enviar os pedidos.");
+      }
       setConfirmarEnvio(false);
     } finally {
       setEnviando(false);
     }
   }
+
+  // Bugs 21 e 26: a loja que falhou saiu do pedido; quem só tinha itens nela fica sem parte e precisa aparecer aqui.
+  const lojasFora = (sala.avisos ?? []).filter((a) => a.startsWith(PREFIXO_LOJA_FORA));
+  const comParte = new Set(partes.map((p) => p.participante_id));
+  const semPedido = n > 0 ? sala.participantes.filter((p) => p.respondeu && !comParte.has(p.id)).map((p) => p.nome) : [];
 
   const falta = partes.filter((p) => sala.pagamentos?.[p.participante_id]?.status !== "pago").length;
   const rotuloTrava = falta > 0 ? `Falta pagar ${falta} de ${partes.length}` : "Aguardando liberação";
@@ -446,6 +476,21 @@ export default function Pagamento({
           ? "É 1 pedido: na fatura aparece 1 cobrança e chega 1 entrega."
           : `São ${n} pedidos: na fatura aparecem ${n} cobranças e chegam ${n} entregas.`}
       </div>
+
+      {lojasFora.length > 0 && (
+        <div className="aviso" role="status">
+          {lojasFora.map((a) => (
+            <p key={a}>{a}</p>
+          ))}
+          {semPedido.length > 0 && (
+            <p>
+              <strong>
+                {juntarNomes(semPedido)} {semPedido.length === 1 ? "ficou" : "ficaram"} sem pedido nesta rodada.
+              </strong>
+            </p>
+          )}
+        </div>
+      )}
 
       {n === 0 && <EsqueletoCartoes n={2} rotulo="Montando os carrinhos…" />}
       {carrinhos.map((c) => (
@@ -495,7 +540,13 @@ export default function Pagamento({
       {!separado && (
         <div className="cartao">
           <h2>Pagamento único</h2>
-          <p className="suave">{organizador ? "Você paga o total no iFood e acerta com o grupo depois." : "O organizador paga tudo e acerta com o grupo."}</p>
+          <p className="suave">
+            {sala.participantes.length === 1
+              ? "Você paga o total no iFood."
+              : organizador
+                ? "Você paga o total no iFood e acerta com o grupo depois."
+                : "O organizador paga tudo e acerta com o grupo."}
+          </p>
         </div>
       )}
 
@@ -505,7 +556,39 @@ export default function Pagamento({
         </div>
       )}
 
-      {organizador ? (
+      {prontosNoIfood && (
+        <div className="alerta alerta-ok" role="status">
+          <strong>✅ Carrinhos prontos no iFood</strong>
+          <ul className="resumo-env">
+            {carrinhos.map((c) => (
+              <li key={c.cart_id}>
+                <span>{c.loja_nome}</span>
+                <strong>{brl(c.total)}</strong>
+              </li>
+            ))}
+            <li className="total">
+              <span>Total</span>
+              <strong>{brl(totalGeral)}</strong>
+            </li>
+          </ul>
+          <p className="alerta-ok-nota">Na conta de teste o envio fica desligado; com uma conta real, o pedido sai aqui.</p>
+        </div>
+      )}
+
+      {organizador && prontosNoIfood ? (
+        // Bug 38: com os carrinhos prontos, deslizar de novo só repetia o 409; o rodapé vira "fazer outro pedido".
+        <div className="rodape-acao">
+          <button
+            type="button"
+            className="primario"
+            onClick={() => {
+              window.location.hash = "#/";
+            }}
+          >
+            Fazer outro pedido
+          </button>
+        </div>
+      ) : organizador ? (
         <div className="rodape-acao">
           <Deslizar
             bloqueado={!podeEnviar || enviando}

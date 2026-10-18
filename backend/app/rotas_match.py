@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from . import config
 from .ifood_mcp.cliente import MSG_ENVIO_DESLIGADO, ErroMCP, abrir_cliente
-from .match import checkout, motor, salas
+from .match import busca, checkout, motor, salas
 from .match.ajuste import interpretar_ajuste
 from .match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from .match.modelos import Candidato, Desejo, para_dict
@@ -151,6 +151,28 @@ def _texto_limpo(valor: str | None, rotulo: str, maximo: int) -> str:
     return texto
 
 
+async def _geo(sala: dict, cfg, cliente) -> dict:
+    """Coordenadas do endereço do Match para o checkout (o getItem real exige `userLocation`; bug 17). Vão no campo
+    `geo` da combinação passada ao checkout (não é gravado na sala).
+
+    O `resultado.endereco` da sala não guarda coordenadas; no modo real elas vêm do mock do `.env` (mesmo id) ou de
+    1 `listAddresses`. Demo: nada (o checkout do demo não usa getItem; o roteiro não muda)."""
+    endereco = (sala.get("resultado") or {}).get("endereco") or {}
+    geo = {k: endereco[k] for k in ("latitude", "longitude") if endereco.get(k) is not None}
+    if len(geo) == 2 or getattr(cliente, "modo", "demo") == "demo":
+        return geo
+    mock = motor.endereco_mock(cfg)
+    if mock and mock["id"] == endereco.get("id"):
+        return {"latitude": mock["latitude"], "longitude": mock["longitude"]}
+    try:
+        achado = busca.ler_endereco(await cliente.chamar("listAddresses")) or {}
+    except ErroMCP:
+        return {}
+    if achado.get("id") != endereco.get("id"):
+        return {}
+    return {k: achado[k] for k in ("latitude", "longitude") if achado.get(k) is not None}
+
+
 def _candidato_de_dict(d: dict) -> Candidato:
     campos = Candidato.__dataclass_fields__
     return Candidato(**{k: v for k, v in d.items() if k in campos})
@@ -172,7 +194,8 @@ def _calcular_partes(sala: dict, carrinhos: list[dict]) -> tuple[list[dict], lis
                 preco=preco, eta_min=c.get("eta_min"), vertical="", perecivel=False,
             ))
     escolhas = {p["id"]: por_pessoa[p["id"]] for p in sala["participantes"] if p["id"] in por_pessoa}
-    taxas = {c["loja_id"]: float(c["taxa"] or 0) for c in carrinhos}
+    # taxa de entrega + taxa de serviço do iFood (bug 29): as duas estão no total do carrinho e são divididas igual
+    taxas = {c["loja_id"]: float(c["taxa"] or 0) + float(c.get("servico") or 0) for c in carrinhos}
     descontos = {c["loja_id"]: float(c["desconto"] or 0) for c in carrinhos}
     try:
         partes = calcular_partes(escolhas, nomes, taxas, descontos)
@@ -319,6 +342,15 @@ def registrar_desejo(sala_id: str, pid: str, corpo: CorpoDesejo):
 
 # ---------- Match ----------
 MSG_AJUSTE_NAO_ENTENDIDO = 'Não entendi quem ou o quê. Ex.: "troca o sorvete do Milan por açaí"'
+MSG_AJUSTE_NAO_ENTENDIDO_1 = 'Não entendi o quê. Ex.: "troca o sorvete por açaí"'  # sala de 1 pessoa: sem nome
+
+
+def _msg_ajuste_nao_entendido(participantes: list[dict]) -> str:
+    respondidos = [p for p in participantes if p["respondeu"]]
+    if len(respondidos) == 1:
+        return MSG_AJUSTE_NAO_ENTENDIDO_1
+    nome = respondidos[0]["nome"] if respondidos else "Milan"
+    return f'Não entendi quem ou o quê. Ex.: "troca o sorvete do {nome} por açaí"'
 MAX_TEXTO_AJUSTE = 200
 
 
@@ -332,7 +364,11 @@ def _desejos_da_sala(sala: dict) -> list[Desejo]:
 async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
     """Roda o Match (leilão incluído) com o MCP e valida o resultado. Não grava nada na sala além do rastro:
     sem endereço ou sem combinação → `ErroSala` 409 legível; erro do iFood → o mesmo tratamento de sempre."""
+    excluidas = salas.obter(sala_id).get("lojas_indisponiveis") or {}  # bug 36: MERCH-* no escolher
+
     async def operacao(cfg, cliente):
+        if excluidas:
+            return await motor.rodar_match(cfg, cliente, desejos, lojas_excluidas=excluidas)
         return await motor.rodar_match(cfg, cliente, desejos)
 
     resultado = await _usar_cliente(sala_id, operacao)
@@ -340,9 +376,12 @@ async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
 
     if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
         raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
+    if resultado.get("problema") == "ifood":  # bug 31: iFood fora do ar — a culpa não é do pedido
+        raise ErroSala(503, " ".join(resultado.get("avisos") or []) or motor.MSG_IFOOD_FORA)
     if not resultado.get("combinacoes"):
         avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
-        raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+        para_quem = "para você" if len({d.participante_id for d in desejos}) == 1 else "que sirva para todos"
+        raise ErroSala(409, f"O Match não encontrou um pedido {para_quem}. {avisos}")
     return resultado
 
 
@@ -393,7 +432,7 @@ async def ajustar(sala_id: str, corpo: CorpoAjuste, x_organizador: str | None = 
         ]
         mudancas = await interpretar_ajuste(config.carregar(), texto, participantes)
         if not mudancas:
-            raise ErroSala(422, MSG_AJUSTE_NAO_ENTENDIDO)
+            raise ErroSala(422, _msg_ajuste_nao_entendido(participantes))
 
         por_id = {m.participante_id: m for m in mudancas}
         nomes = {p["id"]: p["nome"] for p in sala["participantes"]}
@@ -442,15 +481,63 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
             raise ErroSala(409, motor.MSG_ENDERECO_SEM_ID if sala["resultado"].get("endereco") else
                            "O Match não achou um endereço de entrega; rode o Match de novo.")
 
-        async def operacao(cfg, cliente):
-            return await checkout.montar_carrinhos(cliente, combinacao, endereco_id)
+        falhas: list[dict] = []  # bug 21: loja com erro sai do pedido; as outras seguem
+        # bug 36: loja que responde MERCH-* não monta carrinho nunca; guardada na sala, o próximo Match a deixa de fora
+        indisponiveis: dict[str, str] = dict(sala.get("lojas_indisponiveis") or {})
+        trocou: dict = {}
 
-        carrinhos = await _usar_cliente(sala_id, operacao)
+        async def operacao(cfg, cliente):
+            nonlocal idx, combinacao
+            geo = await _geo(sala, cfg, cliente)
+            alternativas = [k for k in range(len(combinacoes)) if k != idx]
+            while True:
+                falhas.clear()
+                try:
+                    montados = await checkout.montar_carrinhos(
+                        cliente, {**combinacao, "geo": geo, "falhas": falhas}, endereco_id)
+                except checkout.ErroCheckout as e:
+                    novas = {f["loja_id"]: f["loja_nome"] for f in falhas
+                             if checkout.loja_indisponivel(f["excecao"].__cause__)}
+                    indisponiveis.update(novas)
+                    # todas as lojas falharam: tenta a próxima combinação do Match que não usa loja indisponível
+                    proxima = next((k for k in alternativas
+                                    if not set(_lojas_da(combinacoes[k])) & set(indisponiveis)), None)
+                    if not novas or proxima is None or len(trocou) >= MAX_TROCAS_LOJA_INDISPONIVEL:
+                        if novas:
+                            raise checkout.ErroCheckout(e.loja_id, f"{e.mensagem} {MSG_SEM_OUTRA_OPCAO}",
+                                                        codigo=e.codigo) from e.__cause__
+                        raise
+                    alternativas.remove(proxima)
+                    trocou[proxima] = ", ".join(novas.values())
+                    idx, combinacao = proxima, combinacoes[proxima]
+                    continue
+                break
+            indisponiveis.update({f["loja_id"]: f["loja_nome"] for f in falhas
+                                  if checkout.loja_indisponivel(f["excecao"].__cause__)})
+            for f in falhas:  # login/token vencido numa loja não é "loja fora": é reconectar o iFood
+                erro = _erro_do_ifood(f["excecao"])
+                if erro.status == 401:
+                    raise erro
+            return montados
+
+        try:
+            carrinhos = await _usar_cliente(sala_id, operacao)
+        finally:
+            if indisponiveis != (sala.get("lojas_indisponiveis") or {}):
+                salas.atualizar(sala_id, lambda s: s.__setitem__("lojas_indisponiveis", indisponiveis))
+        nomes = {p["id"]: p["nome"] for p in sala["participantes"]}
+        lojas_fora = [_loja_fora(f, nomes) for f in falhas]
+        escolhida = _sem_lojas(combinacao, {f["loja_id"] for f in falhas}) if falhas else combinacao
+        avisos_troca = [f"{lojas} não está aceitando pedidos pelo iFood agora; montei a próxima opção do Match."
+                        for lojas in trocou.values()]
 
         def gravar(s: dict) -> None:
             salas.exigir_estado(s, MATCH_PRONTO, acao="escolher a combinação")
             s["combinacao"] = idx
-            s["combinacao_escolhida"] = combinacao
+            s["combinacao_escolhida"] = escolhida
+            s["avisos"] = [*[a for a in s["avisos"] if not a.startswith(PREFIXO_LOJA_FORA)
+                             and not a.endswith(SUFIXO_TROCA)],
+                           *avisos_troca, *(f["aviso"] for f in lojas_fora)]
             s["modo_pagamento"] = corpo.modo_pagamento
             s["pagamentos"] = {}
             s["prazo_fim"] = None
@@ -460,7 +547,63 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
 
         salas.atualizar(sala_id, gravar)
         pub = salas.publica(salas.obter(sala_id))
-        return {k: pub[k] for k in ("estado", "carrinhos", "modo_pagamento", "partes", "pagamentos", "prazo_fim", "avisos")}
+        resposta = {k: pub[k] for k in ("estado", "carrinhos", "modo_pagamento", "partes", "pagamentos", "prazo_fim",
+                                        "avisos")}
+        return {**resposta, "lojas_fora": lojas_fora}
+
+
+PREFIXO_LOJA_FORA = "Não consegui montar o carrinho em "
+SUFIXO_TROCA = "montei a próxima opção do Match."
+MAX_TROCAS_LOJA_INDISPONIVEL = 2  # cada troca custa 1 createCart (+ getCart); o Match traz até 3 combinações
+MSG_SEM_OUTRA_OPCAO = ("As outras opções do Match também usam essa loja: ajuste o pedido ou rode o Match de novo "
+                       "(ela fica de fora).")
+
+
+def _lojas_da(combinacao: dict) -> list[str]:
+    """Lojas da combinação (campo `lojas`; sem ele, as das escolhas)."""
+    if combinacao.get("lojas"):
+        return list(combinacao["lojas"])
+    lojas: list[str] = []
+    for valor in (combinacao.get("escolhas") or {}).values():
+        for c in (valor if isinstance(valor, list) else [valor]):
+            if c.get("loja_id") and c["loja_id"] not in lojas:
+                lojas.append(c["loja_id"])
+    return lojas
+
+
+def _loja_fora(falha: dict, nomes: dict[str, str]) -> dict:
+    """Loja que saiu do pedido no escolher (bug 21), com o aviso legível de quem ficou sem o quê."""
+    from .ifood_mcp import oauth
+
+    pessoas = [nomes.get(pid, pid) for pid in falha["participantes"]]
+    quem = pessoas[0] if len(pessoas) == 1 else ", ".join(pessoas[:-1]) + " e " + pessoas[-1]
+    itens = ", ".join(dict.fromkeys(i["nome"] for i in falha["itens"]))
+    motivo = (f"o iFood respondeu {falha['codigo_ifood']}" if falha.get("codigo_ifood")
+              else "o iFood respondeu com erro")
+    aviso = (f"{PREFIXO_LOJA_FORA}{falha['loja_nome']} ({motivo}); "
+             f"os itens de {quem} ({itens}) ficaram de fora; "
+             "o pedido segue com as outras lojas.")
+    return {
+        "loja_id": falha["loja_id"], "loja_nome": falha["loja_nome"], "codigo_ifood": falha.get("codigo_ifood"),
+        "erro": oauth.sem_segredos(falha["erro"]),
+        "participantes": [{"id": pid, "nome": nomes.get(pid, pid)} for pid in falha["participantes"]],
+        "itens": [{"participante_id": i["participante_id"], "nome": i["nome"]} for i in falha["itens"]],
+        "aviso": aviso,
+    }
+
+
+def _sem_lojas(combinacao: dict, lojas: set[str]) -> dict:
+    """A combinação sem as lojas que falharam (remover itens / remontar depois não tentam a loja que saiu)."""
+    escolhas = {}
+    for slot, valor in (combinacao.get("escolhas") or {}).items():
+        if isinstance(valor, list):
+            restantes = [c for c in valor if c.get("loja_id") not in lojas]
+            if restantes:
+                escolhas[slot] = restantes
+        elif valor.get("loja_id") not in lojas:
+            escolhas[slot] = valor
+    return {**combinacao, "escolhas": escolhas,
+            "lojas": [l for l in combinacao.get("lojas") or [] if l not in lojas]}
 
 
 # ---------- pagamentos ----------
@@ -561,7 +704,8 @@ async def resolver(sala_id: str, pid: str, corpo: CorpoResolver, x_organizador: 
         nome = salas.participante(sala, pid)["nome"]
 
         async def operacao(cfg, cliente):
-            return await checkout.montar_carrinhos(cliente, filtrada, endereco_id)
+            geo = await _geo(sala, cfg, cliente)
+            return await checkout.montar_carrinhos(cliente, {**filtrada, "geo": geo}, endereco_id)
 
         carrinhos = await _usar_cliente(sala_id, operacao)
 
@@ -621,6 +765,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
         problema = next((r for r in resultados if r["status"] in ("falhou", "total_mudou")), None)
         # conta de teste com `submitOrder` desligado: não é falha para "tentar de novo"; os carrinhos ficam prontos
         desligado = bool(problema and problema["status"] == "falhou" and problema.get("erro") == MSG_ENVIO_DESLIGADO)
+        # bug 18: conta de teste sem forma de pagamento aceitável → envio bloqueado (409, não "tente de novo")
+        sem_pagamento = bool(problema and problema.get("codigo") == checkout.CODIGO_SEM_PAGAMENTO)
 
         def gravar(s: dict) -> None:
             for r in resultados:
@@ -648,6 +794,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
 
         if desligado:
             raise ErroSala(409, MSG_ENVIO_DESLIGADO_SALA)
+        if sem_pagamento:
+            raise ErroSala(409, f"{problema.get('erro')} Os carrinhos ficaram montados no iFood; nada foi enviado.")
         loja = problema.get("loja_nome") or problema.get("loja_id")
         ficou = f"{feitos} de {total} pedidos já foram enviados e foram mantidos."
         if problema["status"] == "falhou":
@@ -669,7 +817,8 @@ async def _remontar_loja(sala_id: str, loja_id: str) -> None:
     endereco_id = sala["resultado"]["endereco"]["id"]
 
     async def operacao(cfg, cliente):
-        return await checkout.montar_carrinhos(cliente, filtrada, endereco_id)
+        geo = await _geo(sala, cfg, cliente)
+        return await checkout.montar_carrinhos(cliente, {**filtrada, "geo": geo}, endereco_id)
 
     try:
         novos = await _usar_cliente(sala_id, operacao)

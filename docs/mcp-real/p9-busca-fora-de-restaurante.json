@@ -1,0 +1,651 @@
+{
+  "dipirona (DRUGSTORE)": {
+    "args": {
+      "query": "dipirona",
+      "resultKind": "ITEM",
+      "pageSize": 5,
+      "merchantType": "DRUGSTORE"
+    },
+    "resposta": {
+      "agentHints": {
+        "nextStepWhenUserPicksItem": "***"
+      },
+      "hasMore": true,
+      "interpretedQuery": "dipirona",
+      "nextPageToken": "***",
+      "resultKind": "ITEM",
+      "results": [
+        {
+          "itemEan": "7896004769196",
+          "itemId": "9e04229c-5a53-488d-b590-bf0d9017c302",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202306201700_h29i1mjqlp7.jpg",
+          "itemName": "Dipirona Monoidratada 500mg Ems 10 Comprimidos",
+          "itemSkuId": "01a081e1-c098-7413-84ba-2fbef358796a",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 51,
+                "min": 41
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "ece26318-fa6b-47eb-8684-00760146a79e",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/ece26318-fa6b-47eb-8684-00760146a79e/202302031854_5EID.png",
+            "merchantName": "Drogaria São Paulo - Sao Carlos III",
+            "minimumOrderAmount": 30,
+            "ratingCount": 163,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.81
+          },
+          "promotionalUnitPrice": 4.49,
+          "unitPrice": 4.49
+        },
+        {
+          "itemEan": "7891058002602",
+          "itemId": "07e4beab-043f-49cd-b88c-1de7034f4cdc",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202601031306_bh7z577ue4s.png",
+          "itemName": "Dipirona Monoidratada 1g Medley 10 Comprimidos",
+          "itemSkuId": "01a03fff-e321-7b32-acdf-0ad500091f7e",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 61,
+                "min": 51
+              },
+              "fee": 10.99,
+              "promotionalFee": 10.99
+            },
+            "isOpen": false,
+            "merchantId": "d9bc1ecb-d539-4fb4-86f9-22353fc26db5",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/d9bc1ecb-d539-4fb4-86f9-22353fc26db5/202308041904_YOXU.png",
+            "merchantName": "Farmácias Nissei - 431",
+            "minimumOrderAmount": 30,
+            "ratingCount": 353,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 1.33
+          },
+          "promotionalUnitPrice": 15.78,
+          "unitPrice": 15.78
+        },
+        {
+          "itemEan": "7896004703398",
+          "itemId": "f2354577-e147-4556-9960-143532e3a7db",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202307251019_nyzvvrdfgd.jpg",
+          "itemName": "Dipirona Monoidratada 500mg Comprimido Ems 10 Comprimidos",
+          "itemSkuId": "01a03fbf-a4dc-7373-9ae8-2f201f95e20b",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 72,
+                "min": 62
+              },
+              "fee": 9.99,
+              "promotionalFee": 9.99
+            },
+            "isOpen": false,
+            "merchantId": "aec840ea-723c-47ac-adfa-***e",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/aec840ea-723c-47ac-adfa-***e/202307042006_USB0.png",
+            "merchantName": "Drogão Super - São Carlos C. Botelho",
+            "minimumOrderAmount": 30,
+            "ratingCount": 309,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 1.04
+          },
+          "promotionalUnitPrice": 4.1,
+          "unitPrice": 4.1
+        },
+        {
+          "itemEan": "7891058002602",
+          "itemId": "713fbe6e-083b-43c2-a11e-2ccf14efb4ad",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202601031306_bh7z577ue4s.png",
+          "itemName": "Dipirona Monoidratada 1g Medley 10 Comprimidos",
+          "itemSkuId": "01a03fff-e321-7b32-acdf-0ad500091f7e",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 51,
+                "min": 41
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "ece26318-fa6b-47eb-8684-00760146a79e",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/ece26318-fa6b-47eb-8684-00760146a79e/202302031854_5EID.png",
+            "merchantName": "Drogaria São Paulo - Sao Carlos III",
+            "minimumOrderAmount": 30,
+            "ratingCount": 163,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.81
+          },
+          "promotionalUnitPrice": 10.87,
+          "unitPrice": 10.87
+        },
+        {
+          "itemEan": "7899547500356",
+          "itemId": "eae0b563-9129-48db-9aec-ef04b107c5bb",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202210192251_gbplmcxtgz6.jpg",
+          "itemName": "Dipirona Monoidratada 1g Prati-Donaduzzi 10 Comprimidos",
+          "itemSkuId": "01a03fbf-a4d2-7580-bde1-2308b897793e",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 51,
+                "min": 41
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "ece26318-fa6b-47eb-8684-00760146a79e",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/ece26318-fa6b-47eb-8684-00760146a79e/202302031854_5EID.png",
+            "merchantName": "Drogaria São Paulo - Sao Carlos III",
+            "minimumOrderAmount": 30,
+            "ratingCount": 163,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.81
+          },
+          "promotionalUnitPrice": 11.99,
+          "unitPrice": 11.99
+        }
+      ]
+    }
+  },
+  "ração de cachorro (PETSTORE)": {
+    "args": {
+      "query": "ração de cachorro",
+      "resultKind": "ITEM",
+      "pageSize": 5,
+      "merchantType": "PETSTORE"
+    },
+    "resposta": {
+      "agentHints": {
+        "nextStepWhenUserPicksItem": "***"
+      },
+      "hasMore": true,
+      "interpretedQuery": "ração de cachorro",
+      "nextPageToken": "***",
+      "resultKind": "ITEM",
+      "results": [
+        {
+          "itemEan": "7897348205470",
+          "itemId": "d8f9b795-db07-46c5-9702-511b7f0b651f",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202307091138_j58mipuakz.jpg",
+          "itemName": "Ração Para Cachorro Adulto, Ração Premier Ambientes Internos Cães Castrados Adultos Raças Pequenas Sabor Frango E Salmão - 1 Kg",
+          "itemSkuId": "SKU-AKBV14332",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 60,
+                "min": 45
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "d517d478-ae66-48ba-ba0a-431da9ad4dbf",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/d517d478-ae66-48ba-ba0a-431da9ad4dbf/202310042132_438I.png",
+            "merchantName": "Petz Sao Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 145,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.67
+          },
+          "promotionalUnitPrice": 45.99,
+          "unitPrice": 45.99
+        },
+        {
+          "itemEan": "***",
+          "itemId": "efcbb2e6-960a-435e-b63c-e8dd8798767a",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202511120843_1vkdpvi0dyn.png",
+          "itemName": "Rações Para Cachorros Porte Pequeno, Ração Vitta Natural Cães Adultos Raças Pequenas Carne E Arroz 15kg",
+          "itemSkuId": "SKU-INBO59106",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 130,
+                "min": 120
+              },
+              "fee": 10,
+              "promotionalFee": 10
+            },
+            "isOpen": false,
+            "merchantId": "427d24ff-44f9-4544-9e4e-916da50d44e3",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/427d24ff-44f9-4544-9e4e-916da50d44e3/202303211857_BjPV_i.jpg",
+            "merchantName": "Casale Pet",
+            "minimumOrderAmount": 30,
+            "ratingCount": 45,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.64
+          },
+          "promotionalUnitPrice": 151.47,
+          "unitPrice": 151.47
+        },
+        {
+          "itemEan": "7896029037317",
+          "itemId": "c592035a-1b00-43ec-a9e9-9345713eb348",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202411052055_tb30m8bjqn9.png",
+          "itemName": "Ração Optimum Para Cães Adultos Raças Pequenas E Minis Sabor Frango E Arroz 1kg",
+          "itemSkuId": "SKU-ZPRP19400",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 60,
+                "min": 45
+              },
+              "fee": 10.49,
+              "promotionalFee": 10.49
+            },
+            "isOpen": false,
+            "merchantId": "3c067204-6bc8-42c5-affd-77878adcb9d2",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/3c067204-6bc8-42c5-affd-77878adcb9d2/202601261413_9ZpY_i.jpg",
+            "merchantName": "PetCamp - São Carlos Petroni",
+            "minimumOrderAmount": 20,
+            "ratingCount": 84,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 2.4
+          },
+          "promotionalUnitPrice": 23.99,
+          "unitPrice": 23.99
+        },
+        {
+          "itemEan": "7896029038543",
+          "itemId": "616c8cdf-ee2b-4af6-a0f5-c12f3ff32fd3",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202411062111_fo8m6baob5b.jpeg",
+          "itemName": "Ração Optimum Para Cães Filhotes Raças Médias E Grandes Sabor Frango E Arroz 15kg",
+          "itemSkuId": "SKU-YUHJ80165",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 60,
+                "min": 45
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "d517d478-ae66-48ba-ba0a-431da9ad4dbf",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/d517d478-ae66-48ba-ba0a-431da9ad4dbf/202310042132_438I.png",
+            "merchantName": "Petz Sao Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 145,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.67
+          },
+          "promotionalUnitPrice": 199.99,
+          "unitPrice": 199.99
+        },
+        {
+          "itemEan": "7896029037263",
+          "itemId": "2ee4c7d3-0990-492f-b0a2-b2e9bb34935d",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202411052050_40l8hpsms8x.png",
+          "itemName": "Ração Optimum Para Cães Adultos Raças Pequenas E Minis Sabor Frango E Arroz 10,1kg",
+          "itemSkuId": "SKU-FDPC22731",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 60,
+                "min": 45
+              },
+              "fee": 8.49,
+              "promotionalFee": 8.49
+            },
+            "isOpen": false,
+            "merchantId": "d517d478-ae66-48ba-ba0a-431da9ad4dbf",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/d517d478-ae66-48ba-ba0a-431da9ad4dbf/202310042132_438I.png",
+            "merchantName": "Petz Sao Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 145,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 0.67
+          },
+          "promotionalUnitPrice": 147.99,
+          "unitPrice": 147.99
+        }
+      ]
+    }
+  },
+  "arroz (GROCERIES)": {
+    "args": {
+      "query": "arroz",
+      "resultKind": "ITEM",
+      "pageSize": 5,
+      "merchantType": "GROCERIES"
+    },
+    "resposta": {
+      "agentHints": {
+        "nextStepWhenUserPicksItem": "***"
+      },
+      "hasMore": true,
+      "interpretedQuery": "arroz",
+      "nextPageToken": "***",
+      "resultKind": "ITEM",
+      "results": [
+        {
+          "itemEan": "***",
+          "itemId": "5d43c0fc-6b29-4671-b64e-7cf88ca5c417",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202511241640_8te88c37lwx.jpeg",
+          "itemName": "Arroz Tipo 1 Prato Fino 1kg",
+          "itemSkuId": "SKU-YNCO08843",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 95,
+                "min": 85
+              },
+              "fee": 13.99,
+              "promotionalFee": 0
+            },
+            "isOpen": false,
+            "merchantId": "32549526-5a03-4af1-a9ed-f4e8875828bf",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/32549526-5a03-4af1-a9ed-f4e8875828bf/202605131411_woyX_l.jpg",
+            "merchantName": "Oba Hortifruti - São Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 276,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 2.1
+          },
+          "promotionalUnitPrice": 6.99,
+          "unitPrice": 6.99
+        },
+        {
+          "itemEan": "7896006711155",
+          "itemId": "75e1366a-3117-41bd-b42a-c70a9351df50",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202510042239_gnoj8rq4vo6.jpeg",
+          "itemName": "Arroz Branco Tipo 1 Camil 5kg",
+          "itemSkuId": "SKU-ZDLV97808",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 170,
+                "min": 140
+              },
+              "fee": 18.99,
+              "promotionalFee": 18.99
+            },
+            "isOpen": false,
+            "merchantId": "2454a662-ab7d-4cb8-91c9-c***",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/2454a662-ab7d-4cb8-91c9-c***/202509011622_2TXL.png",
+            "merchantName": "Atacadão São Carlos",
+            "minimumOrderAmount": 90,
+            "ratingCount": 212,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 4.11
+          },
+          "promotionalUnitPrice": 21.9,
+          "unitPrice": 21.9
+        },
+        {
+          "itemEan": "***",
+          "itemId": "24f14b14-5fa9-43d0-b779-4857de80c046",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202511241640_8te88c37lwx.jpeg",
+          "itemName": "Arroz Tipo 1 Prato Fino 1kg",
+          "itemSkuId": "SKU-YNCO08843",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 233,
+                "min": 223
+              },
+              "fee": 14.99,
+              "promotionalFee": 0
+            },
+            "isOpen": false,
+            "merchantId": "e6067614-d8f3-4108-8b6e-c72fd364ae2c",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/3974223/202607281734_5AGE.png",
+            "merchantName": "Pão de Açúcar - Shopping Iguatemi São Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 99,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 2.44
+          },
+          "promotionalUnitPrice": 8.29,
+          "unitPrice": 8.29
+        },
+        {
+          "itemEan": "7896290300011",
+          "itemId": "f9685e5f-dfd3-4de1-857a-163508fbed85",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202510031433_ls39feod7t.jpeg",
+          "itemName": "Arroz Branco Tipo 1 Prato Fino 5kg",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 95,
+                "min": 85
+              },
+              "fee": 13.99,
+              "promotionalFee": 0
+            },
+            "isOpen": false,
+            "merchantId": "32549526-5a03-4af1-a9ed-f4e8875828bf",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/32549526-5a03-4af1-a9ed-f4e8875828bf/202605131411_woyX_l.jpg",
+            "merchantName": "Oba Hortifruti - São Carlos",
+            "minimumOrderAmount": 30,
+            "ratingCount": 276,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 2.1
+          },
+          "promotionalUnitPrice": 31.99,
+          "unitPrice": 31.99
+        },
+        {
+          "itemEan": "7896079431158",
+          "itemId": "22a5da47-059a-481c-87ce-87db2a0e96a0",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/820af392-002c-47b1-bfae-d7ef31743c7f/202510031842_c55wmidc8uo.jpeg",
+          "itemName": "Arroz Tipo 1 Namorado 5kg",
+          "itemSkuId": "SKU-PJLB32114",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 170,
+                "min": 140
+              },
+              "fee": 18.99,
+              "promotionalFee": 18.99
+            },
+            "isOpen": false,
+            "merchantId": "2454a662-ab7d-4cb8-91c9-c***",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/2454a662-ab7d-4cb8-91c9-c***/202509011622_2TXL.png",
+            "merchantName": "Atacadão São Carlos",
+            "minimumOrderAmount": 90,
+            "ratingCount": 212,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 4.11
+          },
+          "promotionalUnitPrice": 22.09,
+          "unitPrice": 22.09
+        }
+      ]
+    }
+  },
+  "pizza (None)": {
+    "args": {
+      "query": "pizza",
+      "resultKind": "ITEM",
+      "pageSize": 5
+    },
+    "resposta": {
+      "agentHints": {
+        "nextStepWhenUserPicksItem": "***"
+      },
+      "hasMore": true,
+      "interpretedQuery": "pizza",
+      "nextPageToken": "***",
+      "resultKind": "ITEM",
+      "results": [
+        {
+          "itemEan": "",
+          "itemId": "184af40c-58aa-4308-a61d-13b4dcc92962",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202201061129_8LWK_i.jpg",
+          "itemName": "Pizza",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 70,
+                "min": 60
+              },
+              "fee": 9.5,
+              "promotionalFee": 9.5
+            },
+            "isOpen": true,
+            "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/54615ed7-5697-413b-a508-9156e3f5ec70/202512211429_vLkx_3.jpg",
+            "merchantName": "Ponto da Esfiha São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 384,
+            "reviewRating": 4.7,
+            "straightLineDistanceKm": 3.76
+          },
+          "promotionalUnitPrice": 8.99,
+          "unitPrice": 8.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "4403bdd2-523b-43bf-9eac-cfa7473dc8d0",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/712b947e-f578-4ef2-a33b-0d8e41db823a/202609171813_N131_.jpeg",
+          "itemName": "Frango tudo",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 59,
+                "min": 49
+              },
+              "fee": 0,
+              "promotionalFee": 0
+            },
+            "isOpen": true,
+            "merchantId": "712b947e-f578-4ef2-a33b-0d8e41db823a",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/712b947e-f578-4ef2-a33b-0d8e41db823a/202308030132_22re_i.jpg",
+            "merchantName": "Lanchonete Tropical Original -bel e João",
+            "minimumOrderAmount": 25,
+            "ratingCount": 315,
+            "reviewRating": 4.5,
+            "straightLineDistanceKm": 2.009
+          },
+          "promotionalUnitPrice": 35.74,
+          "unitPrice": 54.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "368099d0-4108-44d9-a93a-de99bab0f92e",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202111291340_RT24_i.jpg",
+          "itemName": "1 Pizza Marguerita + 1 Pizza Calabresa + Guaranáscarlos",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 70,
+                "min": 60
+              },
+              "fee": 9.5,
+              "promotionalFee": 9.5
+            },
+            "isOpen": true,
+            "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/54615ed7-5697-413b-a508-9156e3f5ec70/202512211429_vLkx_3.jpg",
+            "merchantName": "Ponto da Esfiha São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 384,
+            "reviewRating": 4.7,
+            "straightLineDistanceKm": 3.76
+          },
+          "promotionalUnitPrice": 159.99,
+          "unitPrice": 159.99
+        },
+        {
+          "itemEan": "[]",
+          "itemId": "99427f4b-2ae3-40c3-bd6a-c8d35a7c9f31",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9096d9d9-3cb2-4331-87e6-c1aa2cbb7080/202608251855_mc8bersalud.png",
+          "itemName": "Frango Palmito",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 55,
+                "min": 45
+              },
+              "fee": 0,
+              "promotionalFee": 0
+            },
+            "isOpen": true,
+            "merchantId": "9096d9d9-3cb2-4331-87e6-c1aa2cbb7080",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/9096d9d9-3cb2-4331-87e6-c1aa2cbb7080/202109011840_ir9z_i.jpg",
+            "merchantName": "Avalanche - Lanches e Diversão",
+            "minimumOrderAmount": 30,
+            "ratingCount": 146,
+            "reviewRating": 4.7,
+            "straightLineDistanceKm": 2.92
+          },
+          "promotionalUnitPrice": 54,
+          "unitPrice": 54
+        },
+        {
+          "itemEan": "",
+          "itemId": "2a6edc94-ed90-4ead-8f22-2f497f5e8081",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/e42f29a7-8f57-4820-8921-5b42fbeb93e0/202404110950_3C65_i.jpg",
+          "itemName": "Pizza Sensação",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 70,
+                "min": 60
+              },
+              "fee": 9.5,
+              "promotionalFee": 9.5
+            },
+            "isOpen": true,
+            "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/54615ed7-5697-413b-a508-9156e3f5ec70/202512211429_vLkx_3.jpg",
+            "merchantName": "Ponto da Esfiha São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 384,
+            "reviewRating": 4.7,
+            "straightLineDistanceKm": 3.76
+          },
+          "promotionalUnitPrice": 89.99,
+          "unitPrice": 89.99
+        }
+      ]
+    }
+  }
+}

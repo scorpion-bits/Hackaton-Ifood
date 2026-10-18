@@ -77,8 +77,11 @@ async def test_monta_dois_carrinhos_com_valores_do_getcart():
     assert all(i["preco"] and i["quantidade"] == 1 for i in jp["itens"] + sv["itens"])
 
     ferramentas = [c.tool for c in cli.rastro]
-    esperado_loja = lambda n: SEQUENCIA_LOJA[:2] + ["addItemToCart"] * (n - 1) + SEQUENCIA_LOJA[2:]
+    # MCP real: o createCart já leva o 1º item (`items`); os outros vão por addItemToCart
+    esperado_loja = lambda n: ["createCart"] + ["addItemToCart"] * (n - 1) + SEQUENCIA_LOJA[2:]
     assert ferramentas[:-2] == esperado_loja(2) + esperado_loja(2)
+    assert all("merchantId=" in c.resumo and "cartId" not in c.resumo
+               for c in cli.rastro if c.tool == "listPaymentMethods")
     assert "submitOrder" not in ferramentas
 
 
@@ -203,3 +206,106 @@ async def test_nao_reenvia_carrinho_ja_enviado():
     assert [(p["loja_id"], p["status"]) for p in segunda] == [("loja-demo-sorvete", "enviado")]
     assert terceira == []
     assert [c.tool for c in cli.rastro].count("submitOrder") == 2
+
+
+# --- bug 25: desconto que o getCart real aplica no total sem detalhar ---
+
+def _partes_dos_carrinhos(carrinhos: list[dict], donos: dict[str, list[tuple[str, float]]]):
+    """Partes como a rota faz: itens do carrinho + taxa/desconto por loja."""
+    from app.match.acerto import calcular_partes
+
+    escolhas: dict[str, list[Candidato]] = {}
+    for c in carrinhos:
+        for pid, preco in donos[c["loja_id"]]:
+            escolhas.setdefault(pid, []).append(Candidato(
+                participante_id=pid, loja_id=c["loja_id"], loja_nome=c["loja_id"], item_id="x", item_nome="x",
+                preco=preco, eta_min=None, vertical="", perecivel=False))
+    return calcular_partes(escolhas, {}, {c["loja_id"]: c["taxa"] for c in carrinhos},
+                           {c["loja_id"]: c["desconto"] for c in carrinhos})
+
+
+def test_total_menor_que_subtotal_mais_taxa_deriva_desconto_e_partes_fecham():
+    from app.match.acerto import centavos
+    from app.match.checkout import _ler_totais
+
+    # números do bug 25 (MCP real, conta de teste): o summary não trouxe desconto
+    bk = {"loja_id": "bk", **_ler_totais({"summary": {"subtotalAmount": 40.99, "deliveryFee": 9.99,
+                                                       "totalAmount": 31.51}})}
+    masc = {"loja_id": "masc", **_ler_totais({"summary": {"subtotalAmount": 37.80, "deliveryFee": 6.99,
+                                                           "totalAmount": 36.33}})}
+    assert (bk["desconto"], bk["total"], bk["desconto_derivado"]) == (19.47, 31.51, True)
+    assert (masc["desconto"], masc["desconto_derivado"]) == (8.46, True)
+
+    partes = _partes_dos_carrinhos([bk, masc], {
+        "bk": [("ana", 40.99)],
+        "masc": [("ana", 12.60), ("bia", 25.20)],
+    })
+    assert sum(centavos(p.total) for p in partes) == centavos(31.51) + centavos(36.33)
+    ana, bia = partes
+    # desconto da Mascavado (8,46) proporcional a 12,60 : 25,20 → 2,82 e 5,64; o do BK (19,47) só da Ana
+    assert (ana.desconto, bia.desconto) == (22.29, 5.64)
+    assert (ana.total, bia.total) == (round(31.51 + 12.60 + 3.50 - 2.82, 2), round(25.20 + 3.49 - 5.64, 2))
+
+
+def test_desconto_explicito_do_summary_e_lido_e_nao_e_derivado():
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"summary": {"subtotalAmount": 40.99, "deliveryFee": 9.99, "benefitsTotalAmount": 19.47,
+                                 "totalAmount": 31.51}})
+    assert t["desconto"] == 19.47 and "desconto_derivado" not in t
+
+
+def test_desconto_com_frete_gratis_fecha_com_o_total():
+    """Bug 39 (PC do Thales, MCP real em SP): `benefitsTotalAmount` soma o frete grátis que já veio zerado no
+    `deliveryFeeAmount`; sem ajuste, 14,40 + 0 + 0,99 − 13,19 ≠ 8,19 na tela."""
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"summary": {"subtotalAmount": 14.40, "deliveryFeeAmount": 0.0, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 13.19, "totalAmount": 8.19}})
+    assert (t["desconto"], t["total"], t["desconto_ajustado"]) == (7.20, 8.19, True)
+    t = _ler_totais({"summary": {"subtotalAmount": 16.90, "deliveryFeeAmount": 0.0, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 11.99, "totalAmount": 17.89}})
+    assert t["desconto"] == 0.0 and round(t["subtotal"] + t["taxa"] + t["servico"] - t["desconto"], 2) == t["total"]
+
+
+def test_sem_desconto_nao_muda_o_formato():
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0, "discount": 0, "total": 55.0})
+    assert t == {"subtotal": 50.0, "taxa": 5.0, "servico": 0.0, "desconto": 0.0, "total": 55.0}
+    # total ausente (0) não vira desconto
+    assert _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0})["desconto"] == 0.0
+
+
+def test_taxa_de_servico_do_ifood_entra_nos_totais_e_fecha_a_conta():
+    """Bug 29 (P7/P8 no real): o getCart traz "Taxa de serviço" (`fees[]`, `summary.feeTotalAmount`) dentro do total;
+    sem lê-la, as partes ficavam R$ 0,99–1,00 abaixo do carrinho."""
+    import json
+    from pathlib import Path
+
+    from app.match.checkout import _ler_totais
+    amostra = json.loads((Path(__file__).resolve().parents[2] / "docs" / "mcp-real" / "bug25-whopper-carrinho.json")
+                         .read_text(encoding="utf-8"))
+
+    def achar(no):
+        if isinstance(no, dict):
+            if isinstance(no.get("summary"), dict) and "feeTotalAmount" in no["summary"]:
+                return no
+            for v in no.values():
+                if (r := achar(v)) is not None:
+                    return r
+        if isinstance(no, list):
+            for v in no:
+                if (r := achar(v)) is not None:
+                    return r
+        return None
+
+    t = _ler_totais(achar(amostra))
+    assert (t["subtotal"], t["taxa"], t["servico"], t["desconto"], t["total"]) == (39.99, 9.99, 1.0, 0.0, 50.98)
+    # com desconto do iFood (benefício): itens + entrega + serviço − desconto == total
+    t = _ler_totais({"summary": {"subtotalAmount": 33.90, "deliveryFeeAmount": 9.99, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 16.95, "totalAmount": 27.93}})
+    assert round(t["subtotal"] + t["taxa"] + t["servico"] - t["desconto"], 2) == t["total"]
+    # só a lista fees[] (sem summary): soma os valores
+    assert _ler_totais({"subtotal": 10.0, "deliveryFee": 5.0, "fees": [{"amount": 0.99}], "total": 15.99})["servico"] == 0.99
+

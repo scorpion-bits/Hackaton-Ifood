@@ -1,347 +1,527 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Match — pedido em grupo sem dor</title>
-  <!-- Reveal.js local (node_modules): funciona sem internet. Abra este arquivo direto no navegador.
-       Fonte: Inter se estiver instalada; senão Segoe UI (Windows) ou Arial. Nada é baixado da internet. -->
-  <link rel="stylesheet" href="node_modules/reveal.js/dist/reset.css">
-  <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
-  <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/white.css">
-  <style>
-    :root {
-      --vermelho: #ea1d2c; --vermelho-escuro: #b8131f; --tinta: #1d1d1f; --cinza: #6b6b70; --linha: #ececef;
-      --fundo-suave: #f7f7f8; --amarelo: #fff4d6; --amarelo-tinta: #6b4e00; --verde: #0f7a3f;
-      --r-main-font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
-      --r-heading-font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
-      --r-main-font-size: 30px; --r-heading-color: var(--tinta); --r-main-color: var(--tinta); --r-link-color: var(--vermelho);
-    }
-    .reveal { font-family: var(--r-main-font); }
-    .reveal .slides { text-align: left; }
-    .reveal .slides section { box-sizing: border-box; height: 720px !important; min-height: 720px; padding: 56px 72px 64px !important; top: 0 !important; }
-    /* PDF (?print-pdf): o reveal.css zera o layout; repõe o mesmo enquadramento da tela. */
-    html.print-pdf .reveal .slides .pdf-page > section { box-sizing: border-box !important; width: 1280px !important;
-      height: 720px !important; padding: 56px 72px 64px !important; position: relative !important; overflow: hidden !important; }
-    .reveal .slides section::after {
-      content: "Protótipo de hackathon · não afiliado ao iFood";
-      position: absolute; right: 72px; top: 22px; font-size: 13px; color: #a0a0a6; letter-spacing: .02em;
-    }
-    .reveal h1, .reveal h2, .reveal h3 { text-transform: none; letter-spacing: -0.02em; font-weight: 800; }
-    .reveal h2 { font-size: 46px; margin: 0 0 .45em; }
-    .reveal h3 { font-size: 26px; margin: 0 0 .3em; }
-    .reveal p { margin: .35em 0; line-height: 1.35; }
-    .reveal ul { margin: 0 0 0 1em; font-size: 26px; }
-    .reveal li { margin: .28em 0; line-height: 1.3; }
-    .reveal code { font-size: .85em; background: var(--fundo-suave); padding: 0 .25em; border-radius: 5px; color: var(--vermelho-escuro); }
-    .reveal .marca { color: var(--vermelho); }
-    .reveal .cinza { color: var(--cinza); }
-    .reveal .pequeno { font-size: 18px; color: var(--cinza); }
-    .reveal .preencher { background: var(--amarelo); color: var(--amarelo-tinta); padding: 0 .3em; border-radius: 5px; font-weight: 700; border: 2px dashed #e0b000; }
-    .reveal .selo { display: inline-block; background: var(--vermelho); color: #fff; font-size: 14px; font-weight: 700; padding: .2em .7em; border-radius: 999px; vertical-align: middle; letter-spacing: .03em; }
-    .reveal .selo.amarelo { background: var(--amarelo); color: var(--amarelo-tinta); }
-    .reveal .selo.cinza { background: var(--cinza); color: #fff; }
-    .reveal .fonte { position: absolute; left: 72px; right: 72px; bottom: 18px; font-size: 13px; color: #8a8a90; line-height: 1.4; }
-    .reveal .fonte a { color: #8a8a90; text-decoration: underline; }
-    .reveal .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-    .reveal .tres { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
-    .reveal .caixa { border: 2px solid var(--linha); border-radius: 18px; padding: 18px 22px; background: #fff; }
-    .reveal .caixa.vermelha { border-color: var(--vermelho); }
-    .reveal .caixa.suave { background: var(--fundo-suave); border-color: var(--fundo-suave); }
-    .reveal .caixa ul { font-size: 22px; }
-    .reveal .caixa p { font-size: 22px; }
-    .reveal .grande { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
-    .reveal .celular { height: 470px; border-radius: 26px; box-shadow: 0 10px 30px rgba(0,0,0,.18); border: 6px solid #1d1d1f; margin: 0; }
-    .reveal .celular.menor { height: 420px; }
-    .reveal .lado { display: grid; grid-template-columns: 1.25fr 1fr; gap: 36px; align-items: center; }
-    .reveal .fluxo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
-    .reveal .fluxo span { border: 2px solid var(--vermelho); border-radius: 12px; padding: 5px 10px; font-size: 18px; font-weight: 600; font-family: ui-monospace, Consolas, monospace; background: #fff; }
-    .reveal .fluxo span.trava { background: var(--vermelho); color: #fff; }
-    .reveal .fluxo b { color: var(--cinza); font-size: 18px; }
-    .reveal table { font-size: 18px; border-collapse: collapse; width: 100%; }
-    .reveal table th, .reveal table td { border-bottom: 1px solid var(--linha); padding: 7px 8px; text-align: left; vertical-align: top; }
-    .reveal table th { font-weight: 700; color: var(--cinza); font-size: 16px; }
-    .reveal table td.nosso, .reveal table th.nosso { background: #fff0f1; font-weight: 700; }
-    .reveal .sim { color: var(--verde); font-weight: 700; }
-    .reveal .nao { color: #a0a0a6; }
-    /* capa */
-    .reveal .capa { background: var(--vermelho); color: #fff; }
-    .reveal .capa::after { color: rgba(255,255,255,.75) !important; }
-    .reveal .capa h1 { color: #fff; font-size: 104px; margin: 40px 0 0; letter-spacing: -0.04em; }
-    .reveal .capa .frase { font-size: 34px; line-height: 1.35; font-weight: 600; max-width: 1000px; margin-top: 26px; }
-    .reveal .capa .frase strong { background: #fff; color: var(--vermelho); padding: 0 .2em; border-radius: 6px; }
-    .reveal .capa .rodape-capa { position: absolute; left: 72px; bottom: 40px; font-size: 18px; color: rgba(255,255,255,.85); }
-    /* 4 passos da frase única */
-    .reveal .passos4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 6px; }
-    .reveal .passos4 .caixa { padding: 16px 16px; }
-    .reveal .passos4 .num { display: inline-block; width: 38px; height: 38px; border-radius: 999px; background: var(--vermelho); color: #fff; font-weight: 800; font-size: 22px; text-align: center; line-height: 38px; margin-bottom: 8px; }
-    .reveal .passos4 h3 { font-size: 24px; }
-    .reveal .passos4 p { font-size: 19px; color: var(--cinza); }
-    /* conversa do Ajustar */
-    .reveal .conversa { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px; }
-    .reveal .bolha { max-width: 88%; border-radius: 18px; padding: 10px 16px; font-size: 21px; line-height: 1.3; }
-    .reveal .bolha.org { align-self: flex-end; background: var(--vermelho); color: #fff; border-bottom-right-radius: 6px; }
-    .reveal .bolha.ia { align-self: flex-start; background: #fff0f1; color: var(--tinta); border-bottom-left-radius: 6px; }
-    /* agente -> MCP -> iFood */
-    .reveal .arq { display: grid; grid-template-columns: 1.1fr auto .9fr auto 1fr; gap: 12px; align-items: center; margin: 4px 0 14px; }
-    .reveal .meio { text-align: center; font-size: 19px; }
-    .reveal .meio .mcp { border: 3px solid var(--tinta); border-radius: 16px; padding: 16px 10px; font-weight: 800; font-size: 24px; }
-    .reveal .meio .seta { font-size: 30px; color: var(--vermelho); line-height: 1; margin: 6px 0; }
-    .reveal .ibits { border: 3px solid var(--vermelho); border-radius: 18px; padding: 16px 18px; background: #fff0f1; font-size: 20px; }
-    .reveal .ibits b { color: var(--vermelho); font-size: 26px; }
-    .reveal .equipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 18px; }
-    .reveal .equipe .caixa { text-align: center; padding: 16px 10px; }
-    .reveal .equipe .nome { font-weight: 800; font-size: 24px; }
-    .reveal .equipe .papel { font-size: 17px; color: var(--cinza); }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Match · Pitch</title>
+<style>
+/* ---------- tema ---------- */
+:root {
+  --marca: #ea1d2c; --marca-escura: #b3121f; --marca-suave: #fde8ea;
+  --bg: #ffffff; --bg-fora: #f2f2f2; --card: #ffffff; --texto: #1d1b1a; --suave: #6b6461; --linha: #e4dfdb;
+  --ok: #0b7a4b; --ok-fundo: #e3f4ea; --roxo: #6c3ad1; --roxo-suave: #efe8fc;
+  --zap: #e7ffdb; --zap-outro: #ffffff; --zap-fundo: #efe7de;
+  --sombra: 0 18px 50px rgba(40, 20, 10, .14);
+}
+:root[data-tema="escuro"] {
+  --marca: #ff4b57; --marca-escura: #ff7a83; --marca-suave: #3a1a1d;
+  --bg: #131112; --bg-fora: #0a0909; --card: #1f1c1d; --texto: #f4efec; --suave: #a59c97; --linha: #332e2f;
+  --ok: #4bd39a; --ok-fundo: #12332a; --roxo: #a98bff; --roxo-suave: #261d3d;
+  --zap: #144d37; --zap-outro: #232526; --zap-fundo: #0e1416;
+  --sombra: 0 18px 50px rgba(0, 0, 0, .55);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg-fora); overflow: hidden; }
+body { font-family: "Segoe UI", Inter, Roboto, system-ui, -apple-system, sans-serif; color: var(--texto); transition: background .4s; }
+
+/* ---------- palco 16:9 (1600×900, escalado para caber) ---------- */
+#palco { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; background: var(--bg);
+  overflow: hidden; transition: background .4s; }
+.slide { position: absolute; inset: 0; padding: 80px 110px; display: flex; flex-direction: column; justify-content: center;
+  opacity: 0; visibility: hidden; transform: translateX(60px); transition: opacity .55s ease, transform .55s ease, visibility 0s .55s; }
+.slide.ativo { opacity: 1; visibility: visible; transform: none; transition: opacity .55s ease, transform .55s ease; }
+.slide.antes { transform: translateX(-60px); }
+
+/* entrada animada: .a anima quando o slide fica ativo (atraso em --d) */
+.a { opacity: 0; transform: translateY(26px); }
+.ativo .a { animation: entra .7s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: var(--d, 0s); }
+@keyframes entra { to { opacity: 1; transform: none; } }
+.a.zoom { transform: scale(.85); }
+.a.lado { transform: translateX(60px); }
+/* passo a passo: .f aparece a cada clique */
+.f { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+.f.on { opacity: 1; transform: none; }
+
+/* ---------- tipografia ---------- */
+.rotulo { font-size: 22px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--marca); margin-bottom: 18px; }
+h1 { font-size: 92px; line-height: 1.02; font-weight: 800; letter-spacing: -.03em; }
+h2 { font-size: 64px; line-height: 1.06; font-weight: 800; letter-spacing: -.025em; margin-bottom: 26px; }
+h3 { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+p, li { font-size: 28px; line-height: 1.4; }
+.suave { color: var(--suave); }
+.destaque { color: var(--marca); }
+em { font-style: normal; color: var(--marca); }
+.fonte { position: absolute; left: 110px; bottom: 34px; font-size: 16px; color: var(--suave); }
+
+/* ---------- barra de progresso, tema, cronômetro ---------- */
+#progresso { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--marca); transition: width .5s ease; z-index: 5; }
+#cantos { position: fixed; right: 14px; bottom: 12px; display: flex; gap: 8px; z-index: 20; opacity: .25; transition: opacity .3s; }
+#cantos:hover { opacity: 1; }
+#cantos button { font: 600 13px/1 inherit; font-family: inherit; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--linha);
+  background: var(--card); color: var(--texto); cursor: pointer; }
+#marca-canto { position: absolute; top: 26px; right: 40px; z-index: 4; transition: opacity .4s; }
+#marca-canto img { height: 52px; width: auto; display: block; }
+#marca-canto.oculto { opacity: 0; }
+
+/* ---------- celular ---------- */
+.cel { position: relative; width: 330px; height: 714px; border-radius: 48px; background: #111; padding: 12px; box-shadow: var(--sombra),
+  inset 0 0 0 2px #333; flex: none; }
+.cel::before { content: ""; position: absolute; top: 20px; left: 50%; width: 92px; height: 24px; margin-left: -46px; background: #111;
+  border-radius: 20px; z-index: 3; }
+.cel .tela { position: absolute; inset: 12px; border-radius: 37px; overflow: hidden; background: #fff; }
+.cel .tela img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.cel .tela img.f { transform: scale(1.03); }
+.cel .tela img.f.on { transform: none; }
+.cel.p { width: 290px; height: 628px; border-radius: 42px; }
+.cel.p .tela { border-radius: 32px; }
+.celulares { display: flex; gap: 34px; align-items: center; justify-content: center; }
+.flutua { animation: flutua 6s ease-in-out infinite; }
+@keyframes flutua { 50% { transform: translateY(-10px); } }
+
+/* ---------- capa e fechamento ---------- */
+.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 50%, #c8101e 100%); color: #fff; }
+.capa .rotulo, .capa em { color: #ffe1e3; }
+.logo { display: flex; align-items: center; }
+.logo img { height: 210px; width: auto; display: block; margin-left: -10px; filter: drop-shadow(0 10px 24px rgba(80, 0, 0, .25)); }
+.capa .comidas { position: absolute; right: 90px; top: 50%; transform: translateY(-50%); font-size: 120px; display: grid;
+  grid-template-columns: 1fr 1fr; gap: 28px; }
+.capa .comidas span { animation: flutua 5s ease-in-out infinite; }
+.capa .comidas img { display: block; width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 7px solid #fff;
+  box-shadow: 0 18px 40px rgba(80,0,0,.35); }
+.capa .comidas span:nth-child(2) { animation-delay: -1.2s; } .capa .comidas span:nth-child(3) { animation-delay: -2.4s; }
+.capa .comidas span:nth-child(4) { animation-delay: -3.6s; }
+.equipe { font-size: 22px; opacity: .9; margin-top: 46px; }
+
+/* ---------- WhatsApp da persona ---------- */
+.dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+.persona { display: flex; align-items: center; gap: 22px; margin-bottom: 26px; }
+.avatar { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: var(--marca-suave); flex: none; }
+.zap { background: var(--zap-fundo); border-radius: 30px; padding: 26px 24px 30px; box-shadow: var(--sombra); display: flex; flex-direction: column;
+  gap: 12px; height: 680px; overflow: hidden; }
+.zap .topo { font-weight: 700; font-size: 22px; padding-bottom: 12px; border-bottom: 1px solid var(--linha); margin-bottom: 4px; display: flex; gap: 12px; align-items: center; }
+.zap .topo small { font-weight: 400; color: var(--suave); font-size: 17px; }
+.bolha { max-width: 82%; padding: 12px 16px; border-radius: 16px; font-size: 22px; line-height: 1.3; background: var(--zap-outro); box-shadow: 0 1px 1px rgba(0,0,0,.08); }
+.bolha b { display: block; font-size: 16px; margin-bottom: 2px; }
+.bolha.eu { align-self: flex-end; background: var(--zap); }
+.bolha.digitando { font-size: 26px; letter-spacing: 4px; color: var(--suave); }
+
+/* ---------- dores ---------- */
+.dores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; margin-top: 10px; }
+.dor { background: var(--card); border-radius: 26px; padding: 34px 28px; box-shadow: var(--sombra); border-top: 6px solid var(--marca); }
+.dor .ico, .ganho .ico { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 16px;
+  background: var(--marca-suave); color: var(--marca); }
+.ico .ic { width: 40px; height: 40px; }
+.ico .ifood { width: 52px; fill: var(--marca); }
+/* ícones de traço (no lugar dos emojis) e a logo do iFood, que segue a cor do texto */
+.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -0.14em; flex: none; }
+.ic.cheio { fill: currentColor; stroke: none; }
+.ic.verde { color: #1a9c4b; }
+.caixa h3 .ic { color: var(--marca); width: 30px; height: 30px; }
+.ifood { fill: currentColor; height: 1em; width: auto; }
+.rotulo.com-logo { display: flex; align-items: center; gap: 12px; }
+.rotulo .ifood.no-rotulo { height: 30px; margin-top: -4px; }
+.caixa h3 .ifood.no-titulo { height: 30px; fill: var(--marca); }
+.avatar.letra { background: var(--marca); color: #fff; font: 800 50px/1 inherit; }
+.logo.parceria { display: flex; align-items: center; gap: 28px; }
+.logo.parceria .x { color: #fff; font-size: 64px; font-weight: 300; opacity: .85; }
+.logo.parceria .ifood { height: 108px; fill: #fff; }
+.dor p { font-size: 22px; color: var(--suave); }
+.faixa { margin-top: 40px; padding: 24px 30px; border-radius: 20px; background: var(--marca-suave); font-size: 26px; }
+
+/* ---------- virada ---------- */
+.virada { text-align: center; align-items: center; }
+.virada h1 { font-size: 104px; }
+.ibits { display: inline-flex; align-items: center; gap: 14px; margin-top: 40px; padding: 18px 30px; border-radius: 999px; background: var(--card);
+  box-shadow: var(--sombra); font-size: 30px; font-weight: 700; }
+.ibits .bola { width: 50px; height: 50px; border-radius: 50%; background: var(--marca); color: #fff; display: grid; place-items: center; font-size: 26px; }
+
+/* ---------- passos da solução ---------- */
+.passo { display: grid; grid-template-columns: 1.05fr 1fr; gap: 60px; align-items: center; }
+.num { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--marca); color: #fff;
+  font-size: 32px; font-weight: 800; margin-bottom: 22px; }
+.lista { list-style: none; display: flex; flex-direction: column; gap: 16px; margin-top: 6px; }
+.lista li { padding-left: 42px; position: relative; font-size: 27px; }
+.lista li::before { content: ""; position: absolute; left: 0; top: 12px; width: 22px; height: 22px; border-radius: 7px; background: var(--marca-suave);
+  box-shadow: inset 0 0 0 3px var(--marca); }
+.resolve { display: inline-flex; gap: 12px; align-items: center; margin-top: 32px; padding: 14px 24px; border-radius: 999px; background: var(--ok-fundo);
+  color: var(--ok); font-weight: 700; font-size: 24px; }
+
+/* ---------- arquitetura ---------- */
+.fluxo { display: grid; grid-template-columns: 1fr 70px 1fr 70px 1fr; align-items: stretch; margin-top: 8px; }
+.caixa { background: var(--card); border-radius: 26px; padding: 30px; box-shadow: var(--sombra); }
+.caixa h3 { font-size: 28px; display: flex; gap: 10px; align-items: center; }
+.caixa p { font-size: 21px; color: var(--suave); }
+.caixa ul { list-style: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.caixa li { font-size: 21px; }
+.caixa.ia { border-top: 6px solid var(--roxo); } .caixa.codigo { border-top: 6px solid var(--ok); } .caixa.mcp { border-top: 6px solid var(--marca); }
+.seta { display: grid; place-items: center; font-size: 40px; color: var(--suave); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tools span { font: 600 16px/1 Consolas, "Cascadia Mono", monospace; padding: 8px 10px; border-radius: 10px; background: var(--marca-suave); color: var(--marca-escura); }
+.ativo .tools span { animation: pisca 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * .3s); }
+@keyframes pisca { 0%, 70%, 100% { filter: none; } 10% { filter: brightness(1.25) saturate(1.4); transform: translateY(-3px); } }
+.prova { display: flex; align-items: center; gap: 26px; margin-top: 34px; padding: 22px 28px; border-radius: 22px; background: var(--card);
+  border: 2px dashed var(--marca); font-size: 23px; }
+.prova-cels { display: flex; gap: 14px; flex: none; }
+.cel.mini { width: 232px; height: 502px; border-radius: 34px; padding: 8px; }
+.cel.mini::before { top: 14px; width: 64px; height: 16px; margin-left: -32px; }
+.cel.mini .tela { inset: 8px; border-radius: 27px; }
+/* "Como funciona": no clique da prova, os 3 quadros dão lugar às telas do app no MCP real */
+.slide:has(.prova.on) .fluxo { display: none; }
+.prova-txt { flex: 1; min-width: 0; font-size: 23px; line-height: 1.45; }
+.prova .prova-txt .conta { white-space: normal; font-size: 21px; }
+.prova .conta { font: 700 24px/1.3 Consolas, "Cascadia Mono", monospace; color: var(--marca); white-space: nowrap; }
+
+/* ---------- impacto ---------- */
+.ganhos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.ganho { background: var(--card); border-radius: 26px; padding: 34px 30px; box-shadow: var(--sombra); }
+.ganho .ico { font-size: 50px; margin-bottom: 12px; }
+.ganho p { font-size: 22px; color: var(--suave); }
+.prox { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.prox div { padding: 22px 28px; border-radius: 20px; background: var(--marca-suave); font-size: 23px; }
+
+/* ---------- modo apresentador e impressão ---------- */
+.nota { display: none; }
+#notas { display: none; }
+body.apresentador { overflow: auto; background: #111; color: #eee; padding: 30px; font-family: inherit; }
+body.apresentador #palco, body.apresentador #cantos { display: none; }
+body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap: 30px; }
+#notas .fala { font-size: 30px; line-height: 1.45; white-space: pre-line; }
+#notas .tit { font-size: 18px; color: #f77; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; }
+#notas .relogio { font: 700 64px/1 Consolas, monospace; }
+#notas .alvo { font-size: 20px; color: #aaa; margin-top: 8px; }
+#notas .prox-tit { margin-top: 30px; font-size: 20px; color: #aaa; }
+@media print {
+  @page { size: 1600px 900px; margin: 0; }
+  html, body { overflow: visible; height: auto; background: none; }
+  #palco { position: static; transform: none !important; height: auto; overflow: visible; background: none; }
+  .slide { position: relative; width: 1600px; height: 900px; opacity: 1; visibility: visible; transform: none; page-break-after: always;
+    background: var(--bg); }
+  .slide.capa { background: radial-gradient(1200px 700px at 85% 20%, #ff4b57 0%, #ea1d2c 50%, #c8101e 100%); }
+  .a, .f { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .cel .tela img.f { opacity: 0 !important; }
+  .cel .tela img.f:last-child { opacity: 1 !important; }
+  .slide:has(.prova) .fluxo { display: none; }  /* PDF: no "Como funciona" vale a prova (telas do MCP real) */
+  #cantos, #progresso, #marca-canto { display: none; }
+}
+</style>
 </head>
 <body>
-<div class="reveal"><div class="slides">
+<div id="palco">
+  <div id="marca-canto"><img src="img/match-vermelha.png" alt="Match"></div>
 
-  <!-- 1. Abertura (0:00–0:15) -->
-  <section class="capa">
-    <h1>Match</h1>
-    <p class="frase">Pedido em grupo sem dor:<br>
-      cada um fala o que quer, o <strong>IBits</strong> monta, divide a conta<br>e pede pelo iFood.</p>
-    <p class="rodape-capa">Thales Miguel Hajes · Milan · Zenon · Antonio — Hackathon SEMCOMP × iFood "Vendendo com Agentes" · São Carlos · 18/10/2026</p>
-    <aside class="notes">Thales, olhando para a banca: "Sexta à noite, quatro amigos, quatro vontades e um grupo de WhatsApp.
-      O Match resolve isso numa frase: cada um fala o que quer, o IBits monta, divide a conta e pede pelo iFood." (15 s)</aside>
+  <!-- 1 · CAPA -->
+  <section class="slide capa" data-titulo="Capa" data-tempo="0:15">
+    <div class="rotulo a com-logo">Hackathon SEMCOMP × <svg class="ifood no-rotulo" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg> · Vendendo com Agentes</div>
+    <div class="logo a" style="--d:.15s"><img src="img/match-branca.png" alt="Match"></div>
+    <h2 class="a" style="--d:.35s; margin-top: 30px; font-size: 54px; max-width: 900px;">Ninguém mais vira <em>o gerente do pedido</em>.</h2>
+    <p class="a" style="--d:.55s; max-width: 860px; opacity: .92;">Pedido em grupo montado por um agente que opera o MCP do iFood.</p>
+    <p class="equipe a" style="--d:.75s">Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
+    <div class="comidas" aria-hidden="true"><span><img src="img/pratos/pizza.jpg" alt=""></span><span><img src="img/pratos/hamburguer.jpg" alt=""></span><span><img src="img/pratos/acai.jpg" alt=""></span><span><img src="img/pratos/sanduiche.jpg" alt=""></span></div>
+    <aside class="nota">"Boa tarde! Nós somos o time do Match." (pausa) → avance.</aside>
   </section>
 
-  <!-- 2. Problema (0:15–0:35) -->
-  <section>
-    <h2>Todo grupo tem um <span class="marca">"gerente do pedido"</span></h2>
-    <div class="lado">
+  <!-- 2 · PERSONA -->
+  <section class="slide" data-titulo="A Ana" data-tempo="0:45">
+    <div class="dupla">
       <div>
-        <ul>
-          <li>Pergunta no WhatsApp o que cada um quer</li>
-          <li>Procura loja que agrade todo mundo (e o vegetariano?)</li>
-          <li>Confere se cabe no bolso de cada um</li>
-          <li>Monta o carrinho, adianta o dinheiro e <strong>cobra o Pix depois</strong></li>
-        </ul>
-      </div>
-      <div class="caixa vermelha">
-        <h3>E quanto tempo isso leva?</h3>
-        <p>No Brasil, <strong>não achamos nenhum número público</strong> sobre pedido em grupo.</p>
-        <p>Fora daqui: no Reino Unido, quase metade dos entrevistados diz que um grupo leva em média <strong>25 minutos</strong> para escolher onde comer.</p>
-        <p class="pequeno">Pesquisa de 2018, encomendada, amostra não informada, sobre restaurante (não delivery). Só como apoio.</p>
-      </div>
-    </div>
-    <div class="fonte">Busca de dado brasileiro: nenhum encontrado (docs/pesquisa-mercado.md §4, 17/10/2026) ·
-      25 min: OnePoll para Meerkat Meals, 2018 — <a href="https://publicsectorcatering.co.uk/news/guess-how-long-brits-spend-deciding-where-eat-out">Public Sector Catering, 01/10/2018</a></div>
-    <aside class="notes">"Todo grupo tem alguém que vira gerente do pedido. Procuramos dado brasileiro sobre isso e não existe.
-      O que achamos é de fora: 25 minutos para um grupo decidir, no Reino Unido." (20 s)
-      <!-- Se a pesquisa da equipe (docs/pesquisa-usuarios.md) tiver resultado tabulado, trocar a caixa pela pesquisa com n. --></aside>
-  </section>
-
-  <!-- 3. Solução (0:35–0:55) -->
-  <section>
-    <h2>Uma frase de cada um. <span class="marca">O resto é com o IBits.</span></h2>
-    <div class="passos4">
-      <div class="caixa"><div class="num">1</div><h3>Cada um fala</h3><p>Entra pelo QR, sem login, e escreve do seu jeito: "japonês e um sorvete, até R$ 45".</p></div>
-      <div class="caixa"><div class="num">2</div><h3>O IBits monta</h3><p>Lê o cardápio de cada loja no iFood e combina itens de até 3 lojas, com o motivo de cada escolha.</p></div>
-      <div class="caixa"><div class="num">3</div><h3>Divide a conta</h3><p>Junto ou cada um paga a sua parte. A taxa de cada loja só entre quem pediu dela.</p></div>
-      <div class="caixa vermelha"><div class="num">4</div><h3>Pede pelo iFood</h3><p>Carrinho pelo MCP do iFood. Nada sai sem o ok do organizador.</p></div>
-    </div>
-    <div class="duas" style="margin-top:22px;align-items:center">
-      <p style="font-size:24px">Só o organizador usa o iFood. <strong>Comendo sozinho?</strong> "Só eu": uma tela, uma frase, o mesmo agente.</p>
-      <div style="display:flex;gap:14px;justify-content:flex-end">
-        <img class="celular" style="height:250px;border-width:4px;border-radius:18px" src="img/f3-convidado.png" alt="Convidado escreve o que quer">
-        <img class="celular" style="height:250px;border-width:4px;border-radius:18px" src="img/f10-soeu.png" alt="Tela Só eu: o que você quer?">
-      </div>
-    </div>
-    <div class="fonte">Capturas do protótipo em modo demonstração (dados simulados).</div>
-    <aside class="notes">"Cada um fala, o IBits monta, divide a conta e pede pelo iFood. E se for só você, o mesmo agente resolve numa tela." (20 s)</aside>
-  </section>
-
-  <!-- 4. Demo (0:55–2:55) -->
-  <section>
-    <h2>Demo ao vivo <span class="selo">DEMONSTRAÇÃO</span></h2>
-    <div class="lado" style="grid-template-columns: 1fr 1.25fr">
-      <div>
-        <p style="font-size:24px">Thales organiza no projetor. Três amigos entram pelo QR, <strong>sem login</strong>:</p>
-        <div class="caixa suave" style="margin-top:10px">
-          <p>Milan: <em>"japonês e um sorvete, até R$ 45"</em></p>
-          <p>Zenon: <em>"hambúrguer e sorvete, até R$ 50"</em></p>
-          <p>Antonio: <em>"algo barato e vegetariano, até R$ 25"</em></p>
+        <div class="rotulo a">Sexta, 21h · república em São Carlos</div>
+        <div class="persona a" style="--d:.15s">
+          <div class="avatar letra">A</div>
+          <div><h2 style="margin:0">Essa é a Ana.</h2><p class="suave">21 anos, mora com 3 amigos.</p></div>
         </div>
-        <p class="pequeno" style="margin-top:12px">Sala → frases → Rodar Match → opções → <strong>Ajustar com o IBits</strong> → divisão da conta → carrinho.<br>Plano B: vídeo gravado com o mesmo roteiro.</p>
+        <p class="a" style="--d:.3s">A turma decidiu pedir comida.<br>Ela abriu o grupo para perguntar o que cada um queria…</p>
+        <p class="a destaque" style="--d:4.2s; margin-top: 26px; font-weight: 700; font-size: 32px;">…e virou a gerente do pedido.</p>
       </div>
-      <div style="display:flex;gap:16px;justify-content:flex-end">
-        <img class="celular menor" src="img/f2-org.png" alt="Sala do organizador com QR e convidados que responderam">
-        <img class="celular menor" src="img/f9-ajustar.png" alt="Opções atualizadas depois do ajuste">
+      <div class="zap a lado" style="--d:.2s">
+        <div class="topo">Rep do Campus <small>Ana, Bruno, Carla, Diego</small></div>
+        <div class="bolha eu a" style="--d:.7s">bora pedir? o que vcs querem?</div>
+        <div class="bolha a" style="--d:1.3s"><b>Bruno</b>japa!! e um sorvete</div>
+        <div class="bolha a" style="--d:1.9s"><b>Diego</b>hambúrguer, sem discussão</div>
+        <div class="bolha a" style="--d:2.5s"><b>Carla</b>sou vegetariana e tô no limite, até 25</div>
+        <div class="bolha eu a" style="--d:3.1s">gente, não tem um lugar que tenha tudo isso…</div>
+        <div class="bolha a" style="--d:3.7s"><b>Bruno</b>faz aí que depois eu te passo o pix</div>
+        <div class="bolha digitando a" style="--d:4.3s">•••</div>
       </div>
     </div>
-    <div class="fonte">Capturas do protótipo em modo demonstração (lojas e preços fictícios). Se a demo rodar no MCP real, a tela mostra o selo "iFood real · conta de teste".</div>
-    <aside class="notes">Roteiro clique a clique: docs/roteiro-demo.md (2 min).</aside>
+    <aside class="nota">"Essa é a Ana. Sexta, nove da noite, república aqui em São Carlos. A turma quer pedir comida e ela pergunta no grupo o que cada um quer." (deixe as mensagens aparecerem) "O Bruno quer japonês e sorvete, o Diego quer hambúrguer, a Carla é vegetariana e tem 25 reais… e o Bruno ainda diz: faz aí que depois eu te passo o Pix." → "A Ana virou a gerente do pedido."</aside>
   </section>
 
-  <!-- 5. Agente conversacional (2:55–3:10) -->
-  <section>
-    <h2>Conversa com o agente. <span class="marca">Conta com o código.</span></h2>
-    <div class="lado" style="grid-template-columns: 1.3fr 1fr">
+  <!-- 3 · DORES -->
+  <section class="slide" data-titulo="As dores" data-tempo="1:20">
+    <div class="rotulo a">O que a Ana passa toda vez</div>
+    <h2 class="a" style="--d:.1s">Pedir em grupo dá <em>trabalho</em> para uma pessoa só.</h2>
+    <div class="dores">
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.6"/><path d="M12 16.8h.01"/></svg></div><h3>Ninguém decide</h3><p>Ela pergunta um por um no WhatsApp e junta as respostas na mão.</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2v8a3 3 0 0 0 6 0V2"/><path d="M7 2v20"/><path d="M18 2c-2 2-3 5-3 8h3v12"/></svg></div><h3>Cada um quer uma coisa</h3><p>Uma loja só não agrada todo mundo. Alguém sempre cede.</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3v3a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5"/></svg></div><h3>Cada bolso, um limite</h3><p>Um tem R$ 25, outro tem R$ 45. E a taxa de entrega, quem paga?</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><h3>A conta fica com ela</h3><p>Ela paga tudo, depois cobra o Pix de cada um. E sempre falta alguém.</p></div>
+    </div>
+    <div class="faixa f">O iFood tem <b>65 milhões</b> de clientes e <b>mais de 180 milhões</b> de pedidos por mês¹. Mas o pedido da turma ainda é montado <b>na mão</b>.</div>
+    <div class="fonte">¹ Portal de Dados iFood (institucional.ifood.com.br/portal-de-dados-ifood), 2026.</div>
+    <aside class="nota">(clique a cada dor) "Ninguém decide: ela pergunta um por um. Cada um quer uma coisa: uma loja só não agrada todo mundo. Cada bolso tem um limite: a Carla tem 25, o Bruno 45, e a taxa de entrega, quem paga? E no fim a conta fica com ela: paga tudo e sai cobrando Pix." (clique) "O iFood tem 65 milhões de clientes e mais de 180 milhões de pedidos por mês, mas o pedido da turma ainda é montado na mão."</aside>
+  </section>
+
+  <!-- 4 · VIRADA -->
+  <section class="slide virada" data-titulo="Virada" data-tempo="1:30">
+    <h1 class="a">E se cada um<br>só dissesse <em>o que quer</em>?</h1>
+    <div class="ibits a zoom" style="--d:.6s"><span class="bola"><svg class="ic cheio" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.1 3.2 4.5 6.8 4.5c2 0 3.6 1.1 4.4 2.6.8-1.5 2.4-2.6 4.4-2.6 3.6 0 5.8 3.6 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></span>O <span class="destaque">IBits</span> faz o resto.</div>
+    <aside class="nota">"E se cada um só dissesse o que quer… e um agente fizesse o resto? Esse é o Match, com o nosso agente, o IBits."</aside>
+  </section>
+
+  <!-- 5 · PASSO 1 -->
+  <section class="slide" data-titulo="1 · Cada um fala" data-tempo="1:55">
+    <div class="passo">
       <div>
-        <div class="conversa">
-          <div class="bolha org">troca o sorvete do Milan e do Zenon por açaí</div>
-          <div class="bolha ia">Entendi: Milan: açaí no lugar do sorvete · Zenon: açaí no lugar do sorvete. Pronto, atualizei as opções.</div>
-        </div>
-        <ul style="font-size:22px">
-          <li><strong>O agente entende</strong> quem e o quê, e muda só o pedido dessas pessoas</li>
-          <li><strong>As ferramentas decidem</strong>: busca no MCP, combinação, preço e divisão são código</li>
-          <li>Não entendeu? Ele diz: <em>"Não entendi quem ou o quê"</em>, com um exemplo. Não chuta</li>
+        <div class="num a">1</div>
+        <h2 class="a" style="--d:.1s">Cada um fala<br><em>do seu jeito</em>.</h2>
+        <ul class="lista">
+          <li class="a" style="--d:.25s">A Ana cria a sala e mostra o QR.</li>
+          <li class="a" style="--d:.4s">Os amigos entram <b>sem login</b>, em menos de 30 segundos.</li>
+          <li class="a" style="--d:.55s">Uma frase livre: <i>"algo barato e vegetariano, até R$ 25"</i>.</li>
         </ul>
+        <div class="resolve a" style="--d:.8s">✓ A Ana não pergunta mais um por um</div>
       </div>
-      <div style="display:flex;justify-content:flex-end">
-        <img class="celular" src="img/f9-ajustar.png" alt="Opção atualizada: Kaigan Sushi + Açaí do Campus + Brasa Burger, itens novos marcados">
+      <div class="celulares">
+        <div class="cel p a" style="--d:.2s"><div class="tela"><img src="img/app/02-sala.png" alt="Sala da Ana com QR code e os amigos que responderam"></div></div>
+        <div class="cel a flutua" style="--d:.45s"><div class="tela"><img src="img/app/03-convidado.png" alt="Tela da Carla escrevendo o pedido dela"></div></div>
       </div>
     </div>
-    <div class="fonte">Saída do protótipo em modo demonstração: depois do ajuste, Kaigan Sushi + Açaí do Campus + Brasa Burger, 3 de 3 bem atendidos, R$ 99,50 só itens (lojas fictícias).
-      Rota <code>POST /api/salas/{id}/ajustar</code>; teste <code>backend/tests/test_ajuste.py</code>.</div>
-    <aside class="notes">"É isso que o regulamento pede: agente conversacional e ferramentas determinísticas trabalhando juntos."
-      <!-- CONFIRMAR NO PC DO THALES: com chave de IA no .env, quem entende a frase é o LLM (JSON validado); sem chave, é o intérprete determinístico. Dizer qual está ligado. --></aside>
+    <aside class="nota">"Com o Match, a Ana cria uma sala e mostra o QR. Os amigos entram sem login, em menos de 30 segundos, e cada um escreve do seu jeito. A Carla escreveu: algo barato e vegetariano, até 25 reais."</aside>
   </section>
 
-  <!-- 6. Como funciona: agente -> MCP -> iFood (3:10–3:35) -->
-  <section>
-    <h2 style="font-size:38px">Do restaurante ao fechamento do carrinho, <span class="marca">pelo MCP</span></h2>
-    <div class="arq" style="margin-bottom:6px">
-      <div class="ibits"><b>IBits</b> — agente do grupo
-        <ul style="font-size:18px;margin-top:6px">
-          <li>Entende a frase de cada um</li>
-          <li>Avalia cada loja: um avaliador por loja, que só lê o cardápio dela</li>
-          <li>Escolhe a melhor combinação</li>
+  <!-- 6 · PASSO 2 -->
+  <section class="slide" data-titulo="2 · O IBits monta" data-tempo="2:30">
+    <div class="passo">
+      <div>
+        <div class="num a">2</div>
+        <h2 class="a" style="--d:.1s">O IBits monta<br><em>o pedido do grupo</em>.</h2>
+        <ul class="lista">
+          <li class="a" style="--d:.25s">Um avaliador por loja, que só lê o cardápio dela no iFood.</li>
+          <li class="a" style="--d:.4s">Junta até <b>3 lojas</b> e explica o porquê de cada item.</li>
+          <li class="a" style="--d:.55s">Respeita o orçamento e a restrição de cada um.</li>
         </ul>
+        <div class="resolve a" style="--d:.8s">✓ 3 de 3 bem atendidos, ninguém cedeu</div>
       </div>
-      <div class="meio"><div class="seta">⇄</div></div>
-      <div class="meio"><div class="mcp">MCP do iFood<br><span style="font-weight:500;font-size:16px">consumidor · OAuth</span></div></div>
-      <div class="meio"><div class="seta">⇄</div></div>
-      <div class="caixa" style="font-size:19px"><strong>iFood</strong><br>lojas, cardápio, preço, taxa, carrinho e pedido.<br><span class="cinza">Número só vem daqui.</span></div>
+      <div class="celulares">
+        <div class="cel a flutua" style="--d:.2s"><div class="tela">
+          <img src="img/app/04-avaliacao.png" alt="O IBits avaliando cada loja">
+          <img class="f" src="img/app/05-pedido.png" alt="O pedido do grupo escolhido pelo IBits">
+        </div></div>
+      </div>
     </div>
+    <aside class="nota">"Aí entra o IBits. Ele cria um avaliador para cada loja, que só lê o cardápio daquela loja no iFood, e junta o melhor de até três lojas." (clique: troca a tela) "Esse é o pedido do grupo: japonês e sorvete para o Bruno, hambúrguer para o Diego, vegetariano dentro dos 25 da Carla. Cada item com o motivo. Três de três bem atendidos."</aside>
+  </section>
+
+  <!-- 7 · PASSO 3 -->
+  <section class="slide" data-titulo="3 · Ajustar" data-tempo="2:50">
+    <div class="passo">
+      <div>
+        <div class="num a">3</div>
+        <h2 class="a" style="--d:.1s">Mudou de ideia?<br><em>É só falar.</em></h2>
+        <ul class="lista">
+          <li class="a" style="--d:.25s"><i>"troca o sorvete de Bruno por açaí"</i></li>
+          <li class="a" style="--d:.4s">O IBits entende quem e o quê, e refaz só aquela parte.</li>
+          <li class="a" style="--d:.55s">Não entendeu? Ele pergunta, não chuta.</li>
+        </ul>
+        <div class="resolve a" style="--d:.8s">✓ Sem recomeçar o grupo do zero</div>
+      </div>
+      <div class="celulares">
+        <div class="cel a flutua" style="--d:.2s"><div class="tela"><img src="img/app/06-ajustar.png" alt="Conversa com o IBits trocando o sorvete do Bruno por açaí"></div></div>
+      </div>
+    </div>
+    <aside class="nota">"E se alguém muda de ideia? É só falar. A Ana escreve: troca o sorvete de Bruno por açaí. O IBits entende quem e o quê e refaz só aquela parte. Se não entender, ele pergunta."</aside>
+  </section>
+
+  <!-- 8 · PASSO 4 -->
+  <section class="slide" data-titulo="4 · Cada um paga" data-tempo="3:20">
+    <div class="passo">
+      <div>
+        <div class="num a">4</div>
+        <h2 class="a" style="--d:.1s">Cada um paga<br><em>a sua parte</em>.</h2>
+        <ul class="lista">
+          <li class="a" style="--d:.25s">Conta dividida <b>ao centavo</b>, com a taxa de cada loja só entre quem pediu dela.</li>
+          <li class="a" style="--d:.4s">Pix direto para a Ana, com QR na tela de cada amigo.</li>
+          <li class="a" style="--d:.55s">O pedido <b>só sai com 100% pago</b>, e com o ok da Ana.</li>
+        </ul>
+        <div class="resolve a" style="--d:.8s">✓ A Ana não adianta mais nada</div>
+      </div>
+      <div class="celulares">
+        <div class="cel p a" style="--d:.2s"><div class="tela"><img src="img/app/07-confira.png" alt="Revisão dos carrinhos com subtotal, taxa e total"></div></div>
+        <div class="cel a flutua" style="--d:.45s"><div class="tela"><img src="img/app/08-vaquinha-pix.png" alt="Parte da Carla com o QR do Pix"></div></div>
+      </div>
+    </div>
+    <aside class="nota">"E a conta? Cada um paga a sua parte, dividida ao centavo: a taxa de entrega de cada loja só entra para quem pediu dela. O Pix vai direto para a Ana, e o pedido só sai quando todo mundo pagou e ela deu o ok. A Ana não adianta mais nada."</aside>
+  </section>
+
+  <!-- 9 · COMO FUNCIONA -->
+  <section class="slide" data-titulo="Como funciona" data-tempo="3:55">
+    <div class="rotulo a">Como funciona</div>
+    <h2 class="a" style="--d:.1s">A IA conversa. O código calcula. <em>O MCP do iFood executa.</em></h2>
     <div class="fluxo">
-      <span>listAddresses</span><b>→</b><span>searchOffers</span><b>→</b><span>getMerchant</span><b>→</b>
-      <span>createCart</span><b>→</b><span>addItemToCart</span><b>→</b><span>setCartDelivery</span><b>→</b>
-      <span>setCartPayment</span><b>→</b><span>getCart</span><b>→</b><span class="trava">submitOrder (userConsent)</span>
+      <div class="caixa ia a" style="--d:.25s"><h3><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg> Agente IBits</h3><p>a parte que precisa de IA</p>
+        <ul><li>Entende a frase de cada um</li><li>Avalia cada loja</li><li>Entende o "Ajustar"</li></ul></div>
+      <div class="seta a" style="--d:.4s">⇄</div>
+      <div class="caixa codigo a" style="--d:.5s"><h3><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg> Ferramentas</h3><p>código, sem chute</p>
+        <ul><li>Escolhe a combinação</li><li>Divide a conta ao centavo</li><li>Gera o Pix</li></ul></div>
+      <div class="seta a" style="--d:.65s">⇄</div>
+      <div class="caixa mcp a" style="--d:.75s"><h3>MCP do <svg class="ifood no-titulo" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></h3><p>loja, preço, taxa e carrinho</p>
+        <div class="tools">
+          <span style="--i:0">searchOffers</span><span style="--i:1">getMerchant</span><span style="--i:2">getItem</span>
+          <span style="--i:3">createCart</span><span style="--i:4">addItemToCart</span><span style="--i:5">setCartDelivery</span><span style="--i:6">getCart</span>
+        </div></div>
     </div>
-    <div class="duas" style="gap:20px">
-      <div class="caixa vermelha" style="padding:12px 18px">
-        <h3 style="font-size:22px">Já verificado no MCP real</h3>
-        <p style="font-size:20px">Agente IBits aprovado no portal · conta de teste · login OAuth · <code>list_tools</code> com 23 tools.</p>
+    <div class="prova f">
+      <div class="prova-cels">
+        <div class="cel mini"><div class="tela"><img src="img/app/real-avaliacao.png" alt="Avaliação das lojas no MCP real, com as logos das lojas"></div></div>
+        <div class="cel mini"><div class="tela"><img src="img/app/real-pedido.png" alt="Pedido no MCP real: Big Mac e McFritas no mesmo McDonald's, com as fotos do iFood"></div></div>
+        <div class="cel mini"><div class="tela"><img src="img/app/real-prontos.png" alt="Carrinho pronto no iFood, no MCP real"></div></div>
       </div>
-      <div class="caixa" style="padding:12px 18px">
-        <h3 style="font-size:22px">Pedido real, com trava</h3>
-        <!-- CONFIRMAR NO PC DO THALES: a frase abaixo depende do pedido real de ponta a ponta (tarefa A1). -->
-        <p style="font-size:20px">No modo real, o carrinho vai para a conta de teste e taxa e total vêm do <code>getCart</code>.</p>
-        <p style="font-size:20px"><code>submitOrder</code> só com o ok na tela e <code>IFOOD_MCP_PERMITIR_ENVIO=true</code>. No real, nunca Pix nem cartão online: só pagamento sem cobrança no app (ex.: dinheiro na entrega).</p>
-      </div>
-    </div>
-    <div class="fonte">A disputa na tela é a forma visual de mostrar essa avaliação: é simulada por nós a partir do cardápio que o MCP devolve; as lojas não rodam nada.
-      Sequência: <a href="https://mcp-developer.ifood.com.br/llms-full.txt">doc oficial do MCP (llms-full.txt)</a> · código: <code>backend/app/match/busca.py</code>, <code>checkout.py</code> · diagnóstico real: 17/10/2026.</div>
-    <aside class="notes">"Cada loja é avaliada por um agente que só enxerga o cardápio dela. É isso que a disputa mostra. Tudo passa pelo MCP do iFood, do restaurante ao fechamento do carrinho."</aside>
+      <div class="prova-txt"><b><svg class="ic verde" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l3 3 5-6"/></svg> No iFood de verdade.</b> MCP real, conta de teste: lojas, logos, fotos, preços e carrinho vêm do iFood.<br>
+        <span class="suave">"Um hambúrguer e uma batata frita" → Big Mac + McFritas na mesma loja, 1 entrega.</span><br>
+        E a conta fecha com o iFood ao centavo (Burger King):<br><span class="conta">39,99 + entrega 9,99 + serviço 1,00 = R$&nbsp;50,98</span></div></div>
+    <aside class="nota">"Por baixo: a IA faz o que precisa de IA, entender as frases e avaliar as lojas. A conta é código, sem chute. E tudo que é loja, preço, taxa e carrinho vem do MCP do iFood: nenhum número é inventado pela IA." (clique: aparecem as telas reais) "E isso roda no iFood de verdade: lojas, logos, fotos e preços vêm do MCP real. Pedi um hambúrguer e uma batata frita, e o IBits juntou Big Mac e McFritas no mesmo McDonald's, uma entrega só. E a conta bate com o iFood ao centavo, inclusive a taxa de serviço."</aside>
   </section>
 
-  <!-- 7. Agente confiável (3:35–3:55) -->
-  <section>
-    <h2>Um agente em quem dá para confiar</h2>
-    <div class="tres">
-      <div class="caixa">
-        <h3 class="marca">Explica o porquê</h3>
-        <p>Cada item vem com o motivo ("combina com o pedido: japonês"). O rastro mostra cada tool chamada no MCP.</p>
-        <p class="pequeno">Afinidade = quanto os pratos combinam com o que cada um pediu, segundo a IA. Não é satisfação medida.</p>
-      </div>
-      <div class="caixa">
-        <h3 class="marca">Respeita limites</h3>
-        <p>Orçamento de cada um. Restrição só é afirmada se o cardápio tem a etiqueta. Passou de 3 lojas? Avisa o que ficou de fora.</p>
-      </div>
-      <div class="caixa">
-        <h3 class="marca">Pede o seu ok</h3>
-        <p>Nada sai sem confirmação. Na vaquinha, só com 100% pago. <code>getCart</code> de novo antes de enviar: se o total mudou, para e pergunta.</p>
-      </div>
+  <!-- 10 · IMPACTO -->
+  <section class="slide" data-titulo="Impacto" data-tempo="4:30">
+    <div class="rotulo a">Quem ganha</div>
+    <h2 class="a" style="--d:.1s">Um pedido da turma, <em>dentro do iFood</em>.</h2>
+    <div class="ganhos">
+      <div class="ganho a" style="--d:.25s"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></div><h3>A turma</h3><p>Uma frase por pessoa. Ninguém cede, ninguém adianta dinheiro.</p></div>
+      <div class="ganho a" style="--d:.4s"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4.5 9v11h15V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M10 20v-5h4v5"/></svg></div><h3>As lojas</h3><p>Até 3 lojas no mesmo pedido: a sorveteria entra junto com o japonês.</p></div>
+      <div class="ganho a" style="--d:.55s"><div class="ico"><svg class="ifood no-ico" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></div><h3>O iFood</h3><p>O grupo que hoje se organiza no WhatsApp passa a decidir no app.</p></div>
     </div>
-    <div class="caixa suave" style="margin-top:22px"><p><strong>A IA nunca escreve preço.</strong> Preço, taxa e prazo vêm das tools do MCP; fala com número que não veio de lá é trocada por texto conferido.</p></div>
-    <div class="fonte">Regras e testes: <code>docs/tecnico.md</code>; <code>backend/tests/test_leilao.py</code>, <code>test_checkout.py</code>, <code>test_acerto_pix.py</code>.</div>
-    <aside class="notes">"Ele explica o porquê, respeita o orçamento e a restrição de cada um, e não faz nada sem o seu ok." (20 s)</aside>
+    <div class="prox">
+      <div class="f"><b>Próximo passo:</b> piloto com repúblicas e turmas de São Carlos, com meta combinada com o iFood.</div>
+      <div class="f"><b>Para o MCP:</b> documentamos o que travou no caminho, como o erro ADR-2001 ao salvar endereço.</div>
+    </div>
+    <aside class="nota">"Quem ganha? A turma: uma frase por pessoa, ninguém cede, ninguém adianta dinheiro. As lojas: até três no mesmo pedido, a sorveteria entra junto com o japonês. E o iFood: o grupo que hoje se organiza no WhatsApp decide dentro do app." (clique, clique) "Próximo passo: um piloto com repúblicas aqui de São Carlos. E deixamos para o iFood o feedback do que travou no MCP."</aside>
   </section>
 
-  <!-- 8. Impacto (3:55–4:20) -->
-  <section>
-    <h2>Pedido em grupo já existe. <span class="marca">Montado por agente, não.</span></h2>
-    <table>
-      <tr><th></th><th>Rappi (Brasil)</th><th>Uber Eats</th><th>DoorDash</th><th>Ailo (iFood)</th><th class="nosso">Match</th></tr>
-      <tr><td>Pedido em grupo por link</td><td class="sim">sim</td><td class="sim">sim</td><td class="sim">sim</td><td class="nao">não citado</td><td class="nosso">sim, convidado sem login</td></tr>
-      <tr><td>Mais de 1 loja</td><td class="nao">não encontrado</td><td>2 lojas próximas</td><td>DoubleDash</td><td class="nao">não citado</td><td class="nosso">até 3 (avisa as taxas)</td></tr>
-      <tr><td>Quem escolhe os itens</td><td>cada um, à mão</td><td>cada um, à mão</td><td>cada um, à mão</td><td>IA, para 1 pessoa</td><td class="nosso">agente, para o grupo</td></tr>
-      <tr><td>Só sai com 100% pago</td><td class="nao">não encontrado</td><td class="nao">não encontrado</td><td class="nao">não encontrado</td><td class="nao">—</td><td class="nosso">sim</td></tr>
-    </table>
-    <div class="duas" style="margin-top:16px">
-      <p style="font-size:22px">O Ailo já fecha <strong>um</strong> pedido em ~30 segundos. Falta o pedido <strong>da turma</strong>.</p>
-      <p style="font-size:20px">Escala do iFood: <strong>180 mi+</strong> pedidos/mês, <strong>65 mi</strong> de clientes, <strong>500 mil+</strong> lojas. Quantos são de grupo? Não há dado público; não estimamos.
-        <span class="selo cinza">HIPÓTESE</span> mais pedidos de grupo e mais lojas por ocasião.</p>
-    </div>
-    <div class="fonte">
-      Rappi: <a href="https://www.supervarejo.com.br/varejo/rappi-lanca-recurso-que-permite-fazer-pedidos-em-grupo">Supervarejo, 11/2023</a> ·
-      Uber Eats: <a href="https://techcrunch.com/2022/03/09/uber-eats-now-lets-you-split-the-bill">TechCrunch 03/2022</a>, <a href="https://techcrunch.com/2023/10/11/uber-eats-now-lets-you-order-from-two-nearby-stores-at-the-same-time">10/2023</a> ·
-      DoorDash: <a href="https://help.doordash.com/en-us/business/article/guide-to-group-orders">grupo</a>, <a href="https://about.doordash.com/en-us/news/introducing-doubledash-a-new-way-to-shop-multiple-stores-in-one-order">DoubleDash</a> ·
-      Ailo: <a href="https://institucional.ifood.com.br/inovacao/ailo-assistente-de-ia-pedidos/">iFood, 10/10/2025</a> ·
-      30 s: <a href="https://canaltech.com.br/apps/nova-ia-do-i-food-deixa-voce-fazer-pedidos-no-whats-app-com-apenas-um-clique">Canaltech, 16/07/2026</a> ·
-      Escala: <a href="https://institucional.ifood.com.br/portal-de-dados-ifood/">Portal de Dados iFood</a> ·
-      "não encontrado" = busca da equipe em 17/10/2026.</div>
-    <aside class="notes">"A Rappi já tem pedido em grupo, mas cada um escolhe à mão. O Ailo já fecha um pedido em 30 segundos. Falta o pedido da turma." (25 s)</aside>
+  <!-- 11 · FECHAMENTO -->
+  <section class="slide capa" data-titulo="Fechamento" data-tempo="4:50" data-som="vinheta">
+    <div class="persona a"><div class="avatar letra" style="background:#fff;color:var(--marca)">A</div>
+      <p style="font-size:32px">A Ana voltou a ser só<br><b>mais uma amiga com fome.</b></p></div>
+    <div class="logo a parceria" style="--d:.3s; margin-top: 30px"><img src="img/match-branca.png" alt="Match"><span class="x">×</span><svg class="ifood no-fechamento" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></div>
+    <h2 class="a" style="--d:.5s; margin-top: 24px; font-size: 52px;">Cada um fala o que quer.<br><em>O IBits monta, divide e pede pelo iFood.</em></h2>
+    <p class="equipe a" style="--d:.7s">Obrigado! · Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
+    <div class="comidas" aria-hidden="true"><span><img src="img/pratos/pizzas.jpg" alt=""></span><span><img src="img/pratos/milkshake.jpg" alt=""></span><span><img src="img/pratos/lanche.jpg" alt=""></span><span><img src="img/pratos/hamburguer.jpg" alt=""></span></div>
+    <aside class="nota">(ao entrar neste slide toca a vinheta "iFood!": espere ela terminar antes de falar) "E a Ana voltou a ser só mais uma amiga com fome. Match: cada um fala o que quer, o IBits monta, divide e pede pelo iFood. Obrigado!"</aside>
   </section>
 
-  <!-- 9. Próximos passos (4:20–4:40) -->
-  <section>
-    <h2>Próximos passos</h2>
-    <div class="duas">
-      <div class="caixa vermelha">
-        <h3>Piloto em São Carlos <span class="selo cinza">PROPOSTA</span></h3>
-        <ul>
-          <li>4 semanas, repúblicas e turmas</li>
-          <li>Grupo A com "Dê um Match" na home; grupo B como hoje</li>
-          <li>Meta combinada com o iFood antes (não chutamos número)</li>
-        </ul>
-      </div>
-      <div class="caixa">
-        <h3>O que pedimos ao MCP</h3>
-        <ul>
-          <li>Documentar o <code>userLocation</code> (sem ele a busca volta vazia)</li>
-          <li>Doc com 24 tools; servidor com 23</li>
-          <li>Publicar o formato de resposta (<code>listAddresses</code> veio diferente)</li>
-        </ul>
-        <p class="pequeno">Ideias para o MCP: pagamento dividido e várias lojas numa entrega.</p>
-      </div>
-    </div>
-    <div class="fonte">Piloto: <code>docs/proposta-negocio.md</code> §5 · Feedback completo do MCP (entregável 6): <code>docs/feedback-mcp.md</code>, testes da equipe em 17/10/2026.</div>
-    <aside class="notes">"Queremos testar em São Carlos com o iFood. E deixamos para o time do MCP três ajustes que achamos usando de verdade." (20 s)</aside>
-  </section>
+  <div id="progresso"></div>
+</div>
 
-  <!-- 10. Fechamento + equipe (4:40–5:00) -->
-  <section>
-    <p class="grande" style="margin-top:30px">Cada um fala o que quer, o <span class="marca">IBits</span> monta,<br>divide a conta e pede pelo iFood.</p>
-    <div class="equipe">
-      <div class="caixa"><div class="nome">Thales</div><div class="papel">pitch, front, testes</div></div>
-      <div class="caixa"><div class="nome">Milan</div><div class="papel">IA, back, design</div></div>
-      <div class="caixa"><div class="nome">Zenon</div><div class="papel">front, entregáveis, pitch</div></div>
-      <div class="caixa"><div class="nome">Antonio</div><div class="papel">testes</div></div>
-    </div>
-    <p style="font-size:28px;margin-top:34px"><strong class="marca">Match:</strong> ninguém mais vira gerente do pedido. <strong>Obrigado!</strong></p>
-    <div class="fonte">Código, doc técnico e os 6 entregáveis no repositório da equipe. Dados da demo simulados (selo DEMONSTRAÇÃO).</div>
-  </section>
+<!-- vinheta do iFood: toca ao AVANÇAR para um slide com data-som="vinheta" (hoje: o Fechamento) -->
+<audio id="vinheta" src="audio/vinheta-ifood.mp3" preload="auto"></audio>
 
-</div></div>
-<script src="node_modules/reveal.js/dist/reveal.js"></script>
+<div id="cantos">
+  <button id="bt-tema" type="button" title="Tema claro/escuro (T)">◐ Tema</button>
+  <button id="bt-notas" type="button" title="Janela do apresentador (S)">Notas</button>
+  <button id="bt-tela" type="button" title="Tela cheia (F)">⛶</button>
+</div>
+
+<div id="notas">
+  <div><div class="tit" id="n-tit"></div><div class="fala" id="n-fala"></div></div>
+  <div><div class="relogio" id="n-relogio">0:00</div><div class="alvo" id="n-alvo"></div><div class="prox-tit" id="n-prox"></div>
+    <p class="alvo" style="margin-top:30px">← → navegar · T tema · F tela cheia<br>Cronômetro começa no 1º avanço.</p></div>
+</div>
+
 <script>
-  // PDF (`npm run pdf`): o exportador espera `window.Reveal.isReady()`, mas o layout de impressão do Reveal termina
-  // depois (evento `pdf-ready`). Sem isto o PDF às vezes sai com 1 página em branco. Então, no modo ?print-pdf,
-  // o objeto só volta a ser global quando o layout de impressão acabou.
-  const R = window.Reveal;
-  const impressao = /print-pdf/.test(location.search);
-  if (impressao) {
-    delete window.Reveal;
-    R.on("pdf-ready", () => setTimeout(() => { window.Reveal = R; }, 300));
+(() => {
+  const params = new URLSearchParams(location.search);
+  const raiz = document.documentElement;
+  const palco = document.getElementById('palco');
+  const slides = [...document.querySelectorAll('.slide')];
+  const canal = 'BroadcastChannel' in window ? new BroadcastChannel('match-pitch') : null;
+  const apresentador = params.has('notas');
+  const impressao = params.has('print');
+
+  // tema: o do sistema, a não ser que já tenham escolhido
+  const salvo = (() => { try { return localStorage.getItem('match-tema'); } catch { return null; } })();
+  const temaInicial = params.get('tema') || salvo || (matchMedia('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro');
+  const aplicarTema = (t) => { raiz.dataset.tema = t; try { localStorage.setItem('match-tema', t); } catch {} };
+  aplicarTema(temaInicial);
+  const trocarTema = () => { aplicarTema(raiz.dataset.tema === 'escuro' ? 'claro' : 'escuro'); canal?.postMessage({ tema: raiz.dataset.tema }); };
+
+  if (impressao) { document.body.classList.add('impressao'); slides.forEach((s) => s.classList.add('ativo')); return; }
+
+  // escala do palco
+  const ajustar = () => { const k = Math.min(innerWidth / 1600, innerHeight / 900); palco.style.transform = `translate(-50%,-50%) scale(${k})`; };
+  addEventListener('resize', ajustar); ajustar();
+
+  let atual = 0, passo = 0, inicio = null;
+  const passos = (s) => [...s.querySelectorAll('.f')];
+
+  const vinheta = document.getElementById('vinheta');
+  vinheta.volume = 0.8;
+  function mostrar(i, p, enviar = true) {
+    const antes = atual;
+    atual = Math.max(0, Math.min(slides.length - 1, i));
+    // som só na tela principal (a do apresentador fica muda) e só avançando para o slide (voltar não toca)
+    if (!apresentador && atual > antes && slides[atual].dataset.som === 'vinheta') {
+      vinheta.currentTime = 0;
+      vinheta.play().catch(() => {});
+    }
+    const fs = passos(slides[atual]);
+    passo = p === 'fim' ? fs.length : Math.max(0, Math.min(fs.length, p));
+    slides.forEach((s, k) => { s.classList.toggle('ativo', k === atual); s.classList.toggle('antes', k < atual); });
+    fs.forEach((f, k) => f.classList.toggle('on', k < passo));
+    document.getElementById('progresso').style.width = `${((atual + 1) / slides.length) * 100}%`;
+    document.getElementById('marca-canto').classList.toggle('oculto', slides[atual].classList.contains('capa'));
+    history.replaceState(null, '', `${location.pathname}${location.search}#${atual + 1}`);
+    if (enviar) canal?.postMessage({ atual, passo, inicio });
+    atualizarNotas();
   }
-  window.addEventListener("load", () => {
-    R.initialize({ hash: true, width: 1280, height: 720, margin: 0, center: false, pdfSeparateFragments: false });
+  function avancar() {
+    if (inicio === null) inicio = Date.now();
+    passo < passos(slides[atual]).length ? mostrar(atual, passo + 1) : mostrar(atual + 1, 0);
+  }
+  function voltar() { passo > 0 ? mostrar(atual, passo - 1) : mostrar(atual - 1, 'fim'); }
+
+  // janela do apresentador (?notas): fala do slide, próximo slide e cronômetro (5:00)
+  function atualizarNotas() {
+    if (!apresentador) return;
+    const s = slides[atual], prox = slides[atual + 1];
+    document.getElementById('n-tit').textContent = `${atual + 1}/${slides.length} · ${s.dataset.titulo} · terminar até ${s.dataset.tempo}`;
+    document.getElementById('n-fala').textContent = s.querySelector('.nota')?.textContent.trim() || '';
+    document.getElementById('n-prox').textContent = prox ? `Próximo: ${prox.dataset.titulo}` : 'Último slide';
+    document.getElementById('n-alvo').textContent = `meta: ${s.dataset.tempo} · limite 5:00`;
+  }
+  if (apresentador) {
+    document.body.classList.add('apresentador');
+    setInterval(() => {
+      const el = document.getElementById('n-relogio');
+      if (inicio === null) { el.textContent = '0:00'; return; }
+      const seg = Math.floor((Date.now() - inicio) / 1000);
+      el.textContent = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
+      el.style.color = seg >= 300 ? '#ff5b5b' : seg >= 270 ? '#ffb020' : '#7dff9e';
+    }, 250);
+  }
+  canal && (canal.onmessage = (e) => {
+    if (e.data.tema) aplicarTema(e.data.tema);
+    if ('atual' in e.data) { inicio = e.data.inicio; mostrar(e.data.atual, e.data.passo, false); }
   });
+
+  addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (['arrowright', 'pagedown', ' ', 'enter'].includes(k)) { e.preventDefault(); avancar(); }
+    else if (['arrowleft', 'pageup', 'backspace'].includes(k)) { e.preventDefault(); voltar(); }
+    else if (k === 'home') mostrar(0, 0);
+    else if (k === 'end') mostrar(slides.length - 1, 'fim');
+    else if (k === 't') trocarTema();
+    else if (k === 'f') document.fullscreenElement ? document.exitFullscreen() : raiz.requestFullscreen?.();
+    else if (k === 's') window.open(`${location.pathname}?notas#${atual + 1}`, 'match-notas', 'width=1100,height=700');
+    else if (k === 'r') { inicio = null; mostrar(atual, passo); }
+  });
+  palco.addEventListener('click', (e) => (e.clientX > innerWidth / 3 ? avancar() : voltar()));
+  document.getElementById('bt-tema').onclick = (e) => { e.stopPropagation(); trocarTema(); };
+  document.getElementById('bt-notas').onclick = () => window.open(`${location.pathname}?notas#${atual + 1}`, 'match-notas', 'width=1100,height=700');
+  document.getElementById('bt-tela').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : raiz.requestFullscreen?.());
+
+  mostrar((parseInt(location.hash.slice(1), 10) || 1) - 1, 0, false);
+})();
 </script>
 </body>
 </html>

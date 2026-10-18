@@ -12,6 +12,9 @@ export interface Candidato {
   nota: number;
   motivo: string;
   viola: string[];
+  /** Foto do prato e logo da loja vindas do MCP real (M9); no modo demonstração vêm vazias. */
+  imagem_url?: string | null;
+  loja_logo_url?: string | null;
 }
 
 export interface Combinacao {
@@ -127,6 +130,8 @@ export interface Carrinho {
   itens: unknown[];
   subtotal: number;
   taxa: number;
+  /** Taxa de serviço do iFood (bug 29), já incluída no total; dividida nas partes junto com a entrega. */
+  servico?: number;
   desconto: number;
   total: number;
   eta_min: number | null;
@@ -180,6 +185,8 @@ export interface EstadoSala {
   estado: EstadoSalaNome;
   demonstracao: boolean;
   conta_teste?: boolean;
+  /** O organizador cadastrou chave Pix ao criar a sala (o GET nunca devolve a chave inteira). */
+  tem_chave_pix?: boolean;
   participantes: Participante[];
   resultado?: ResultadoMatch;
   carrinhos?: Carrinho[];
@@ -190,6 +197,8 @@ export interface EstadoSala {
   pedidos?: Record<string, unknown>[];
   /** C14 (opcional): ajustes já feitos com o IBits, do mais antigo ao mais novo. */
   ajustes?: AjusteSala[];
+  /** Bug 21 (opcional): avisos gravados ao montar os carrinhos (ex.: loja que o iFood recusou e saiu do pedido). */
+  avisos?: string[];
   rastro: ChamadaRastro[];
 }
 

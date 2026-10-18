@@ -1,0 +1,176 @@
+{
+  "tool": "getMerchant",
+  "chamadas": [
+    {
+      "rotulo": "getMerchant",
+      "args": {
+        "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "address": "***",
+        "agentHints": {
+          "nextStepForItemsNavigation": "Follow `catalogSummary.navigationHint` to browse or search items in this merchant's catalog.",
+          "nextStepWhenUserPicksItem": "***"
+        },
+        "appDeeplink": "ifood://catalog-hub/54615ed7-5697-413b-a508-9156e3f5ec70/RESTAURANT",
+        "catalogSummary": {
+          "navigationHint": "Call `browseOffers` with `resultKind=ITEM`, the matching `merchantType`, and `refinements.merchantId=54615ed7-5697-413b-a508-9156e3f5ec70` to browse items. Use `searchOffers` with `refinements.merchantId=54615ed7-5697-413b-a508-9156e3f5ec70` for keyword search within this merchant.",
+          "totalItems": 138
+        },
+        "deliveryMethods": [
+          {
+            "deliveryMethodId": "DEFAULT",
+            "deliveryMethodMode": "DELIVERY",
+            "estimatedMinutes": {
+              "max": 50,
+              "min": 40
+            },
+            "fee": 7.5,
+            "promotionalFee": 7.5
+          }
+        ],
+        "featuredItems": [
+          {
+            "itemId": "9e51164c-fd47-4faf-8e1b-92d480301ce5",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202106281552_5DPS_i.jpg",
+            "itemName": "Carne",
+            "menuSection": "Esfihas Salgadas Abertas",
+            "promotionalUnitPrice": 6,
+            "unitPrice": 6
+          },
+          {
+            "itemId": "5c57c447-c13a-4b9d-b34e-d4b1527e18b4",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202201061115_6FD2_i.jpg",
+            "itemName": "Três Queijos",
+            "menuSection": "Esfihas Salgadas Abertas",
+            "promotionalUnitPrice": 8.99,
+            "unitPrice": 8.99
+          },
+          {
+            "itemId": "ccb09026-48d4-4b2e-9c8b-ba654174a410",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202108231025_II30_i.jpg",
+            "itemName": "Frango com Catupiry",
+            "menuSection": "Esfihas Salgadas Abertas",
+            "promotionalUnitPrice": 8.99,
+            "unitPrice": 8.99
+          },
+          {
+            "itemId": "4310183d-85cb-407e-94dd-ef9b299dadaf",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202410301820_IK15_i.jpg",
+            "itemName": "Esf. Banana Nevada",
+            "menuSection": "Esfihas Doces",
+            "promotionalUnitPrice": 12.99,
+            "unitPrice": 12.99
+          },
+          {
+            "itemId": "9be4a3b9-9272-42f3-9429-86363a54c60c",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202201061054_31B6_i.jpg",
+            "itemName": "Carne com queijo",
+            "menuSection": "Esfihas Salgadas Abertas",
+            "promotionalUnitPrice": 8.99,
+            "unitPrice": 8.99
+          }
+        ],
+        "isOpen": true,
+        "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+        "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/54615ed7-5697-413b-a508-9156e3f5ec70/202512211429_vLkx_3.jpg",
+        "merchantName": "Ponto da Esfiha São Carlos",
+        "merchantType": "RESTAURANT",
+        "minimumOrderAmount": 20,
+        "operatingHours": {
+          "today": [
+            {
+              "closeLocal": "04:00",
+              "openLocal": "00:00"
+            },
+            {
+              "closeLocal": "23:59",
+              "openLocal": "07:00"
+            }
+          ],
+          "weekly": {
+            "fri": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "mon": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "sat": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "sun": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "thu": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "tue": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ],
+            "wed": [
+              {
+                "closeLocal": "04:00",
+                "openLocal": "00:00"
+              },
+              {
+                "closeLocal": "23:59",
+                "openLocal": "07:00"
+              }
+            ]
+          }
+        },
+        "ratingCount": 385,
+        "reviewRating": 4.7,
+        "straightLineDistanceKm": 1.62
+      },
+      "ms": 1666
+    }
+  ]
+}

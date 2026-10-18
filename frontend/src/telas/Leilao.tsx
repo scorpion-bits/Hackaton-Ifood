@@ -14,7 +14,7 @@ const MAX_FALAS = 6; // orçamento de palco: o leilão todo cabe em ~8 s
 const MS_FALA = 820; // intervalo entre falas
 const MS_FECHAMENTO = 1400;
 const MS_DIGITANDO = 520;
-const MS_AUTO_CONVIDADO = 4000; // convidado segue sozinho; organizador toca em "Ver as opções" (narra o fechamento)
+const MS_AUTO_CONVIDADO = 4000; // convidado segue sozinho; organizador toca em "Ver o pedido" (narra o fechamento)
 // Versão curta (C14, depois de "Ajustar com o IBits"): ~4 s, abertura + 2 lances/passes + fechamento, segue sozinha.
 const COMPACTO = { maxFalas: 4, lances: 2, msFala: 560, msFechamento: 900, msDigitando: 300, msAuto: 1200 };
 
@@ -62,7 +62,7 @@ function EtiquetaPatrocinado({ demo }: { demo: boolean }) {
 
 /**
  * Disputa entre as lojas (C13, leilão): só TOCA o roteiro de `leilao.falas`. Nada aqui calcula preço ou escolhe loja.
- * `onFim` é chamado ao tocar em Pular ou em "Ver as opções". No aparelho do organizador a tela NUNCA avança sozinha
+ * `onFim` é chamado ao tocar em Pular ou em "Ver o pedido". No aparelho do organizador a tela NUNCA avança sozinha
  * (ele narra o Patrocinado e o fechamento); no do convidado avança ~4 s depois do fechamento.
  */
 export default function Leilao({
@@ -76,7 +76,7 @@ export default function Leilao({
   rastro: ChamadaRastro[];
   organizador: boolean;
   onFim: () => void;
-  /** C14: disputa curta (~4 s) depois de um ajuste; segue sozinha para o deck e tem "Pular". */
+  /** C14: disputa curta (~4 s) depois de um ajuste; segue sozinha para o pedido e tem "Pular". */
   compacto?: boolean;
 }) {
   // O polling troca o objeto a cada 2 s: o roteiro usa só o que existia ao montar.
@@ -167,7 +167,7 @@ export default function Leilao({
       ? [
           nMcp > 0 ? `MCP · ${nMcp} ${nMcp === 1 ? "chamada" : "chamadas"}` : null,
           nIa > 0 ? `${nIa} ${nIa === 1 ? "agente com IA" : "agentes com IA"}` : null,
-          typeof med?.ms_total === "number" && med.ms_total >= 100 ? `disputa em ${segundos(med.ms_total)} s` : null,
+          typeof med?.ms_total === "number" && med.ms_total >= 100 ? `avaliação em ${segundos(med.ms_total)} s` : null,
         ]
           .filter(Boolean)
           .join(" · ")
@@ -189,10 +189,10 @@ export default function Leilao({
   }
 
   return (
-    <section className="tela ld-raiz ld-sala" aria-label="A disputa pelo pedido">
+    <section className="tela ld-raiz ld-sala" aria-label="Como o IBits avaliou cada loja">
       <div className="ld-top">
         <span className="ld-step">
-          {compacto ? "Refazendo o pedido" : "Disputa das lojas"}
+          {compacto ? "Refazendo o pedido" : "Avaliação das lojas"}
         </span>
         {R.length > 0 && (
           <span className="ld-mcp" title="Chamadas ao MCP do iFood neste match">
@@ -207,11 +207,11 @@ export default function Leilao({
       </div>
 
       <div>
-        <h1 className="ld-titulo">{compacto ? "As lojas disputam de novo" : "A disputa pelo seu pedido"}</h1>
+        <h1 className="ld-titulo">{compacto ? "O IBits avalia de novo" : "Como o IBits avaliou cada loja"}</h1>
         <p className="ld-subtitulo">
           {compacto
-            ? "Com o seu ajuste, os agentes das lojas refizeram a disputa."
-            : "Como os agentes das lojas disputaram, com dados do iFood."}
+            ? "Com o seu ajuste, o IBits avaliou cada loja de novo, com dados do iFood."
+            : "Um avaliador por loja, que só lê o cardápio dela. Preços e prazos vêm do iFood."}
         </p>
       </div>
 
@@ -243,7 +243,7 @@ export default function Leilao({
       {!compacto && fechou && L.lojas.some((l) => l.afinidade > 0) && (
         <p className="ld-patro-nota">
           % = afinidade da loja: quanto os pratos dela combinam com quem ela atende. A afinidade do pedido inteiro
-          aparece no Match.
+          aparece no pedido.
         </p>
       )}
 
@@ -312,7 +312,7 @@ export default function Leilao({
 
       {terminou && (
         <button type="button" className="primario ld-seguir" onClick={onFim} autoFocus>
-          {compacto ? "Ver o pedido atualizado" : "Ver as opções"}
+          {compacto ? "Ver o pedido atualizado" : "Ver o pedido"}
         </button>
       )}
 

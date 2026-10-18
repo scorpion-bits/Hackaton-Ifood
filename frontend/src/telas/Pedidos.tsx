@@ -165,7 +165,7 @@ export default function Pedidos({ salaId, sala }: { salaId: string; sala: Estado
                 <Avatar nome={p.lojaNome} tam="md" loja />
                 <div>
                   <h2>{p.lojaNome}</h2>
-                  <small className="lbl">Não saiu</small>
+                  <small className="lbl falha">Não saiu</small>
                 </div>
               </header>
               <p>{p.erro || p.descricao || "O iFood recusou este pedido."}</p>

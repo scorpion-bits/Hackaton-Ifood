@@ -20,9 +20,9 @@ Regras:
 | Sala + QR | 0:00–0:12 | — |
 | Convidados respondem | 0:12–0:35 | Thales lê as frases enquanto eles digitam |
 | Rodar Match + disputa | 0:35–0:48 (disputa ≤ 10 s) | **Pular** assim que a rodada fechar |
-| Opções (deck) | 0:48–0:58 | Não ler a lista; só loja + "3 de 3" |
+| O pedido do grupo | 0:48–0:58 | Não ler a lista; só lojas + "3 de 3" |
 | **Ajustar com o IBits** (momento uau) | 0:58–1:20 | Nunca cortar. Disputa curta: **Pular** |
-| Dar match + vaquinha | 1:20–1:42 | Thales marca "Recebi" sem esperar ninguém |
+| Confirmar pedido + vaquinha | 1:20–1:42 | Thales marca "Recebi" sem esperar ninguém |
 | Confira antes do ok + deslize + rastro | 1:42–2:00 | Pular o rastro |
 
 ## Falas e cliques
@@ -33,12 +33,12 @@ Regras:
 | 0:12–0:35 | Milan, Zenon, Antonio | Leem o QR, digitam nome e a frase, tocam **Enviar meu pedido** | Milan (em voz alta): "Japonês e um sorvete, até 45." · Zenon: "Hambúrguer e sorvete, até 50." · Antonio: "Algo barato e vegetariano, até 25." · Thales: "Cada um falou do seu jeito." |
 | 0:35–0:38 | Thales | **Rodar Match** | "Agora o IBits monta o pedido." |
 | 0:38–0:48 | Thales | A disputa toca sozinha. **Pular** se passar de 10 s | "Para cada loja, o IBits olha só o cardápio dela, que vem do iFood. A tela mostra isso como uma disputa. Preço e prazo vêm do iFood, não da IA." |
-| 0:48–0:58 | Thales | **Ver as opções** → 1º cartão | "Kaigan, Gelato e Brasa. Três de três bem atendidos, e cada item diz o porquê." |
+| 0:48–0:58 | Thales | **Ver o pedido** → "O pedido do grupo" (um cartão só: a melhor combinação) | "Kaigan, Gelato e Brasa. Três de três bem atendidos, e cada item diz o porquê." |
 | 0:58–1:10 | Thales | Desce até **Ajustar com o IBits**, digita *troca o sorvete do Milan e do Zenon por açaí* e envia | **Momento uau:** "E se mudar de ideia? É só falar com o agente." |
-| 1:10–1:20 | Thales | Bolha "Entendi: …" → disputa curta (**Pular**) → cartão com "Atualizado" e "Novo" | "Ele entendeu quem e o quê, refez só o que mudou, e o açaí entrou. Conversa com o agente; a conta, com o código." |
-| 1:20–1:25 | Thales | **Dar match** → "É um Match!" → **Cada um paga a sua parte (vaquinha)** | "Agora, a conta. Cada um paga a sua parte; a taxa de cada loja só entre quem pediu dela." |
+| 1:10–1:20 | Thales | Bolha "Entendi: …" → disputa curta (**Pular**) → **Ver o pedido atualizado** → cartão com o destaque "Atualizado" | "Ele entendeu quem e o quê, refez só o que mudou, e o açaí entrou. Conversa com o agente; a conta, com o código." |
+| 1:20–1:25 | Thales | **Confirmar pedido** → "Como pagar?" → **Cada um paga a sua parte (vaquinha)** | "Agora, a conta. Cada um paga a sua parte; a taxa de cada loja só entre quem pediu dela." |
 | 1:25–1:42 | Milan, Zenon, Antonio, Thales | Milan: **Pix** (QR aparece). Zenon e Antonio: **dinheiro**. Thales toca **Recebi** nos três | "O Pix vai para a minha chave, sem intermediário. O pedido só sai com 100% pago." |
-| 1:42–1:55 | Thales | "Confira antes do ok" → **Deslize para enviar** | "Três lojas, três carrinhos no iFood, com a taxa de cada um. Nada sai sem o meu ok." |
+| 1:42–1:55 | Thales | "Confira antes do ok" → **Deslize para enviar** → **Ver como ficaria** → cartão verde **"✅ Carrinhos prontos no iFood"** | "Três lojas, três carrinhos prontos no iFood, com a taxa de cada um. Na conta de teste paramos aqui; com uma conta real, o pedido sai neste deslize." |
 | 1:55–2:00 | Thales | Abre **Como a IA chegou aqui** (rastro) por 3 s e volta ao slide | "Cada linha é uma tool do MCP do iFood. Do restaurante ao fechamento do carrinho." |
 
 Por que a frase do ajuste tem duas pessoas: com *"troca o sorvete do Milan por açaí"* (só o Milan), o modo demonstração
@@ -53,7 +53,7 @@ ficar em até 3 lojas". É honesto, mas gasta tempo explicando. Com as duas pess
 | Selo "iFood real · conta de teste" | "Isso é o MCP do iFood de verdade, numa conta de teste. Lojas, preço e taxa vêm do iFood." | "o pedido foi entregue", "pagamos" |
 | Envio no real | "O envio fica travado de propósito: só com o meu ok e com a trava liberada. E nunca pagamos Pix de teste." | — |
 
-> ⚠️ confirmar no PC do Thales (tarefa A1): no modo real, o Match chega ao carrinho da conta de teste com taxa e total do `getCart`.
+> ✅ 18/10 06h50 (P11, navegador em modo real): o Match chega aos carrinhos da conta de teste com taxa e total do `getCart`, e o fim é o cartão verde "Carrinhos prontos no iFood" (decisão T8: sem envio real). A conta precisa de **endereço salvo em cidade atendida pela conta de teste** (São Carlos dá ADR-2001; Avenida Paulista, 1000, São Paulo salvou) — sem ele o app usa o endereço mockado.
 > Se não chegar até 10h30, a demo é no modo demonstração e a fala do rastro é a da 1ª linha da tabela.
 
 > ⚠️ confirmar no PC do Thales: com chave de IA no `.env`, quem entende a frase do ajuste é o LLM; sem chave, é o
@@ -74,7 +74,7 @@ Conferido em 18/10/2026 ~03h, rodando o app em modo demonstração (`IFOOD_MCP_M
 7. IBits: "Rodada fechada. Melhor opção: Kaigan Sushi (demo) + Gelato Bom Clima (demo) + Brasa Burger (demo), com 82%
    de afinidade e 3 de 3 bem atendidos. São 3 pedidos, e as taxas aparecem no carrinho antes do seu ok."
 
-**1º cartão antes do ajuste** (82% de afinidade, 3 de 3 bem atendidos, R$ 103,50 só itens):
+**"O pedido do grupo" antes do ajuste** (82% de afinidade, 3 de 3 bem atendidos, R$ 103,50 só itens):
 
 | Pessoa | Item | Loja | Preço |
 |---|---|---|---|
@@ -85,7 +85,7 @@ Conferido em 18/10/2026 ~03h, rodando o app em modo demonstração (`IFOOD_MCP_M
 | Antonio | Sunomono | Kaigan Sushi (demo) | R$ 12,90 |
 
 **Ajuste** *"troca o sorvete do Milan e do Zenon por açaí"* → IBits entende "Milan: açaí no lugar do sorvete" e
-"Zenon: açaí no lugar do sorvete" → **1º cartão depois** (marcado "Atualizado"; os açaís com "Novo"):
+"Zenon: açaí no lugar do sorvete" → **"O pedido do grupo" depois** (com o destaque "Atualizado"):
 Kaigan Sushi + Açaí do Campus + Brasa Burger, **76% de afinidade, 3 de 3 bem atendidos, R$ 99,50 só itens**.
 
 | Pessoa | Item | Loja | Preço |
@@ -118,7 +118,7 @@ Frase que **não** entende (só se sobrar tempo): *"bom dia"* → o servidor res
 | QR não abre | Thales lê o link em voz alta ou o convidado usa o link salvo |
 | Celular sem rede | Thales responde por ele numa aba anônima ("o Antonio está sem sinal, eu faço por ele") |
 | Rodar Match > 10 s | "O IBits está lendo os cardápios." Passou de 20 s: plano B |
-| Disputa trava | **Pular** e seguir pelo deck |
+| Disputa trava | **Pular** e seguir para "O pedido do grupo" |
 | Ajuste responde "Não entendi" | Tocar no chip **Mais barato pra Zenon** (sempre funciona) e seguir: "ele pede outro jeito em vez de chutar" |
 | Ajuste demora | "Ele está refazendo o pedido com as lojas." Passou de 15 s: seguir com o cartão anterior |
 | Erro na tela / app cai | **Recarregar demo** e ir para o plano B |
@@ -127,16 +127,19 @@ Frase que **não** entende (só se sobrar tempo): *"bom dia"* → o servidor res
 | Projetor/PC trava | Vídeo no celular do Zenon; Thales narra por cima com as mesmas falas |
 
 ## Plano B (nesta ordem)
-1. **Sem a disputa:** `MATCH_LEILAO=off` no `.env` e reiniciar o app. O Match vai direto às opções; o Ajustar continua.
+1. **Sem a disputa:** `MATCH_LEILAO=off` no `.env` e reiniciar o app. O Match vai direto ao "O pedido do grupo"; o Ajustar continua.
 2. **Modo demonstração offline:** `IFOOD_MCP_MODO=demo` e `LLM_PROVIDER=mock`. Não precisa de internet nem de chave.
    Resultado esperado: a seção acima.
-3. **Vídeo gravado** (`docs/roteiro-video.md`): arquivo `match-demo.mp4` no PC do Thales e no celular do Zenon
-   (👥 anotar aqui a pasta exata depois de gravar).
+3. **Vídeo gravado** (`docs/roteiro-video.md`): **`match-demo-plano-b.mp4`** (1920×1080, 94 s, sem voz, modo demonstração,
+   tela nova: "O pedido do grupo" → Ajustar → "Confirmar pedido"), enviado pelo Zenon ao Thales fora do git em 18/10.
+   Thales narra ao vivo (as falas aparecem à direita). **Não usar** o `match-demo-rascunho.mp4` (tela antiga, com deck).
+   (👥 anotar aqui a pasta exata no PC do Thales.)
 
 ## Checklist pré-demo (15 min antes)
 - [ ] `.env` no PC do Thales: `IFOOD_MCP_MODO` (demo ou real), `LLM_PROVIDER` (ou `mock`), `MATCH_LEILAO=on`.
-      No real: `IFOOD_MCP_PERMITIR_ENVIO` só `true` se a equipe decidiu enviar na conta de teste; nunca pagar Pix de teste.
-      Chave Pix do organizador digitada na tela, nunca no git.
+      No real: `IFOOD_MCP_PERMITIR_ENVIO=false` (decisão T8: a demo para nos carrinhos prontos); nunca pagar Pix de teste.
+      Chave Pix do organizador digitada na tela ao criar a sala (campo opcional), nunca no git. Sem a chave, o Pix
+      falha: nesse caso Milan também paga em **dinheiro**.
 - [ ] App iniciado (`iniciar.bat`), aberto em `http://localhost:8000`, **Recarregar demo** clicado.
 - [ ] Celulares na mesma rede do PC; link do QR testado num celular (o IP do PC aparece no QR, não `localhost`).
       Firewall do Windows liberando a porta 8000. Rede do evento isolando aparelhos → hotspot do celular.

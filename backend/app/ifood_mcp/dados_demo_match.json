@@ -33,7 +33,9 @@
         {"id": "jp-yakisoba", "nome": "Yakisoba de legumes", "descricao": "Macarrão oriental com legumes salteados no shoyu", "categoria": "Pratos quentes", "preco": 34.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
         {"id": "jp-guioza", "nome": "Guioza de legumes (6 un.)", "descricao": "Pastelzinho japonês grelhado recheado de legumes", "categoria": "Entradas", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"]},
         {"id": "jp-sunomono", "nome": "Sunomono", "descricao": "Salada de pepino agridoce com gergelim", "categoria": "Entradas", "preco": 12.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
-        {"id": "jp-missoshiru", "nome": "Missoshiru", "descricao": "Sopa de missô com tofu e cebolinha", "categoria": "Entradas", "preco": 9.90, "tags": ["sem_lactose"]}
+        {"id": "jp-missoshiru", "nome": "Missoshiru", "descricao": "Sopa de missô com tofu e cebolinha", "categoria": "Entradas", "preco": 9.90, "tags": ["sem_lactose"]},
+        {"id": "jp-cerveja", "nome": "Cerveja long neck 355 ml", "descricao": "Pilsen gelada", "categoria": "Bebidas", "preco": 12.9, "tags": []},
+        {"id": "jp-cha", "nome": "Chá gelado de limão 300 ml", "descricao": "Chá preto com limão", "categoria": "Bebidas", "preco": 8.9, "tags": []}
       ]
     },
     {
@@ -97,7 +99,8 @@
         {"id": "pz-portuguesa", "nome": "Pizza portuguesa grande", "descricao": "Presunto, ovo, cebola, ervilha e muçarela — 8 fatias", "categoria": "Pizzas grandes", "preco": 58.90, "tags": []},
         {"id": "pz-vegana", "nome": "Pizza vegana de legumes grande", "descricao": "Molho de tomate, abobrinha, berinjela, pimentão e queijo vegetal", "categoria": "Pizzas grandes", "preco": 64.90, "tags": ["vegetariano", "vegano", "sem_lactose"]},
         {"id": "pz-brotinho", "nome": "Brotinho de muçarela", "descricao": "Pizza individual de muçarela — 4 fatias", "categoria": "Brotinhos", "preco": 24.90, "tags": ["vegetariano"]},
-        {"id": "pz-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de cola 2 litros", "categoria": "Bebidas", "preco": 14.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]}
+        {"id": "pz-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de cola 2 litros", "categoria": "Bebidas", "preco": 14.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
+        {"id": "pz-agua", "nome": "Água mineral sem gás 500 ml", "descricao": "Garrafa", "categoria": "Bebidas", "preco": 4.9, "tags": []}
       ]
     },
     {
@@ -137,7 +140,8 @@
         {"id": "ac-500", "nome": "Açaí 500 ml com banana e granola", "descricao": "Açaí com banana, granola e mel", "categoria": "Açaí", "preco": 22.90, "tags": ["vegetariano", "sem_lactose"], "perecivel": true},
         {"id": "ac-700", "nome": "Açaí 700 ml completo", "descricao": "Açaí com leite em pó, leite condensado, morango e paçoca", "categoria": "Açaí", "preco": 29.90, "tags": ["vegetariano"], "perecivel": true},
         {"id": "ac-cupuacu", "nome": "Creme de cupuaçu 500 ml", "descricao": "Cupuaçu batido com granola", "categoria": "Cremes", "preco": 23.90, "tags": ["vegetariano"], "perecivel": true},
-        {"id": "ac-tigela", "nome": "Tigela de açaí fit", "descricao": "Açaí sem açúcar com frutas e sementes", "categoria": "Açaí", "preco": 26.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true}
+        {"id": "ac-tigela", "nome": "Tigela de açaí fit", "descricao": "Açaí sem açúcar com frutas e sementes", "categoria": "Açaí", "preco": 26.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
+        {"id": "ac-agua", "nome": "Água mineral sem gás 500 ml", "descricao": "Garrafa", "categoria": "Bebidas", "preco": 4.5, "tags": []}
       ]
     },
     {
@@ -160,7 +164,75 @@
         {"id": "mc-pao-alho", "nome": "Pão de alho congelado 300 g", "descricao": "6 unidades para forno ou churrasqueira", "categoria": "Congelados", "preco": 12.90, "tags": ["vegetariano"], "perecivel": true},
         {"id": "mc-salada", "nome": "Mix de folhas higienizadas 200 g", "descricao": "Alface, rúcula e agrião prontos para servir", "categoria": "Hortifrúti", "preco": 9.90, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"], "perecivel": true},
         {"id": "mc-refri", "nome": "Refrigerante 2 L", "descricao": "Refrigerante de guaraná 2 litros", "categoria": "Bebidas", "preco": 9.99, "tags": ["vegetariano", "vegano", "sem_lactose", "sem_gluten"]},
-        {"id": "mc-sorvete", "nome": "Sorvete de creme 1,5 L", "descricao": "Pote de sorvete de creme para a família", "categoria": "Congelados", "preco": 24.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true}
+        {"id": "mc-sorvete", "nome": "Sorvete de creme 1,5 L", "descricao": "Pote de sorvete de creme para a família", "categoria": "Congelados", "preco": 24.90, "tags": ["vegetariano", "sem_gluten"], "perecivel": true},
+        {"id": "mc-arroz", "nome": "Arroz branco tipo 1 5 kg", "descricao": "Arroz agulhinha", "categoria": "Mercearia", "preco": 27.9, "tags": []},
+        {"id": "mc-feijao", "nome": "Feijão carioca 1 kg", "descricao": "Feijão tipo 1", "categoria": "Mercearia", "preco": 8.49, "tags": []},
+        {"id": "mc-leite", "nome": "Leite integral 1 L", "descricao": "Leite UHT", "categoria": "Laticínios", "preco": 5.29, "tags": []},
+        {"id": "mc-ovos", "nome": "Ovos brancos 12 un.", "descricao": "Dúzia de ovos", "categoria": "Ovos", "preco": 13.9, "tags": []},
+        {"id": "mc-detergente", "nome": "Detergente líquido 500 ml", "descricao": "Lava-louças neutro", "categoria": "Limpeza", "preco": 2.79, "tags": []},
+        {"id": "mc-papel", "nome": "Papel higiênico folha dupla 12 rolos", "descricao": "Rolos de 30 m", "categoria": "Higiene", "preco": 21.9, "tags": []},
+        {"id": "mc-sabao", "nome": "Sabão em pó 1,6 kg", "descricao": "Para roupas brancas e coloridas", "categoria": "Limpeza", "preco": 19.9, "tags": []},
+        {"id": "mc-pilha", "nome": "Pilha alcalina AA 4 un.", "descricao": "Pilhas para controle e brinquedos", "categoria": "Utilidades", "preco": 18.9, "tags": []}
+      ]
+    },
+    {
+      "id": "loja-demo-farmacia",
+      "nome": "Drogaria Bem Estar (demo)",
+      "merchantType": "DRUGSTORE",
+      "categorias": ["Farmácia", "Drogaria"],
+      "rating": 4.6,
+      "distancia_km": 1.1,
+      "tempo_entrega_min": 30,
+      "taxa_entrega": 5.9,
+      "pedido_minimo": 15.0,
+      "horario": "07:00–23:00",
+      "itens": [
+        {"id": "fm-dipirona", "nome": "Dipirona 500 mg 10 comprimidos", "descricao": "Remédio analgésico e antitérmico (genérico) para dor de cabeça e febre", "categoria": "Medicamentos", "preco": 6.49, "tags": []},
+        {"id": "fm-paracetamol", "nome": "Paracetamol 750 mg 20 comprimidos", "descricao": "Remédio analgésico e antitérmico (genérico) para dor e febre", "categoria": "Medicamentos", "preco": 9.9, "tags": []},
+        {"id": "fm-shampoo", "nome": "Shampoo anticaspa 200 ml", "descricao": "Uso diário", "categoria": "Cabelos", "preco": 18.9, "tags": []},
+        {"id": "fm-pasta", "nome": "Pasta de dente 90 g", "descricao": "Creme dental com flúor", "categoria": "Higiene bucal", "preco": 5.49, "tags": []},
+        {"id": "fm-escova", "nome": "Escova de dente macia", "descricao": "Cerdas macias", "categoria": "Higiene bucal", "preco": 8.9, "tags": []},
+        {"id": "fm-protetor", "nome": "Protetor solar FPS 50 120 ml", "descricao": "Proteção UVA e UVB", "categoria": "Dermocosméticos", "preco": 39.9, "tags": []},
+        {"id": "fm-curativo", "nome": "Curativo adesivo 10 un.", "descricao": "Band-aid transparente", "categoria": "Primeiros socorros", "preco": 7.9, "tags": []},
+        {"id": "fm-alcool", "nome": "Álcool em gel 70% 500 ml", "descricao": "Higienizador de mãos", "categoria": "Higiene", "preco": 12.9, "tags": []},
+        {"id": "fm-pilha", "nome": "Pilha alcalina AA 2 un.", "descricao": "Pilhas para termômetro e controle", "categoria": "Utilidades", "preco": 11.9, "tags": []}
+      ]
+    },
+    {
+      "id": "loja-demo-pet",
+      "nome": "Pet Amigo (demo)",
+      "merchantType": "PETSTORE",
+      "categorias": ["Pet shop", "Ração", "Acessórios pet"],
+      "rating": 4.8,
+      "distancia_km": 2.4,
+      "tempo_entrega_min": 45,
+      "taxa_entrega": 7.5,
+      "pedido_minimo": 20.0,
+      "horario": "08:00–20:00",
+      "itens": [
+        {"id": "pt-racao-cao", "nome": "Ração para cães adultos 3 kg", "descricao": "Para cachorro adulto, sabor carne e cereais", "categoria": "Ração", "preco": 59.9, "tags": []},
+        {"id": "pt-racao-gato", "nome": "Ração para gatos castrados 1 kg", "descricao": "Para gato castrado, sabor salmão", "categoria": "Ração", "preco": 32.9, "tags": []},
+        {"id": "pt-petisco", "nome": "Petisco bifinho para cachorro 65 g", "descricao": "Sabor carne", "categoria": "Petiscos", "preco": 9.9, "tags": []},
+        {"id": "pt-areia", "nome": "Areia sanitária para gatos 4 kg", "descricao": "Granulada", "categoria": "Higiene pet", "preco": 19.9, "tags": []},
+        {"id": "pt-shampoo", "nome": "Shampoo para cães 500 ml", "descricao": "Pelos claros e escuros", "categoria": "Higiene pet", "preco": 24.9, "tags": []},
+        {"id": "pt-mordedor", "nome": "Brinquedo mordedor para cachorro", "descricao": "Borracha resistente", "categoria": "Brinquedos", "preco": 14.9, "tags": []}
+      ]
+    },
+    {
+      "id": "loja-demo-caseira",
+      "nome": "Tempero de Casa (demo)",
+      "merchantType": "RESTAURANT",
+      "categorias": ["Brasileira", "Marmitas", "Comida caseira"],
+      "rating": 4.6,
+      "distancia_km": 1.6,
+      "tempo_entrega_min": 30,
+      "taxa_entrega": 4.99,
+      "pedido_minimo": 15.0,
+      "horario": "10:30–22:00",
+      "itens": [
+        {"id": "cc-marmitex-frango", "nome": "Marmitex de frango grelhado", "descricao": "Arroz, feijão, salada, farofa e frango grelhado", "categoria": "Marmitas", "preco": 22.9, "tags": []},
+        {"id": "cc-pf-bife", "nome": "Prato feito de bife acebolado", "descricao": "Arroz, feijão, salada, purê e bife acebolado", "categoria": "Pratos feitos", "preco": 26.9, "tags": []},
+        {"id": "cc-executivo-parmegiana", "nome": "Executivo de frango à parmegiana", "descricao": "Arroz, feijão, purê e salada", "categoria": "Executivos", "preco": 32.9, "tags": []}
       ]
     }
   ]

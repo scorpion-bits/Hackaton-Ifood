@@ -155,7 +155,8 @@ def _endereco(address_id: str) -> dict:
 
 # ---------- formatos de saída ----------
 def _loja_resumo(loja: dict) -> dict:
-    """Loja como aparece nas listas (sem taxa de entrega, como no real)."""
+    """Loja como aparece nas listas. Com taxa de entrega e pedido mínimo, como o `merchant{}` do searchOffers real
+    (docs/mcp-real/searchOffers.json: `deliveryMethod.fee`, `minimumOrderAmount`)."""
     return {
         "merchantId": loja["id"],
         "name": loja["nome"],
@@ -164,6 +165,8 @@ def _loja_resumo(loja: dict) -> dict:
         "rating": loja["rating"],
         "distance": loja["distancia_km"],
         "deliveryTime": loja["tempo_entrega_min"],
+        "deliveryFee": loja["taxa_entrega"],
+        "minimumOrderAmount": loja.get("pedido_minimo"),
     }
 
 
@@ -182,6 +185,8 @@ def _item_resumo(loja: dict, item: dict) -> dict:
         "rating": loja["rating"],
         "distance": loja["distancia_km"],
         "deliveryTime": loja["tempo_entrega_min"],
+        "deliveryFee": loja["taxa_entrega"],
+        "minimumOrderAmount": loja.get("pedido_minimo"),
     }
 
 
@@ -328,22 +333,30 @@ def criar_servidor_demo() -> MCPServer:
         resultKind: Literal["MERCHANT", "ITEM"] = "MERCHANT",
         refinements: dict | None = None,
         sortBy: Literal["relevance", "rating", "distance", "deliveryTime", "price"] = "relevance",
+        pageSize: int | None = None,
+        merchantType: Literal["RESTAURANT", "GROCERIES", "LIQUORSTORE", "DRUGSTORE", "PETSTORE", "SHOPPING"] | None = None,
     ) -> dict:
         """Busca lojas (resultKind=MERCHANT) ou itens (resultKind=ITEM) por termo descritivo.
 
-        Demonstração: `refinements` aceita `merchantType` e `maxPrice` (nomes não verificados no MCP real).
+        `refinements.merchantId` restringe a uma loja (busca dentro da loja, como no MCP real); `merchantType` (raiz,
+        como no real, ou em `refinements`) restringe a categoria; `refinements.maxItemPrice` (real) ou `maxPrice`.
+        `pageSize` é o nome do MCP real (`limit` continua aceito).
         """
+        limit = pageSize if pageSize is not None else limit
         termos = _termos(query)
         if not termos:
             raise ErroDemo("Informe um termo descritivo em 'query' (ex.: 'sorvete', 'pizza').")
         ref = refinements or {}
-        tipo = ref.get("merchantType")
-        preco_max = ref.get("maxPrice")
+        tipo = merchantType or ref.get("merchantType")
+        preco_max = ref.get("maxItemPrice", ref.get("maxPrice"))
+        so_loja = ref.get("merchantId")
         limite = max(1, min(int(limit), 50))
 
         resultados: list[tuple[int, dict]] = []
         for loja in _lojas():
             if tipo and loja["merchantType"] != tipo:
+                continue
+            if so_loja and loja["id"] != so_loja:
                 continue
             texto_loja = _texto_loja(loja)
             if resultKind == "MERCHANT":
@@ -355,7 +368,8 @@ def criar_servidor_demo() -> MCPServer:
                 for item in loja["itens"]:
                     if preco_max is not None and item["preco"] > float(preco_max):
                         continue
-                    pts = _pontos(termos, _texto_item(item) + " " + texto_loja)
+                    # dentro de uma loja, o nome da loja não conta ("refrigerante" não acha a pizza da Pizzaria)
+                    pts = _pontos(termos, _texto_item(item) + ("" if so_loja else " " + texto_loja))
                     if pts:
                         resultados.append((pts, _item_resumo(loja, item)))
 
@@ -379,8 +393,10 @@ def criar_servidor_demo() -> MCPServer:
         resultKind: Literal["MERCHANT", "ITEM"] = "MERCHANT",
         limit: int = 20,
         offset: int = 0,
+        pageSize: int | None = None,
     ) -> dict:
-        """Explora lojas ou itens perto do endereço, sem termo de busca."""
+        """Explora lojas ou itens perto do endereço, sem termo de busca (`pageSize` = nome do MCP real)."""
+        limit = pageSize if pageSize is not None else limit
         lojas = [l for l in _lojas() if merchantType is None or l["merchantType"] == merchantType]
         if resultKind == "MERCHANT":
             todos = [_loja_resumo(l) for l in sorted(lojas, key=lambda l: l["distancia_km"])]
@@ -396,15 +412,17 @@ def criar_servidor_demo() -> MCPServer:
         longitude: float | None = None,
         contentMode: str | None = None,
         limit: int = 5,
+        pageSize: int | None = None,
     ) -> dict:
         """Lista curada para o usuário (demonstração: lojas mais bem avaliadas)."""
+        limit = pageSize if pageSize is not None else limit
         lojas = sorted(_lojas(), key=lambda l: -l["rating"])[: max(1, min(int(limit), 20))]
         return _selo({"contentMode": contentMode, "results": [_loja_resumo(l) for l in lojas]})
 
     @mcp.tool(name="getMerchant", annotations=LEITURA)
     @_erros_legiveis
     def obter_loja(merchantId: str, latitude: float | None = None, longitude: float | None = None) -> dict:
-        """Detalhes da loja com cardápio completo (itemId, nome, preço). Não mostra a taxa de entrega."""
+        """Detalhes da loja com cardápio completo (itemId, nome, preço), taxa de entrega e pedido mínimo."""
         loja = _loja(merchantId)
         categorias: dict[str, list[dict]] = {}
         for item in loja["itens"]:
@@ -441,7 +459,10 @@ def criar_servidor_demo() -> MCPServer:
     @mcp.tool(name="createCart", annotations=ESCRITA)
     @_erros_legiveis
     def criar_carrinho(merchantId: str, addressId: str, items: list[dict] | None = None) -> dict:
-        """Cria um NOVO carrinho (não é idempotente): 1 carrinho = 1 loja + 1 endereço."""
+        """Cria um NOVO carrinho (não é idempotente): 1 carrinho = 1 loja + 1 endereço.
+
+        `items` ([{itemId, quantity, options?}]) é o formato do MCP real, que o exige na criação; aqui é opcional.
+        """
         loja = _loja(merchantId)
         _endereco(addressId)
         cart_id = f"cart-demo-{uuid.uuid4().hex[:10]}"

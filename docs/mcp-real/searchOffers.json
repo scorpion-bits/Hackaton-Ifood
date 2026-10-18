@@ -1,0 +1,872 @@
+{
+  "tool": "searchOffers",
+  "chamadas": [
+    {
+      "rotulo": "searchOffers pizza ITEM",
+      "args": {
+        "query": "pizza",
+        "resultKind": "ITEM",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksItem": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "pizza",
+        "nextPageToken": "***",
+        "resultKind": "ITEM",
+        "results": [
+          {
+            "itemEan": "",
+            "itemId": "269eae27-aee2-4224-a89b-7c6bce57f53e",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202106281308_3G3V_i.jpg",
+            "itemName": "Pizzas Doces Grandes",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 50,
+                  "min": 40
+                },
+                "fee": 7.5,
+                "promotionalFee": 7.5
+              },
+              "isOpen": true,
+              "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/54615ed7-5697-413b-a508-9156e3f5ec70/202512211429_vLkx_3.jpg",
+              "merchantName": "Ponto da Esfiha São Carlos",
+              "minimumOrderAmount": 20,
+              "ratingCount": 385,
+              "reviewRating": 4.7,
+              "straightLineDistanceKm": 1.63
+            },
+            "promotionalUnitPrice": 75.99,
+            "unitPrice": 75.99
+          },
+          {
+            "itemEan": "",
+            "itemId": "c9b768c7-a017-4810-9adc-c185dfd17877",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/2adbc0ca-0e80-44e7-bc45-b1d06d522f9c/202609260450_5X0N_i.jpg",
+            "itemName": "Pizza Pepperoni",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 30,
+                  "min": 20
+                },
+                "fee": 0,
+                "promotionalFee": 0
+              },
+              "isOpen": true,
+              "merchantId": "2adbc0ca-0e80-44e7-bc45-b1d06d522f9c",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/2adbc0ca-0e80-44e7-bc45-b1d06d522f9c/202605201650_XNnT_c.png",
+              "merchantName": "Gattonero",
+              "minimumOrderAmount": 40,
+              "ratingCount": 17,
+              "reviewRating": 4.3,
+              "straightLineDistanceKm": 0.67
+            },
+            "promotionalUnitPrice": 51.48,
+            "unitPrice": 51.48
+          },
+          {
+            "itemEan": "",
+            "itemId": "5c4fea58-7c95-4cdd-8fa5-39f3cb457629",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/12d701fe-07cb-43d6-bd60-03fb44a40b08/202503251023_O8HK_i.jpg",
+            "itemName": "Pizza",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 25,
+                  "min": 10
+                },
+                "fee": 6.99,
+                "promotionalFee": 6.99
+              },
+              "isOpen": true,
+              "merchantId": "12d701fe-07cb-43d6-bd60-03fb44a40b08",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/12d701fe-07cb-43d6-bd60-03fb44a40b08/202503131511_q0N3_i.jpg",
+              "merchantName": "PASTELARIA BRASIL BEBIDAS ",
+              "minimumOrderAmount": 5,
+              "ratingCount": 98,
+              "reviewRating": 4.9,
+              "straightLineDistanceKm": 1.33
+            },
+            "promotionalUnitPrice": 27,
+            "unitPrice": 27
+          },
+          {
+            "itemEan": "",
+            "itemId": "1c9f68f5-1159-465d-9c8d-43f3f3d6ac4c",
+            "itemName": "Pastel de pizza + borda doce",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 64,
+                  "min": 54
+                },
+                "fee": 0,
+                "promotionalFee": 0
+              },
+              "isOpen": true,
+              "merchantId": "ba27f752-3232-4e4e-b688-db12a8c99269",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/ba27f752-3232-4e4e-b688-db12a8c99269/202110271039_SoBJ_i.jpg",
+              "merchantName": "Paulinhos Lanches",
+              "minimumOrderAmount": 34.99,
+              "ratingCount": 288,
+              "reviewRating": 4.7,
+              "straightLineDistanceKm": 2.11
+            },
+            "promotionalUnitPrice": 32.98,
+            "unitPrice": 32.98
+          },
+          {
+            "itemEan": "",
+            "itemId": "3548d539-946f-4bba-a157-de6095316e1a",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/2adbc0ca-0e80-44e7-bc45-b1d06d522f9c/202610101504_4462_i.jpg",
+            "itemName": "Pizza Calabrese",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 30,
+                  "min": 20
+                },
+                "fee": 0,
+                "promotionalFee": 0
+              },
+              "isOpen": true,
+              "merchantId": "2adbc0ca-0e80-44e7-bc45-b1d06d522f9c",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/2adbc0ca-0e80-44e7-bc45-b1d06d522f9c/202605201650_XNnT_c.png",
+              "merchantName": "Gattonero",
+              "minimumOrderAmount": 40,
+              "ratingCount": 17,
+              "reviewRating": 4.3,
+              "straightLineDistanceKm": 0.67
+            },
+            "promotionalUnitPrice": 33.09,
+            "unitPrice": 50.9
+          }
+        ]
+      },
+      "ms": 2038
+    },
+    {
+      "rotulo": "searchOffers pizza MERCHANT",
+      "args": {
+        "query": "pizza",
+        "resultKind": "MERCHANT",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksMerchant": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "pizza",
+        "nextPageToken": "***",
+        "resultKind": "MERCHANT",
+        "results": [
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 80,
+                "min": 70
+              },
+              "fee": 7,
+              "promotionalFee": 7
+            },
+            "isOpen": true,
+            "merchantId": "ce32c0d2-38f2-4f41-bd2f-0f5dad4aa1c7",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/ce32c0d2-38f2-4f41-bd2f-0f5dad4aa1c7/202211181949_aXmr_i.jpg",
+            "merchantName": "Città Della Pizzaria",
+            "minimumOrderAmount": 25,
+            "ratingCount": 29,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 2.31
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 30,
+                "min": 20
+              },
+              "fee": 0,
+              "promotionalFee": 0
+            },
+            "isOpen": true,
+            "merchantId": "2adbc0ca-0e80-44e7-bc45-b1d06d522f9c",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/2adbc0ca-0e80-44e7-bc45-b1d06d522f9c/202605201650_XNnT_c.png",
+            "merchantName": "Gattonero",
+            "minimumOrderAmount": 40,
+            "ratingCount": 17,
+            "reviewRating": 4.3,
+            "straightLineDistanceKm": 0.67
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 80,
+                "min": 70
+              },
+              "fee": 8,
+              "promotionalFee": 8
+            },
+            "isOpen": false,
+            "merchantId": "05de07be-19aa-4ca0-a4d0-ef8cfa8c331c",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/05de07be-19aa-4ca0-a4d0-ef8cfa8c331c/202101151443_3poB_i.png",
+            "merchantName": "Picanha na Tábua Churrascaria & Pizzaria",
+            "minimumOrderAmount": 20,
+            "ratingCount": 635,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 2.37
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 40,
+                "min": 30
+              },
+              "fee": 5,
+              "promotionalFee": 5
+            },
+            "isOpen": true,
+            "merchantId": "72518268-9493-433a-b0e2-e9cd542358f5",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/72518268-9493-433a-b0e2-e9cd542358f5/202510311809_mdBf_1.jpg",
+            "merchantName": "Pizzaria Don Pereira",
+            "minimumOrderAmount": 10,
+            "ratingCount": 11,
+            "reviewRating": 4.5,
+            "straightLineDistanceKm": 2.81
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 53,
+                "min": 38
+              },
+              "fee": 7.99,
+              "promotionalFee": 7.99
+            },
+            "isOpen": true,
+            "merchantId": "321ce6e8-6daf-48b4-9210-ac1d3c82aeb7",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/321ce6e8-6daf-48b4-9210-ac1d3c82aeb7/202608041903_eGmg_l.png",
+            "merchantName": "Camargo Pizza",
+            "minimumOrderAmount": 20,
+            "ratingCount": 4,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 2.13
+          }
+        ]
+      },
+      "ms": 1692
+    },
+    {
+      "rotulo": "searchOffers sorvete ITEM",
+      "args": {
+        "query": "sorvete",
+        "resultKind": "ITEM",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksItem": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "sorvete",
+        "nextPageToken": "***",
+        "resultKind": "ITEM",
+        "results": [
+          {
+            "itemEan": "",
+            "itemId": "37c***c-43af-8484-38f9d466fef8",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/1751465c-9e9c-425e-8f60-5cfb03a2e680/202311091448_0WEY_i.jpg",
+            "itemName": "Açaí ou Sorvete no Copo 500ml",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 65,
+                  "min": 55
+                },
+                "fee": 9,
+                "promotionalFee": 9
+              },
+              "isOpen": true,
+              "merchantId": "1751465c-9e9c-425e-8f60-5cfb03a2e680",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/1751465c-9e9c-425e-8f60-5cfb03a2e680/202003211002_IrfU_.jpeg",
+              "merchantName": "Lual Lanches e Açaí Jardim Botafogo",
+              "minimumOrderAmount": 25,
+              "ratingCount": 547,
+              "reviewRating": 4.9,
+              "straightLineDistanceKm": 1.96
+            },
+            "promotionalUnitPrice": 29.29,
+            "unitPrice": 29.29
+          },
+          {
+            "itemEan": "",
+            "itemId": "5269f258-0a6d-4968-b0a8-8e889e3cc9c9",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/173fb457-1649-41b7-8238-30e3dfc02529/202601301454_366I_i.jpg",
+            "itemName": "Crie seu pote 480ml + 4 Complementos",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "HIGH_DENSITY",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 46,
+                  "min": 31
+                },
+                "fee": 4.99,
+                "promotionalFee": 4.99
+              },
+              "isOpen": true,
+              "merchantId": "4b2fed99-b25c-4696-98e5-cf33a520aa41",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/4b2fed99-b25c-4696-98e5-cf33a520aa41/202412191028_QsKV_i.jpg",
+              "merchantName": "Jah Açaí  e Sorvetes - São Carlos",
+              "minimumOrderAmount": 20,
+              "ratingCount": 146,
+              "reviewRating": 4.9,
+              "straightLineDistanceKm": 1.39
+            },
+            "promotionalUnitPrice": 30.99,
+            "unitPrice": 38.99
+          },
+          {
+            "itemEan": "",
+            "itemId": "a05a3860-15d4-41da-953e-edfe39c9d51d",
+            "itemName": "Sorvete artesanal de Nutella trufado",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 40,
+                  "min": 25
+                },
+                "fee": 10.99,
+                "promotionalFee": 10.99
+              },
+              "isOpen": true,
+              "merchantId": "8cf775ef-f612-45ec-b4a5-e***",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/8cf775ef-f612-45ec-b4a5-e***/202604162018_JfZc_l.jpg",
+              "merchantName": "Mascavado Bakery",
+              "minimumOrderAmount": 25,
+              "ratingCount": 56,
+              "reviewRating": 4.6,
+              "straightLineDistanceKm": 3.54
+            },
+            "promotionalUnitPrice": 18.9,
+            "unitPrice": 18.9
+          },
+          {
+            "itemEan": "",
+            "itemId": "c181fd18-dd8c-4248-b96a-41f24a9a7e86",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202609090210_01n0t53y5z48.jpg",
+            "itemName": "Bk Mix Galak & Negresco",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "HIGH_DENSITY",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 73,
+                  "min": 58
+                },
+                "fee": 7,
+                "promotionalFee": 7
+              },
+              "isOpen": true,
+              "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+              "merchantName": "Burger King - Passeio São Carlos",
+              "minimumOrderAmount": 20,
+              "ratingCount": 915,
+              "reviewRating": 4.8,
+              "straightLineDistanceKm": 2.23
+            },
+            "promotionalUnitPrice": 18.99,
+            "unitPrice": 18.99
+          },
+          {
+            "itemEan": "",
+            "itemId": "4c924f8a-4d1a-40a2-83d0-d6f94e02a60e",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/265b35eb-f873-4acf-9a03-95fa992fe4d0/202609080446_odtvppidje.png",
+            "itemName": "McFlurry Ovomaltine Rocks",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 77,
+                  "min": 62
+                },
+                "fee": 7.99,
+                "promotionalFee": 7.99
+              },
+              "isOpen": true,
+              "merchantId": "265b35eb-f873-4acf-9a03-95fa992fe4d0",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/265b35eb-f873-4acf-9a03-95fa992fe4d0/202408251252_L6ML.png",
+              "merchantName": "Mcdonald's - São Carlos Drive (scd)",
+              "minimumOrderAmount": 15,
+              "ratingCount": 2189,
+              "reviewRating": 4.8,
+              "straightLineDistanceKm": 1.61
+            },
+            "promotionalUnitPrice": 17.9,
+            "unitPrice": 17.9
+          }
+        ]
+      },
+      "ms": 2016
+    },
+    {
+      "rotulo": "searchOffers sorvete MERCHANT",
+      "args": {
+        "query": "sorvete",
+        "resultKind": "MERCHANT",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksMerchant": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "sorvete",
+        "nextPageToken": "***",
+        "resultKind": "MERCHANT",
+        "results": [
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 41,
+                "min": 26
+              },
+              "fee": 4.99,
+              "promotionalFee": 4.99
+            },
+            "isOpen": true,
+            "merchantId": "4b2fed99-b25c-4696-98e5-cf33a520aa41",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/4b2fed99-b25c-4696-98e5-cf33a520aa41/202412191028_QsKV_i.jpg",
+            "merchantName": "Jah Açaí  e Sorvetes - São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 146,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 1.39
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 81,
+                "min": 66
+              },
+              "fee": 5.99,
+              "promotionalFee": 5.99
+            },
+            "isOpen": true,
+            "merchantId": "60aaa819-7d6e-4f25-b676-ce3c3627fa27",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/60aaa819-7d6e-4f25-b676-ce3c3627fa27/202109141313_53CN_i.png",
+            "merchantName": "Sobremesas do Méqui (scd)",
+            "minimumOrderAmount": 10,
+            "ratingCount": 223,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 1.62
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 76,
+                "min": 61
+              },
+              "fee": 10.99,
+              "promotionalFee": 10.99
+            },
+            "isOpen": true,
+            "merchantId": "c29fb013-a361-41ef-a160-8f2ff7523f20",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/c29fb013-a361-41ef-a160-8f2ff7523f20/202610141750_yPxI_g.jpg",
+            "merchantName": "Spaguetto",
+            "minimumOrderAmount": 20,
+            "reviewRating": 0,
+            "straightLineDistanceKm": 4.81
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 30,
+                "min": 20
+              },
+              "fee": 0,
+              "promotionalFee": 0
+            },
+            "isOpen": false,
+            "merchantId": "4b52bf5b-c70b-4a02-9d36-a549c05524fd",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/4b52bf5b-c70b-4a02-9d36-a549c05524fd/202004161412_ohui_i.jpg",
+            "merchantName": "Açai & Sorvete Divino",
+            "minimumOrderAmount": 15,
+            "ratingCount": 163,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 1
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 31,
+                "min": 16
+              },
+              "fee": 9.99,
+              "promotionalFee": 9.99
+            },
+            "isOpen": false,
+            "merchantId": "f42e4583-f76c-453f-9df7-21bf624d76fc",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/f42e4583-f76c-453f-9df7-21bf624d76fc/202606141454_Jbwb_i.jpg",
+            "merchantName": "Sorvetes Mil",
+            "minimumOrderAmount": 10,
+            "ratingCount": 35,
+            "reviewRating": 4.9,
+            "straightLineDistanceKm": 4.23
+          }
+        ]
+      },
+      "ms": 1487
+    },
+    {
+      "rotulo": "searchOffers hambúrguer ITEM",
+      "args": {
+        "query": "hambúrguer",
+        "resultKind": "ITEM",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksItem": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "hambúrguer",
+        "nextPageToken": "***",
+        "resultKind": "ITEM",
+        "results": [
+          {
+            "itemEan": "",
+            "itemId": "edd0d60f-6e90-4513-88ce-d52c6ed0e871",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/1751465c-9e9c-425e-8f60-5cfb03a2e680/202607271541_74BB_i.jpg",
+            "itemName": "X-Americano",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 65,
+                  "min": 55
+                },
+                "fee": 9,
+                "promotionalFee": 9
+              },
+              "isOpen": true,
+              "merchantId": "1751465c-9e9c-425e-8f60-5cfb03a2e680",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/1751465c-9e9c-425e-8f60-5cfb03a2e680/202003211002_IrfU_.jpeg",
+              "merchantName": "Lual Lanches e Açaí Jardim Botafogo",
+              "minimumOrderAmount": 25,
+              "ratingCount": 547,
+              "reviewRating": 4.9,
+              "straightLineDistanceKm": 1.96
+            },
+            "promotionalUnitPrice": 30.55,
+            "unitPrice": 47
+          },
+          {
+            "itemEan": "",
+            "itemId": "0770950c-70c1-412f-bce9-a950d378d156",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202606051707_q9yfrmpyfv.jpg",
+            "itemName": "Combo Stacker Duplo Bacon",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "HIGH_DENSITY",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 73,
+                  "min": 58
+                },
+                "fee": 7,
+                "promotionalFee": 7
+              },
+              "isOpen": true,
+              "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+              "merchantName": "Burger King - Passeio São Carlos",
+              "minimumOrderAmount": 20,
+              "ratingCount": 915,
+              "reviewRating": 4.8,
+              "straightLineDistanceKm": 2.23
+            },
+            "promotionalUnitPrice": 8,
+            "unitPrice": 43.99
+          },
+          {
+            "itemEan": "",
+            "itemId": "4766ee55-b31b-4253-9144-b210108ba6fc",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/91129a9a-e1eb-4487-b741-c04e2fcd2eeb/202310061219_50MK_i.jpg",
+            "itemName": "X-Central",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 70,
+                  "min": 60
+                },
+                "fee": 6,
+                "promotionalFee": 6
+              },
+              "isOpen": true,
+              "merchantId": "91129a9a-e1eb-4487-b741-c04e2fcd2eeb",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/91129a9a-e1eb-4487-b741-c04e2fcd2eeb/202607241432_SK0S_c.png",
+              "merchantName": "Central Lanches",
+              "minimumOrderAmount": 20,
+              "ratingCount": 188,
+              "reviewRating": 4.8,
+              "straightLineDistanceKm": 1.1
+            },
+            "promotionalUnitPrice": 56.9,
+            "unitPrice": 56.9
+          },
+          {
+            "itemEan": "",
+            "itemId": "d4f150f2-b1e3-4192-8218-bfefbd15f56c",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/265b35eb-f873-4acf-9a03-95fa992fe4d0/202607280752_p4iksgcf8i7.png",
+            "itemName": "Tasty Turbo 1 Carne",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "HIGH_DENSITY",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 91,
+                  "min": 76
+                },
+                "fee": 6.99,
+                "promotionalFee": 6.99
+              },
+              "isOpen": true,
+              "merchantId": "265b35eb-f873-4acf-9a03-95fa992fe4d0",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/265b35eb-f873-4acf-9a03-95fa992fe4d0/202408251252_L6ML.png",
+              "merchantName": "Mcdonald's - São Carlos Drive (scd)",
+              "minimumOrderAmount": 15,
+              "ratingCount": 2189,
+              "reviewRating": 4.8,
+              "straightLineDistanceKm": 1.61
+            },
+            "promotionalUnitPrice": 31.9,
+            "unitPrice": 41.9
+          },
+          {
+            "itemEan": "",
+            "itemId": "9cc381b0-82ef-46a6-9ecc-6951a03532af",
+            "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/13406404-984c-458d-94e7-7fcc339d1c4f/202609171651_R5JG_.jpeg",
+            "itemName": "Tudo",
+            "merchant": {
+              "deliveryMethod": {
+                "deliveryMethodId": "DEFAULT",
+                "deliveryMethodMode": "DELIVERY",
+                "estimatedMinutes": {
+                  "max": 24,
+                  "min": 14
+                },
+                "fee": 0,
+                "promotionalFee": 0
+              },
+              "isOpen": true,
+              "merchantId": "13406404-984c-458d-94e7-7fcc339d1c4f",
+              "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/13406404-984c-458d-94e7-7fcc339d1c4f/202308030142_0m3f_i.jpg",
+              "merchantName": "Lanchonete Tropical Original Lj2 Corujão",
+              "minimumOrderAmount": 25,
+              "ratingCount": 217,
+              "reviewRating": 4.5,
+              "straightLineDistanceKm": 2.21
+            },
+            "promotionalUnitPrice": 49.99,
+            "unitPrice": 49.99
+          }
+        ]
+      },
+      "ms": 1986
+    },
+    {
+      "rotulo": "searchOffers hambúrguer MERCHANT",
+      "args": {
+        "query": "hambúrguer",
+        "resultKind": "MERCHANT",
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStepWhenUserPicksMerchant": "***"
+        },
+        "hasMore": true,
+        "interpretedQuery": "hambúrguer",
+        "nextPageToken": "***",
+        "resultKind": "MERCHANT",
+        "results": [
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 59,
+                "min": 44
+              },
+              "fee": 9.99,
+              "promotionalFee": 9.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 915,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 2.23
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 70,
+                "min": 60
+              },
+              "fee": 0,
+              "promotionalFee": 0
+            },
+            "isOpen": true,
+            "merchantId": "22d97c2a-b64b-4f26-ac68-c62f1bd65cef",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/22d97c2a-b64b-4f26-ac68-c62f1bd65cef/202609251448_DedB_l.jpg",
+            "merchantName": "Burger Handmades - Hamburgueria Artesanal ",
+            "minimumOrderAmount": 25,
+            "ratingCount": 20,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 2.38
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 40,
+                "min": 30
+              },
+              "fee": 5,
+              "promotionalFee": 5
+            },
+            "isOpen": true,
+            "merchantId": "25c6970d-02f7-4f44-995b-a60205bc35c7",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/25c6970d-02f7-4f44-995b-a60205bc35c7/202504302345_NVVu_i.jpg",
+            "merchantName": "Max Burguer, Marmitas, Pizzas ",
+            "minimumOrderAmount": 35,
+            "ratingCount": 66,
+            "reviewRating": 5,
+            "straightLineDistanceKm": 2.72
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 54,
+                "min": 39
+              },
+              "fee": 7.99,
+              "promotionalFee": 7.99
+            },
+            "isOpen": true,
+            "merchantId": "83ad89b3-67e1-4b35-b29e-7b41d062dc21",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/83ad89b3-67e1-4b35-b29e-7b41d062dc21/202610091208_Js0b_.jpeg",
+            "merchantName": "Smashingburger",
+            "minimumOrderAmount": 22.99,
+            "ratingCount": 5,
+            "reviewRating": 4.6,
+            "straightLineDistanceKm": 1.8
+          },
+          {
+            "deliveryMethod": {
+              "deliveryMethodId": "DEFAULT",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 57,
+                "min": 47
+              },
+              "fee": 7.5,
+              "promotionalFee": 7.5
+            },
+            "isOpen": true,
+            "merchantId": "8a22f5ba-c289-4437-bf7e-23f2a2ffdae3",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/8a22f5ba-c289-4437-bf7e-23f2a2ffdae3/202607311317_H4oZ_c.png",
+            "merchantName": "Emaus Burger & Drinks",
+            "minimumOrderAmount": 10,
+            "ratingCount": 25,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 1.42
+          }
+        ]
+      },
+      "ms": 1531
+    }
+  ]
+}

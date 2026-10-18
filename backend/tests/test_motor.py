@@ -93,7 +93,9 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     assert r["endereco"]["id"] == "end-demo-sao-carlos"
     # relevância: o roteiro não ganha aviso de "opção aproximada" nem de restrição sem confirmação
     assert not any("Não achei" in a or "Nenhum item confirma" in a for a in r["avisos"])
-    assert len(r["avisos"]) == 2
+    # 3 lojas + taxa estimada + "o orçamento vale para os itens" (o roteiro tem orçamento)
+    assert len(r["avisos"]) == 3
+    assert "O orçamento de cada pessoa vale para os itens; a taxa de entrega é somada à parte." in r["avisos"]
     assert not any(e["motivo"].startswith("Opção aproximada") for c in combos for e in c["escolhas"].values())
     json.dumps(r)
 
@@ -114,7 +116,8 @@ async def test_acai_e_sorvete_nao_sao_cortados_com_folga_de_lojas_e_aviso_diz_o_
 async def test_pessoa_sem_opcao_vira_aviso_legivel():
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
                       Desejo("ana", "Ana", "algo vegano, até R$ 5")])
-    assert "Não achei nada vegano até R$ 5 para Ana." in r["avisos"]
+    # diz também quanto custa o mais barato que a busca achou (acima do orçamento)
+    assert any(a.startswith("Não achei nada vegano até R$ 5 para Ana: o mais barato custa R$ ") for a in r["avisos"])
     assert r["combinacoes"]
     assert set(r["combinacoes"][0]["escolhas"]) == {"milan"}
     assert "sem opção válida para Ana" in r["combinacoes"][0]["explicacao"]
@@ -138,9 +141,9 @@ async def test_item_fora_do_dicionario_busca_pelo_proprio_texto(monkeypatch):
     consultas: list[str] = []
     original = busca_mod.buscar_detalhado
 
-    async def espiao(cliente, intencao, endereco):
+    async def espiao(cliente, intencao, endereco, **kw):
         consultas.append(intencao.consultas)
-        return await original(cliente, intencao, endereco)
+        return await original(cliente, intencao, endereco, **kw)
 
     monkeypatch.setattr(motor_mod, "buscar_detalhado", espiao)
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
@@ -171,7 +174,8 @@ async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada(sem_consulta_livre
 async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consulta_livre):
     r = await _rodar([Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
     assert r["combinacoes"] == []
-    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
+    assert "Não achei feijoada completa para Ana." in r["avisos"]
+    assert not any("a opção mais próxima" in a for a in r["avisos"])  # bug 14: sem combinação, nada de "mais próxima"
     assert any("Nada do que foi pedido está nos cardápios" in a for a in r["avisos"])
     # pizza sem glúten: as pizzas violam a restrição e o resto não tem nada a ver com o pedido
     r = await _rodar([Desejo("ana", "Ana", "pizza", None, ["sem_gluten"])])
@@ -185,7 +189,7 @@ async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consult
 async def test_restricao_sem_tag_que_confirme_avisa_sem_eliminar(monkeypatch):
     original = motor_mod.buscar_detalhado
 
-    async def sem_tags(cliente, intencao, endereco):  # como uma loja que não informa nenhuma tag
+    async def sem_tags(cliente, intencao, endereco, **kw):  # como uma loja que não informa nenhuma tag
         candidatos, detalhes = await original(cliente, intencao, endereco)
         return candidatos, {k: {**v, "tags": []} for k, v in detalhes.items()}
 
@@ -450,3 +454,255 @@ async def test_endereco_sem_id_avisa_ja_ao_rodar():
                                                   "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
     assert "problema" not in r and r["combinacoes"]
     assert motor_mod.MSG_ENDERECO_SEM_ID in r["avisos"]
+
+
+async def test_sem_endereco_com_mock_busca_no_local_do_env(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "-22.0025,-47.8986")
+    r = await _rodar_com_endereco({"addresses": []})
+    assert "problema" not in r and r["combinacoes"]
+    assert r["endereco"]["id"] == motor_mod.ID_ENDERECO_MOCK
+    assert motor_mod.MSG_ENDERECO_MOCK in r["avisos"]
+
+
+async def test_mock_nao_substitui_endereco_salvo(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "-22.0025,-47.8986")
+    r = await _rodar_com_endereco({"addresses": [{"addressId": "a1", "formattedAddress": "Rua X, 1",
+                                                  "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
+    assert r["endereco"]["id"] == "a1" and motor_mod.MSG_ENDERECO_MOCK not in r["avisos"]
+
+
+async def test_mock_invalido_continua_pedindo_endereco(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "São Carlos")
+    r = await _rodar_com_endereco({"addresses": []})
+    assert r["problema"] == "endereco" and r["avisos"] == [motor_mod.MSG_SEM_ENDERECO]
+
+
+# ---------- pedido completo (Trilha A′, etapa 05) ----------
+@pytest.mark.parametrize("texto", ["uma pizza e uma coca", "pizza e um guaraná, até 50", "uma pizza e um refri"])
+async def test_pizza_e_refrigerante_saem_da_mesma_pizzaria(texto):
+    """Regressão: "uma pizza e uma coca" virava pizza + açaí de outra loja; "guaraná" ficava de fora com 2 avisos
+    que se contradiziam ("Não achei" e "não cabe no orçamento")."""
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert set(melhor["escolhas"]) == {"ana", "ana#2"}
+    assert melhor["lojas"] == ["loja-demo-pizza"]
+    assert "refrigerante" in melhor["escolhas"]["ana#2"]["item_nome"].lower()
+    assert not any("Não achei" in a or "ficou de fora" in a for a in r["avisos"])
+
+
+async def test_busca_na_loja_usa_refinements_merchant_id_e_so_traz_o_que_bate():
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        endereco = ler_endereco(await cli.chamar("listAddresses"))
+        intencao = Intencao("ana#2", consultas=["coca", "refrigerante"], vontades=["refrigerante"])
+        cands, detalhes = await busca_mod.buscar_na_loja(cli, intencao, endereco, "loja-demo-pizza", "RESTAURANT")
+        rastro = cli.rastro_como_dicts()
+    assert [(c.loja_id, c.item_id) for c in cands] == [("loja-demo-pizza", "pz-refri")]
+    assert ("loja-demo-pizza", "pz-refri") in detalhes
+    chamadas = [c for c in rastro if c["tool"] == "searchOffers"]
+    assert len(chamadas) == 2  # "coca" não existe na pizzaria; "refrigerante" sim (para na 1ª que acha)
+
+
+async def test_segundo_item_e_procurado_na_loja_do_primeiro(monkeypatch):
+    """A′F1: mesmo que a busca na cidade traga o refri só de outra loja, o Match procura o refri dentro da pizzaria
+    da pizza (searchOffers + refinements.merchantId) e o pedido sai de 1 loja só."""
+    original = busca_mod.buscar_detalhado
+
+    async def sem_refri_da_pizzaria(cliente, intencao, endereco, **kw):
+        cands, det = await original(cliente, intencao, endereco, **kw)
+        if intencao.participante_id.endswith("#2"):  # simula a busca da cidade sem o refri da pizzaria
+            cands = [c for c in cands if c.loja_id != "loja-demo-pizza"]
+        return cands, det
+
+    monkeypatch.setattr(motor_mod, "buscar_detalhado", sem_refri_da_pizzaria)
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == ["loja-demo-pizza"]
+    assert melhor["escolhas"]["ana#2"]["item_id"] == "pz-refri"
+    assert any(c["tool"] == "searchOffers" and "merchantId" in json.dumps(c, ensure_ascii=False) for c in r["rastro"])
+
+
+async def test_taxa_da_busca_entra_no_custo_e_avisa_que_e_estimada():
+    """A′F4: a taxa de entrega que o searchOffers devolve entra no custo antes do carrinho."""
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["taxa_conhecida"] is True
+    assert melhor["componentes"]["custo_total"] == round(24.90 + 14.90 + 8.99, 2)
+    assert "com taxa" in melhor["explicacao"]
+    assert any("taxa de entrega veio da busca do iFood (estimada)" in a for a in r["avisos"])
+    assert not any("só aparece no carrinho" in a for a in r["avisos"])
+
+
+# ---------- Só eu além de restaurante (A′F5) ----------
+@pytest.mark.parametrize("texto, loja, itens", [
+    ("dipirona e protetor solar", "loja-demo-farmacia", {"fm-dipirona", "fm-protetor"}),
+    ("ração de cachorro e um petisco", "loja-demo-pet", {"pt-racao-cao", "pt-petisco"}),
+    ("preciso fazer compras: arroz, feijão e detergente", "loja-demo-mercado", {"mc-arroz", "mc-feijao", "mc-detergente"}),
+    ("preciso de shampoo, pasta de dente e pilha", "loja-demo-farmacia", {"fm-shampoo", "fm-pasta", "fm-pilha"}),
+])
+async def test_lista_de_compras_sai_de_uma_loja_da_categoria_certa(texto, loja, itens):
+    r = await _rodar([Desejo("ana", "Ana", texto, chips=["modo:compras"])])  # botão Compras (regras_pedido.json)
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == [loja]
+    assert {e["item_id"] for e in melhor["escolhas"].values()} == itens
+    buscas = [c for c in r["rastro"] if c["tool"] == "searchOffers"]
+    assert any("merchantType=" in c["resumo"] for c in buscas)  # a busca do varejo vai direto na categoria
+
+
+async def test_produto_que_nao_existe_no_varejo_nao_vira_opcao_aproximada():
+    r = await _rodar([Desejo("ana", "Ana", "dipirona e areia de praia", chips=["modo:compras"])])
+    assert "Não achei areia de praia para Ana." in r["avisos"]
+    assert not any("opção mais próxima" in a for a in r["avisos"])
+    assert "browseOffers" not in [c["tool"] for c in r["rastro"]]
+
+
+# ---------- combos (A′F3) ----------
+@pytest.mark.parametrize("texto", ["hambúrguer com batata e refri", "quero um combo de hambúrguer com refri"])
+async def test_combo_da_loja_atende_varios_itens_da_pessoa_com_um_item_so(texto):
+    """Regressão: "hambúrguer com batata e refri" virava lanche + batata + combo (que já tinha os dois); "combo de
+    hambúrguer com refri" trazia o refri de outra loja."""
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert [e["item_id"] for e in melhor["escolhas"].values()] == ["bg-combo"]
+    assert set(melhor["cobertos"]) == {s for s in ("ana#2", "ana#3") if s in {i["participante_id"] for i in r["intencoes"]}}
+    assert melhor["componentes"]["slots_fora"] == 0 and melhor["afinidade"] > 0
+    assert melhor["escolhas"]["ana"]["motivo"].startswith("Combo com ")
+    assert not any("ficou de fora" in a or "Não achei" in a for a in r["avisos"])
+
+
+async def test_sem_combo_na_loja_os_itens_continuam_avulsos():
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["cobertos"] == {} and len(melhor["escolhas"]) == 2
+
+
+async def test_busca_na_loja_vai_nas_lojas_de_melhor_nota_e_preco_do_primeiro_item(monkeypatch):
+    """Bug 30 (P8, MCP real): a pizza escolhida (a mais barata, nota igual) era de uma loja que vinha em 3º lugar na
+    busca; o refri nunca era procurado nela. Agora as lojas do 1º item são ordenadas por nota e preço."""
+    def c(slot, loja, preco, nota=0.9):
+        return Candidato(slot, loja, loja, f"{loja}-{slot}", "Pizza", preco, 40, "RESTAURANT", False, nota=nota)
+
+    principal = [c("ana", "L1", 40.0), c("ana", "L2", 35.0), c("ana", "L3", 30.0), c("ana", "L4", 8.99),
+                 c("ana", "L5", 5.0, nota=0.3)]
+    chamadas: list[str] = []
+
+    async def espiao(cliente, intencao, endereco, loja_id, vertical=""):
+        chamadas.append(loja_id)
+        return [], {}
+
+    monkeypatch.setattr(motor_mod, "buscar_na_loja", espiao)
+    slots = [(Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana", consultas=["pizza"])),
+             (Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana#2", consultas=["refri"]))]
+    await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
+    # 3 de melhor nota (L4, L3, L2) + a mais barata que faltava (L5, nota baixa: o otimizador pode escolhê-la pelo preço)
+    assert chamadas == ["L4", "L3", "L2", "L5"]
+
+
+# ---------- mensagens honestas (bugs 31 e 32, P8/P9 no MCP real) ----------
+def _cliente_com(cli, troca):
+    """Embrulha `cli.chamar`: `troca(tool, resposta)` muda a resposta; levanta ErroMCP registrado no rastro."""
+    original = cli.chamar
+
+    async def chamar(tool, **args):
+        return troca(tool, await original(tool, **args))
+
+    cli.chamar = chamar
+    return cli
+
+
+async def test_ifood_fora_do_ar_nao_culpa_o_pedido():
+    """Bug 31: com INTERNAL em todas as buscas, a mensagem dizia "aumente o orçamento"."""
+    from app.ifood_mcp import ErroMCP
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        original = cli.chamar
+
+        async def chamar(tool, **args):
+            if tool in ("searchOffers", "browseOffers", "getMerchant"):
+                cli._registrar(tool, tool, 0.0, ok=False, erro="INTERNAL")
+                raise ErroMCP("INTERNAL: upstream service")
+            return await original(tool, **args)
+
+        cli.chamar = chamar
+        r = await rodar_match(cfg, cli, ROTEIRO)
+    assert r["problema"] == "ifood" and r["combinacoes"] == []
+    assert any("O iFood não respondeu" in a for a in r["avisos"])
+    assert not any("orçamento" in a or "Não achei" in a for a in r["avisos"])
+
+
+async def test_loja_fechada_diz_que_esta_fechada_e_nao_pede_mais_orcamento():
+    """Bug 32: de madrugada o iFood acha a dipirona, mas toda loja vem isOpen: false."""
+    def fechar(tool, resposta):
+        if tool in ("searchOffers", "browseOffers"):
+            for r in resposta.get("results") or []:
+                r["isOpen"] = False
+        return resposta
+
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        r = await rodar_match(cfg, _cliente_com(cli, fechar), [Desejo("ana", "Ana", "dipirona e protetor solar",
+                                                                         chips=["modo:compras"])])
+    assert r["combinacoes"] == []
+    assert any("Drogaria Bem Estar (demo)" in a and "fechadas agora" in a for a in r["avisos"])
+    assert "Tente de novo quando as lojas abrirem." in r["avisos"]
+    assert not any("orçamento" in a for a in r["avisos"])
+
+
+# ---------- rodada exploratória do agente do Zenon (18/10 ~04h) ----------
+@pytest.mark.parametrize("texto, loja, itens", [
+    ("2 pizzas e 2 cocas", "loja-demo-pizza", ["pz-refri", "pz-refri"]),       # o mesmo pedido repetido vale 2×
+    ("quero um x-salada com fritas", "loja-demo-burger", ["bg-batata"]),        # "x-salada" não vira salada
+    ("um açaí e uma água", "loja-demo-acai", ["ac-agua"]),
+    ("sushi e uma cerveja", "loja-demo-japones", ["jp-cerveja"]),
+])
+async def test_frases_da_rodada_exploratoria(texto, loja, itens):
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == [loja]
+    ids = [e["item_id"] for e in melhor["escolhas"].values()]
+    for item in itens:
+        assert ids.count(item) >= itens.count(item)
+
+
+async def test_nada_achado_nao_culpa_o_orcamento_e_pao_de_queijo_nao_vira_hamburguer():
+    r = await _rodar([Desejo("ana", "Ana", "vinho e gelo")])
+    assert r["combinacoes"] == [] and not any("orçamento" in a for a in r["avisos"])
+    r = await _rodar([Desejo("ana", "Ana", "um pão de queijo")])
+    assert not r["combinacoes"] or "Smash" not in str(r["combinacoes"][0]["escolhas"])
+    assert any("Não achei pão de queijo" in a for a in r["avisos"])
+
+
+
+def test_bebida_pelo_nome_nao_vira_opcao_aproximada_de_comida():
+    """Bug 35 (P11, MCP real às 05h): sem pizza aberta, "Coca-Cola Original 350ml" (achada na busca da loja, sem
+    categoria) virou a "opção mais próxima" da pizza. O nome basta para saber que é bebida; combo não conta."""
+    from app.match.juiz import bebida_sem_pedir
+
+    pizza = Intencao("p", consultas=["pizza"])
+    for nome in ("Coca-Cola Original 350ml", "Refrigerante Coca-Cola Lata 350ml", "Guarana Antartica2lt",
+                 "Suco de laranja 500 ml"):
+        assert bebida_sem_pedir(pizza, {}, nome), nome
+    for nome in ("Pizza de calabresa", "Combo X-salada + refri", "X-Bacon + Coca 350ml", "Frango tudo"):
+        assert not bebida_sem_pedir(pizza, {}, nome), nome
+    assert not bebida_sem_pedir(Intencao("p", consultas=["coca"]), {}, "Coca-Cola Original 350ml")
+
+
+async def test_busca_na_loja_inclui_a_loja_mais_barata_do_primeiro_item(monkeypatch):
+    """Teste do Thales (MCP real, SP): "um hambúrguer e uma batata frita" → Big Mac do McDonald's (o mais barato, nota
+    baixa) + batata de outra padaria; o McDonald's tem McFritas, mas a batata nunca era procurada nele."""
+    def c(slot, loja, preco, nota):
+        return Candidato(slot, loja, loja, f"{loja}-{slot}", "Hambúrguer", preco, 40, "RESTAURANT", False, nota=nota)
+
+    principal = [c("ana", "Original", 34.9, 0.9), c("ana", "Habibs", 22.0, 0.9), c("ana", "Achapa", 30.0, 0.8),
+                 c("ana", "Estadao", 28.0, 0.85), c("ana", "Mcdonalds", 2.9, 0.4)]
+    chamadas: list[str] = []
+
+    async def espiao(cliente, intencao, endereco, loja_id, vertical=""):
+        chamadas.append(loja_id)
+        return [], {}
+
+    monkeypatch.setattr(motor_mod, "buscar_na_loja", espiao)
+    slots = [(Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana", consultas=["hambúrguer"])),
+             (Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana#2", consultas=["batata frita"]))]
+    await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
+    assert "Mcdonalds" in chamadas and len(chamadas) <= motor_mod.MAX_LOJAS_DO_PRINCIPAL + motor_mod.lojas_mais_baratas_na_busca()

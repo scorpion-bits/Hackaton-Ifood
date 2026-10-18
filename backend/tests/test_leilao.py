@@ -69,14 +69,14 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     assert replicas == [{"quem": "loja-demo-sorvete", "tipo": "replica",
                          "texto": "Fecho 2 sorvetes num pedido só: 1 entrega em vez de 2."}]
 
-    # patrocinado do demo: só tinha suco (bebida) dentro do orçamento do Antonio, que pediu comida → não oferta
-    # bebida; passa com fala honesta e, por ser patrocinado, fala primeiro. Não vence.
+    # poke do demo: só tinha suco (bebida) dentro do orçamento do Antonio, que pediu comida → não oferta
+    # bebida; passa com fala honesta. Não vence. A demo não tem loja patrocinada (o mecanismo é testado abaixo).
     lojas = {l["loja_id"]: l for l in bloco["lojas"]}
     poke = lojas["loja-demo-poke"]
-    assert poke["patrocinado"] is True and poke["vencedora"] is False and poke["passou"] and poke["ofertas"] == []
-    assert falas[1] == {"quem": "loja-demo-poke", "tipo": "passe",
-                        "texto": "Aqui não tem o que Antonio pediu dentro de R$ 25. Passo."}
-    assert sum(l["patrocinado"] for l in lojas.values()) == 1
+    assert poke["patrocinado"] is False and poke["vencedora"] is False and poke["passou"] and poke["ofertas"] == []
+    assert {"quem": "loja-demo-poke", "tipo": "passe",
+            "texto": "Aqui não tem o que Antonio pediu dentro de R$ 25. Passo."} in falas
+    assert not any(l["patrocinado"] for l in lojas.values())
     assert not any(o["item_id"] == "pk-suco" for l in bloco["lojas"] for o in l["ofertas"])
 
     demo = _itens_do_demo()
@@ -188,7 +188,7 @@ def _cenario():
 
 def _agentes(monkeypatch, respostas: dict[str, object]):
     """Troca o LLM por respostas fixas por loja (chave = nome da loja que o agente recebe)."""
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         assert "agente vendedor" in sistema and timeout == leilao.TIMEOUT_AGENTE_S
         return respostas.get(json.loads(usuario)["loja"])
 
@@ -205,7 +205,7 @@ async def _leilao(monkeypatch, respostas):
 async def test_agente_so_enxerga_os_proprios_itens(monkeypatch):
     vistos = {}
 
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         dados = json.loads(usuario)
         vistos[dados["loja"]] = {p["slot_id"]: [i["item_id"] for i in p["itens"]] for p in dados["pedidos"]}
         return None
@@ -531,7 +531,7 @@ async def test_abertura_usa_o_texto_da_pessoa_sem_categoria(monkeypatch):
 async def test_bebida_nunca_e_oferta_para_quem_pediu_comida_e_patrocinada_passa_primeiro(monkeypatch):
     vistos = {}
 
-    async def falso(cfg, sistema, usuario, timeout=None):
+    async def falso(cfg, sistema, usuario, timeout=None, max_tokens=None):
         dados = json.loads(usuario)
         vistos[dados["loja"]] = [i["item_id"] for p in dados["pedidos"] for i in p["itens"]]
         return None

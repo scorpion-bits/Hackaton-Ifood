@@ -14,13 +14,16 @@ import re
 
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
-from .busca import CONFIRMA, buscar_detalhado, ler_endereco
-from .interprete import CONSULTA_RESTRICAO, aplicar_quantidades, interpretar
-from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
+from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
+from .interprete import (CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite,
+                         normalizar)
+from .juiz import ROTULO_RESTRICAO, acertos, avaliar, bebida_sem_pedir, nota_fallback
+from .regras import aplicar_regras, lojas_mais_baratas_na_busca
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
+MAX_LOJAS_DO_PRINCIPAL = 3  # lojas do 1º item da pessoa onde os outros itens dela também são procurados (A′F1)
 MAX_LOJAS = 3  # cada loja a mais = +1 pedido, +1 taxa, +1 entrega (o δ do otimizador penaliza; os avisos deixam o custo explícito)
 TOP = 3
 NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só fica se não houver nada melhor
@@ -34,6 +37,44 @@ MSG_ENDERECO_SEM_ID = ("O endereço do iFood veio sem identificador (addressId):
 MSG_ENDERECO_SEM_COORDENADAS = ("O endereço do iFood veio sem coordenadas (latitude/longitude), e sem elas a busca "
                                 "não acha as lojas que entregam aí. Abra o endereço no app do iFood, confirme o local "
                                 "no mapa e rode o Match de novo.")
+MSG_ENDERECO_MOCK = ("Endereço de teste: a conta do iFood não tem endereço salvo, então a busca e o carrinho usam um "
+                     "local fixo de exemplo. O pedido real só sai com um endereço salvo na conta.")
+MSG_IFOOD_FORA = ("O iFood não respondeu à busca agora (erro do servidor do iFood, não do seu pedido). Tente de novo "
+                  "em instantes.")
+_TOOLS_DE_BUSCA = {"searchOffers", "browseOffers", "getMerchant"}
+
+
+def _erro_curto(erro: str) -> str:
+    """Bug 33: erro do iFood para a tela — sem o JSON cru em inglês (ele fica no rastro). INTERNAL e afins viram
+    "o iFood está instável agora"; mensagem já legível passa como está (até 120 caracteres)."""
+    if "INTERNAL" in erro or "upstream" in erro or erro.lstrip().startswith("{") or "{\"" in erro:
+        return "o iFood está instável agora"
+    return erro[:120]
+
+
+def _ifood_fora(cliente: ClienteIFood) -> bool:
+    """Bug 31: houve busca e TODAS as chamadas de busca falharam (ex.: `INTERNAL` do iFood)."""
+    buscas = [c for c in cliente.rastro_como_dicts() if c["tool"] in _TOOLS_DE_BUSCA]
+    return bool(buscas) and not any(c["ok"] for c in buscas)
+
+
+# addressId fixo do mock: o createCart real aceita (testado em 18/10) e devolve taxa e total reais.
+ID_ENDERECO_MOCK = "00000000-0000-4000-8000-000000000000"
+
+
+def endereco_mock(cfg: Config) -> dict | None:
+    """Endereço mockado do `.env` (`IFOOD_MCP_ENDERECO_MOCK=lat,lng`), ou None se desligado/inválido.
+
+    Por que existe: o `createAddress` do MCP real falha sempre com ADR-2001 nas contas de teste (bug 6 de
+    `docs/testes/bugs.md`; erro sem documentação no portal), e sem endereço salvo o Match nem busca. Com o mock,
+    a busca usa estas coordenadas e o carrinho real é montado com `ID_ENDERECO_MOCK`. Tirar quando o iFood
+    liberar o endereço nas contas de teste."""
+    try:
+        lat, lng = (float(x) for x in cfg.ifood_mcp_endereco_mock.split(","))
+    except ValueError:
+        return None
+    return {"id": ID_ENDERECO_MOCK, "apelido": "Teste", "texto": "Endereço de teste (mock)",
+            "latitude": lat, "longitude": lng}
 
 
 def _reais(valor: float) -> str:
@@ -94,6 +135,68 @@ def _sem_irrelevantes(candidatos: list[Candidato]) -> list[Candidato]:
     return bons if bons else candidatos
 
 
+# item que se apresenta como combo/kit (nome ou seção do cardápio): "Combo smash + batata + refri", "Kit escova"
+_RE_COMBO = re.compile(r"\bcombos?\b|\bkits?\b|\+|\bacompanha\b", re.IGNORECASE)
+
+
+def _montar_combos(slots: list[tuple[Desejo, Intencao]], candidatos: dict[str, list[Candidato]],
+                   detalhes: dict[tuple[str, str], dict]) -> None:
+    """Combos (A′F3, etapa 05): um combo/kit da loja que cita 2+ itens da mesma pessoa vira UM candidato que cobre
+    esses itens (`cobre`), com o preço contado uma vez. O otimizador compara "combo" com "itens avulsos" e nunca
+    escolhe os dois juntos. O item-combo deixa de valer como avulso nesses slots ("hambúrguer, batata e refri" não
+    vira lanche + batata + combo). Altera `candidatos` no lugar."""
+    por_pessoa: dict[str, list[Intencao]] = {}
+    for desejo, intencao in slots:
+        por_pessoa.setdefault(desejo.participante_id, []).append(intencao)
+    for intencoes in por_pessoa.values():
+        if len(intencoes) < 2:
+            continue
+        itens: dict[tuple[str, str], Candidato] = {}
+        for i in intencoes:
+            for c in candidatos.get(i.participante_id, []):
+                if not c.cobre and not c.viola:
+                    itens.setdefault((c.loja_id, c.item_id), c)
+        for chave, c in itens.items():
+            det = detalhes.get(chave, {})
+            if not (_RE_COMBO.search(c.item_nome) or _RE_COMBO.search(str(det.get("categoria", "")))):
+                continue
+            atende, pedidos = [], set()
+            for i in intencoes:  # "2 cocas" são o mesmo pedido: um combo com 1 refri não atende os dois
+                pedido = tuple(normalizar(x) for x in i.consultas)
+                if pedido not in pedidos and acertos(i, c, det):
+                    pedidos.add(pedido)
+                    atende.append(i)
+            if len(atende) < 2:
+                continue
+            notas = [x.nota for i in atende for x in candidatos.get(i.participante_id, [])
+                     if (x.loja_id, x.item_id) == chave]
+            rotulos = [r for r in (_rotulo(i) for i in atende) if r]
+            combo = dataclasses.replace(
+                c, participante_id=atende[0].participante_id, cobre=[i.participante_id for i in atende[1:]],
+                nota=max(notas or [c.nota]),
+                motivo=("Combo com " + " + ".join(rotulos) + ": 1 item só, preço do combo")[:MAX_MOTIVO])
+            for i in atende:
+                candidatos[i.participante_id] = [x for x in candidatos.get(i.participante_id, [])
+                                                 if (x.loja_id, x.item_id) != chave]
+            candidatos[atende[0].participante_id].append(combo)
+
+
+MARGEM_VAREJO = 0.15  # no varejo, só concorrem itens com nota até isto abaixo do melhor (A′F5)
+
+
+def _de_varejo(intencao: Intencao) -> bool:
+    return bool(intencao.verticais) and "RESTAURANT" not in intencao.verticais
+
+
+def _so_os_melhores(candidatos: list[Candidato]) -> list[Candidato]:
+    """Varejo: produto diferente não ganha por ser mais barato (ração de gato para quem pediu ração de cachorro).
+    O preço decide só entre itens que atendem igualmente bem."""
+    if not candidatos:
+        return candidatos
+    melhor = max(c.nota for c in candidatos)
+    return [c for c in candidatos if c.nota >= melhor - MARGEM_VAREJO - 1e-9]
+
+
 def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
     partes = []
     for parte in texto.split(" · "):
@@ -105,12 +208,87 @@ def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
     return " · ".join(partes)
 
 
+async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Desejo, Intencao]],
+                                   buscas: list[tuple[list[Candidato], dict]], julgados: list[list[Candidato]],
+                                   endereco: dict, vez: asyncio.Semaphore | None = None) -> list[list[Candidato]]:
+    """Pedido completo (A′F1, etapa 05): o 2º item em diante de cada pessoa também é procurado DENTRO das lojas
+    mais prováveis do 1º item dela (`searchOffers` + `refinements.merchantId`). Sem isso, "pizza e um refri" buscava
+    refri na cidade toda e o refri vinha de outra loja (+1 taxa, +1 entrega) ou ficava de fora.
+
+    Roda depois do juiz (bug 30): as lojas do 1º item são ordenadas pela nota e pelo preço do melhor item delas —
+    a ordem em que o otimizador tende a escolher —, não pela ordem da busca. Os itens achados na loja ganham a nota
+    do juiz determinístico (sem chamada extra ao LLM: o Groq grátis tem limite de tokens por minuto)."""
+    por_pessoa: dict[str, list[int]] = {}
+    for k, (desejo, _) in enumerate(slots):
+        por_pessoa.setdefault(desejo.participante_id, []).append(k)
+    for indices in por_pessoa.values():
+        if len(indices) < 2:
+            continue
+        melhor_da_loja: dict[str, tuple[float, float, str]] = {}  # loja → (nota, -preço, vertical)
+        for c in julgados[indices[0]]:
+            if c.viola:
+                continue
+            chave = (c.nota, -c.preco, c.vertical)
+            if c.loja_id not in melhor_da_loja or chave[:2] > melhor_da_loja[c.loja_id][:2]:
+                melhor_da_loja[c.loja_id] = chave
+        lojas = sorted(melhor_da_loja, key=lambda l: melhor_da_loja[l][:2], reverse=True)[:MAX_LOJAS_DO_PRINCIPAL]
+        # Teste do Thales (MCP real, SP): o Big Mac (o mais barato, nota baixa) ganhou, mas a batata só foi procurada nas
+        # lojas de melhor nota → batata de outra loja (+1 entrega) com McFritas no próprio McDonald's. Entram também as
+        # lojas mais baratas do 1º item, para que 1 loja vença sempre que der.
+        preco_min = {c.loja_id: min(x.preco for x in julgados[indices[0]] if x.loja_id == c.loja_id and not x.viola)
+                     for c in julgados[indices[0]] if not c.viola}
+        lojas += [l for l in sorted(preco_min, key=preco_min.get)[:lojas_mais_baratas_na_busca()] if l not in lojas]
+        for k in indices[1:]:
+            desejo, intencao = slots[k]
+            detalhes = buscas[k][1]
+            alvos = [l for l in lojas if not any(c.loja_id == l and not c.viola for c in julgados[k])]
+
+            async def na_loja(loja_id: str, intencao: Intencao = intencao):
+                async with (vez or asyncio.Semaphore(1)):
+                    return await buscar_na_loja(cliente, intencao, endereco, loja_id, melhor_da_loja[loja_id][2])
+
+            for novos, det_novos in await asyncio.gather(*(na_loja(l) for l in alvos)):  # lojas ao mesmo tempo
+                vistos = {(c.loja_id, c.item_id) for c in julgados[k]}
+                novos = [c for c in novos if (c.loja_id, c.item_id) not in vistos]
+                if not novos:
+                    continue
+                detalhes.update(det_novos)
+                todos = julgados[k] + novos
+                for c in novos:
+                    c.nota, c.motivo = nota_fallback(intencao, c, det_novos.get((c.loja_id, c.item_id), {}), todos,
+                                                     ha_acertos=True)
+                julgados[k] = todos
+    return julgados
+
+
+def _economia_de_taxa(melhor: Combinacao, validos: dict[str, list[Candidato]], taxas: dict[str, float]) -> str:
+    """"Juntando em 2 lojas (em vez de 3), o grupo economiza R$ 7,50 de taxa": compara com cada item vindo da loja
+    do item de maior nota (o que cada um escolheria sozinho). Vazio se não economiza ou se falta alguma taxa."""
+    sozinho: list[str] = []
+    for slot in melhor.escolhas:
+        if not validos.get(slot):
+            continue
+        preferido = max(validos[slot], key=lambda c: (c.nota, -c.preco))
+        if preferido.loja_id not in sozinho:
+            sozinho.append(preferido.loja_id)
+    if len(sozinho) <= len(melhor.lojas) or any(l not in taxas for l in [*sozinho, *melhor.lojas]):
+        return ""
+    diferenca = round(sum(taxas[l] for l in sozinho) - sum(taxas[l] for l in melhor.lojas), 2)
+    if diferenca < 0.01:
+        return ""
+    n = len(melhor.lojas)
+    return (f"Juntando os itens em {n} loja{'s' if n != 1 else ''}, o pedido paga {_reais(diferenca)} a menos de taxa "
+            f"de entrega do que se cada item viesse da loja com a melhor nota ({len(sozinho)} lojas).")
+
+
 def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], validos: dict[str, list[Candidato]],
-                      pessoa_de: dict[str, str], nomes: dict[str, str]) -> tuple[list[str], list[str]]:
-    """Avisos sobre o que ficou de fora na melhor combinação; devolve (avisos, slots que ficaram de fora)."""
+                      pessoa_de: dict[str, str], nomes: dict[str, str],
+                      ja_avisados: set[str] | None = None) -> tuple[list[str], list[str]]:
+    """Avisos sobre o que ficou de fora na melhor combinação; devolve (avisos, slots que ficaram de fora).
+    `ja_avisados`: slots que já têm "Não achei X" (não ganham um 2º motivo que contradiz o 1º)."""
     avisos: list[str] = []
     fora: list[str] = []
-    presentes = {pessoa_de[s] for s in melhor.escolhas}
+    presentes = {pessoa_de[s] for s in [*melhor.escolhas, *melhor.cobertos]}
     gasto: dict[str, float] = {}
     for slot, c in melhor.escolhas.items():
         gasto[pessoa_de[slot]] = gasto.get(pessoa_de[slot], 0.0) + c.preco
@@ -118,7 +296,7 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     limite_atingido = len(melhor.lojas) >= MAX_LOJAS
     for desejo, intencao in slots:
         slot, pid = intencao.participante_id, desejo.participante_id
-        if slot in melhor.escolhas or not validos[slot]:
+        if slot in melhor.escolhas or slot in melhor.cobertos or not validos[slot] or slot in (ja_avisados or set()):
             continue
         fora.append(slot)
         if pid not in presentes:
@@ -144,19 +322,30 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     return avisos, fora
 
 
-async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo]) -> dict:
-    """Roda o Match para o grupo. Nunca inventa preço; erro de tool vira aviso legível."""
+async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo],
+                      lojas_excluidas: dict[str, str] | None = None) -> dict:
+    """Roda o Match para o grupo. Nunca inventa preço; erro de tool vira aviso legível.
+
+    `lojas_excluidas` ({loja_id: nome}, bug 36): lojas que responderam MERCH-* no carrinho desta sala; ficam de fora."""
     resultado: dict = {"combinacoes": [], "intencoes": [], "avisos": [], "rastro": [], "endereco": None,
                        "pessoas": []}
     avisos: list[str] = resultado["avisos"]
 
+    falha_enderecos: str | None = None  # detalhe do erro do listAddresses
     try:
         endereco = ler_endereco(await cliente.chamar("listAddresses"))
     except ErroMCP as e:
         if "(401)" in str(e):  # login recusado no meio da sessão: a rota devolve 401 com a mensagem certa
             raise
-        avisos.append(f"Não consegui ler os endereços no iFood: {e}")
+        falha_enderecos = str(e)
         endereco = None
+    if endereco is None and (mock := endereco_mock(cfg)):
+        # lista vazia (ADR-2001 no createAddress) ou listAddresses fora do ar (bug 23): usa o mock do .env
+        endereco = mock
+        avisos.append(f"Não consegui ler os endereços no iFood ({_erro_curto(falha_enderecos)}); usando o endereço "
+                      "de teste." if falha_enderecos else MSG_ENDERECO_MOCK)
+    elif falha_enderecos:
+        avisos.append(f"Não consegui ler os endereços no iFood: {_erro_curto(falha_enderecos)}")
     if endereco is None:
         if not avisos:
             avisos.append(MSG_SEM_ENDERECO)
@@ -177,12 +366,37 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     ajustadas = [aplicar_quantidades(d, lista) for d, lista in zip(desejos, interpretacoes)]
     interpretacoes = [lista for lista, _ in ajustadas]
     avisos.extend(a for _, avs in ajustadas for a in avs)  # quantidade ignorada nunca some calada
+    # regras_pedido.json: sem o botão "Compras", tudo é restaurante; item só de mercado/farmácia/pet sai com aviso
+    reguladas = [aplicar_regras(d, lista) for d, lista in zip(desejos, interpretacoes)]
+    avisos.extend(a for _, avs in reguladas for a in avs)
+    desejos = [d for d, (lista, _) in zip(desejos, reguladas) if lista]
+    interpretacoes = [lista for lista, _ in reguladas if lista]
+    if not desejos:  # ninguém ficou com item: a rota responde 409 com os avisos ("ligue Compras")
+        resultado["rastro"] = cliente.rastro_como_dicts()
+        return resultado
+    for d in desejos:  # lista de compras longa: o que passou do limite vira aviso
+        if fora_do_limite := itens_alem_do_limite(d):
+            avisos.append(f"{d.nome} pediu mais de {MAX_SLOTS} itens: o Match monta até {MAX_SLOTS} por pessoa; "
+                          f"ficou de fora: {', '.join(fora_do_limite)}.")
     slots: list[tuple[Desejo, Intencao]] = [(d, i) for d, lista in zip(desejos, interpretacoes) for i in lista]
     pessoa_de = {i.participante_id: d.participante_id for d, i in slots}
 
-    buscas = []
-    for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
-        buscas.append(await buscar_detalhado(cliente, intencao, endereco))
+    fechadas: dict[str, list[str]] = {}  # slot → lojas que tinham o item, mas estão fechadas agora (bug 32)
+    acima: dict[str, float] = {}  # slot → menor preço achado acima do orçamento da pessoa
+    # buscas dos slots ao mesmo tempo, no máximo MATCH_BUSCAS_PARALELAS (no real, 30 buscas em sequência ≈ 30 s)
+    vez = asyncio.Semaphore(getattr(cfg, "match_buscas_paralelas", 4))
+
+    async def buscar_slot(intencao: Intencao):
+        async with vez:
+            return await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas, acima=acima)
+
+    buscas = list(await asyncio.gather(*(buscar_slot(i) for _, i in slots)))
+    if not any(cands for cands, _ in buscas) and _ifood_fora(cliente):
+        # bug 31: todas as buscas deram erro do iFood — não é o pedido nem o orçamento da pessoa
+        avisos[:] = [a for a in avisos if "endereço de teste" in a or "endereços no iFood" in a] + [MSG_IFOOD_FORA]
+        resultado["problema"] = "ifood"
+        resultado["rastro"] = cliente.rastro_como_dicts()
+        return resultado
     if sem_coordenadas and not any(cands for cands, _ in buscas):
         # sem coordenadas e nada achado: o problema é o endereço, não o pedido ("Não achei X" enganaria)
         avisos[:] = [a for a in avisos if a == MSG_ENDERECO_SEM_ID] + [MSG_ENDERECO_SEM_COORDENADAS]
@@ -192,7 +406,16 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     julgados = await asyncio.gather(*(
         avaliar(cfg, d, i, cands, det) for (d, i), (cands, det) in zip(slots, buscas)
     ))
-    candidatos = {i.participante_id: _sem_irrelevantes(lista) for (_, i), lista in zip(slots, julgados)}
+    julgados = await _completar_na_mesma_loja(cliente, slots, buscas, list(julgados), endereco, vez)
+    candidatos = {i.participante_id: (_so_os_melhores(_sem_irrelevantes(lista)) if _de_varejo(i)
+                                      else _sem_irrelevantes(lista))
+                  for (_, i), lista in zip(slots, julgados)}
+    if lojas_excluidas:
+        tinham = {c.loja_id for lista in candidatos.values() for c in lista} & set(lojas_excluidas)
+        candidatos = {slot: [c for c in lista if c.loja_id not in lojas_excluidas] for slot, lista in candidatos.items()}
+        if tinham:
+            avisos.append(f"Deixei de fora {', '.join(lojas_excluidas[l] for l in sorted(tinham))}: não está aceitando "
+                          "pedidos pelo iFood agora.")
     validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
 
     # relevância: o melhor item do slot precisa passar de NOTA_RELEVANTE; senão é "opção aproximada" (e avisa)
@@ -200,9 +423,14 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
               if validos[i.participante_id] and max(c.nota for c in validos[i.participante_id]) < NOTA_RELEVANTE]
     for desejo, intencao in slots:
         slot = intencao.participante_id
-        if not validos[slot]:
+        if not validos[slot] and fechadas.get(slot):  # bug 32: achou, mas a loja está fechada agora
+            lojas = ", ".join(fechadas[slot][:3]) + (" e outras" if len(fechadas[slot]) > 3 else "")
+            avisos.append(f"{_o_que(intencao).capitalize()} para {desejo.nome}: as lojas que têm ({lojas}) estão "
+                          "fechadas agora.")
+        elif not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
-            avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
+            preco = f": o mais barato custa {_reais(acima[slot])}" if slot in acima else ""
+            avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}{preco}.")
     if sem_coordenadas and any(not cands for cands, _ in buscas):
         avisos.append("O endereço do iFood veio sem coordenadas (latitude/longitude): a busca pode ter deixado "
                       "lojas de fora. Confirme o local no app do iFood.")
@@ -212,17 +440,22 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             continue
         slot = intencao.participante_id
         candidatos[slot] = [c for c in candidatos[slot]
-                            if not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}))]
+                            if not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}), c.item_nome)]
         validos[slot] = _validos(intencao, candidatos[slot])
         if not validos[slot]:  # só sobrou bebida para quem pediu comida: não sugere nada
             descartados.append((desejo, intencao))
-            avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}. Quer mudar o pedido?")
+            teto = (f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max and slot in acima else "")
+            preco = f": o mais barato custa {_reais(acima[slot])}" if slot in acima else ""
+            avisos.append(f"Não achei {_pediu(desejo, intencao)}{teto} para {desejo.nome}{preco}. Quer mudar o pedido?")
     fracos = [f for f in fracos if f not in descartados]
+    aviso_aproximada: dict[str, tuple[str, str]] = {}  # slot -> (texto provisório, "Não achei X para Y"), bug 24
     for desejo, intencao in fracos:
         slot = intencao.participante_id
         proximo = max(validos[slot], key=lambda c: (c.nota, -c.preco))
-        avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}; a opção mais próxima é "
-                      f"{proximo.item_nome} ({proximo.loja_nome}). Quer mudar o pedido?")
+        base = f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}"
+        texto = f"{base}; a opção mais próxima é {proximo.item_nome} ({proximo.loja_nome}). Quer mudar o pedido?"
+        avisos.append(texto)
+        aviso_aproximada[slot] = (texto, base)
         candidatos[slot] = _marcar_aproximada(candidatos[slot])
         validos[slot] = _validos(intencao, candidatos[slot])
 
@@ -244,6 +477,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     nada_relevante = bool(fracos or descartados) and not any(
         validos[i.participante_id] and i.participante_id not in ids_fracos for _, i in slots)
 
+    # A′F4: taxa de entrega de cada loja como veio na busca (estimativa; o valor final é o do getCart)
+    taxas = {loja: det["taxa_entrega"] for _, detalhes in buscas for (loja, _), det in detalhes.items()
+             if det.get("taxa_entrega") is not None}
     orcamentos = {d.participante_id: lista[0].orcamento_max for d, lista in zip(desejos, interpretacoes)}
     pesos = pesos_por_perfil([lista[0].perfil for lista in interpretacoes])
 
@@ -256,32 +492,53 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         candidatos, leilao = await rodar_leilao(cfg, slots, candidatos, detalhes_todos, nomes, politica)
         leilao["demonstracao"] = demonstracao
         validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
+    detalhes_combo = {chave: det for _, detalhes in buscas for chave, det in detalhes.items()}
+    _montar_combos(slots, candidatos, detalhes_combo)
+    validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
     if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
         combos = []
-        avisos[:] = [a.removesuffix(" Quer mudar o pedido?") for a in avisos]  # a pergunta vai uma vez só, no fim
-        avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
+        # a pergunta vai uma vez só, no fim; sem combinação, "a opção mais próxima" contradiz o aviso final (bug 14)
+        avisos[:] = [a.removesuffix(" Quer mudar o pedido?").split("; a opção mais próxima é")[0].rstrip(".") + "."
+                     for a in avisos]
+        if any(i.participante_id in acima for _, i in descartados):  # existe, mas passa do orçamento
+            avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
+                          "Tente aumentar o orçamento ou tirar uma restrição.")
+        else:
+            avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
     else:
         combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,
-                          pessoa_de=pessoa_de)
+                          pessoa_de=pessoa_de, taxas=taxas)
 
     if nada_relevante:
         pass  # já avisado acima
+    elif not combos and any(fechadas.get(i.participante_id) and not validos[i.participante_id] for _, i in slots):
+        avisos.append("Tente de novo quando as lojas abrirem.")  # bug 32: não é o orçamento
+    elif not combos and not acima and not any(candidatos.get(i.participante_id) for _, i in slots):
+        # nada achado em loja nenhuma (ex.: "vinho e gelo" sem adega perto): não é o orçamento
+        avisos.append("Nada do que foi pedido está nas lojas abertas perto de você. Quer mudar o pedido?")
     elif not combos:
         avisos.append("Nenhuma combinação coube nas regras (orçamento e restrições). "
                       "Tente aumentar o orçamento ou tirar uma restrição.")
     else:
         melhor = combos[0]
-        extras, fora = _avisos_da_melhor(melhor, slots, validos, pessoa_de, nomes)
+        for slot, (texto, base) in aviso_aproximada.items():  # o aviso cita o item que a combinação de fato usa
+            esc = melhor.escolhas.get(slot)
+            novo = (f"{base}; a opção mais próxima é {esc.item_nome} ({esc.loja_nome}). Quer mudar o pedido?"
+                    if esc else f"{base}. Quer mudar o pedido?")
+            avisos[:] = [novo if a == texto else a for a in avisos]
+        extras, fora = _avisos_da_melhor(melhor, slots, validos, pessoa_de, nomes,
+                                         {i.participante_id for _, i in descartados})
         avisos.extend(extras)
         if fora:  # mediação: mostra o que daria para incluir com mais uma loja (sempre com confirmação humana)
             com_mais = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS + 1, top=1, orcamentos=orcamentos,
-                                pessoa_de=pessoa_de)
+                                pessoa_de=pessoa_de, taxas=taxas)
             def mantem(pid: str) -> bool:  # a pessoa ganha o item sem piorar o que já tinha
                 return all(com_mais[0].escolhas.get(s) is not None
                            and com_mais[0].escolhas[s].nota >= c.nota - 0.1
                            for s, c in melhor.escolhas.items() if pessoa_de[s] == pid)
 
-            ganhos = [s for s in fora if com_mais and s in com_mais[0].escolhas and mantem(pessoa_de[s])]
+            ganhos = [s for s in fora if com_mais and (s in com_mais[0].escolhas or s in com_mais[0].cobertos)
+                      and mantem(pessoa_de[s])]
             if ganhos:
                 rotulos = {i.participante_id: (_rotulo(i) or "item") for _, i in slots}
                 lista = ", ".join(f"{rotulos[s]} de {nomes[pessoa_de[s]]}" for s in ganhos)
@@ -291,7 +548,15 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         if n > 1:
             avisos.append(f"{n} lojas = {n} pedidos, {n} taxas de entrega e {n} entregas (podem chegar em "
                           "horários diferentes).")
-        if not melhor.taxa_conhecida:
+        if melhor.taxa_conhecida:
+            economia = _economia_de_taxa(melhor, validos, taxas)
+            if economia:
+                avisos.append(economia)
+            avisos.append("A taxa de entrega veio da busca do iFood (estimada); o valor final aparece no carrinho, "
+                          "antes de você confirmar.")
+            if any(orcamentos.values()):  # smoke 18/10: "até R$ 42" e total com taxa R$ 48,79 sem explicação
+                avisos.append("O orçamento de cada pessoa vale para os itens; a taxa de entrega é somada à parte.")
+        else:
             avisos.append("A taxa de entrega de cada loja só aparece no carrinho, antes de você confirmar.")
 
     combinacoes = [para_dict(c) for c in combos]

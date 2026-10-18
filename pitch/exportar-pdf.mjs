@@ -1,5 +1,5 @@
 // Exporta pitch/index.html para pitch/pitch.pdf usando um navegador já instalado (sem baixar nada).
-// Uso: cd pitch && npm install && npm run pdf
+// Uso: cd pitch && npm install && npm run pdf   (tema escuro: node exportar-pdf.mjs escuro)
 // Navegador: variável PITCH_BROWSER, ou Edge/Chrome no Windows, ou Chromium/Chrome no Linux.
 import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -29,8 +29,10 @@ function acharNavegador() {
 
 const navegador = await chromium.launch({ executablePath: acharNavegador() });
 const pagina = await navegador.newPage();
-await pagina.goto(pathToFileURL(join(aqui, "index.html")).href + "?print-pdf");
-await pagina.waitForFunction(() => window.Reveal && window.Reveal.isReady());
-await pagina.pdf({ path: join(aqui, "pitch.pdf"), preferCSSPageSize: true, printBackground: true });
+const tema = process.argv[2] === "escuro" ? "escuro" : "claro";
+const saida = tema === "escuro" ? "pitch-escuro.pdf" : "pitch.pdf";
+await pagina.goto(pathToFileURL(join(aqui, "index.html")).href + `?print&tema=${tema}`);
+await pagina.waitForLoadState("load");
+await pagina.pdf({ path: join(aqui, saida), width: "1600px", height: "900px", printBackground: true });
 await navegador.close();
-console.log("PDF gerado em pitch/pitch.pdf — faça commit dele.");
+console.log(`PDF gerado em pitch/${saida} — faça commit dele.`);

@@ -24,6 +24,7 @@ import math
 from dataclasses import dataclass
 
 from .modelos import PERFIS, Candidato, Combinacao, Pesos
+from .regras import peso_mesma_loja
 
 MAX_CANDIDATOS_POR_PESSOA = 8  # por slot
 MAX_COMBINACOES = 50_000  # por conjunto de lojas
@@ -81,10 +82,10 @@ def filtrar_validos(
 
 
 def _sem_repetidos(lista: list[Candidato]) -> list[Candidato]:
-    vistos: set[tuple[str, str]] = set()
+    vistos: set[tuple] = set()
     saida = []
     for c in lista:
-        chave = (c.loja_id, c.item_id)
+        chave = (c.loja_id, c.item_id, tuple(c.cobre))  # o combo (cobre 2+ slots) não é o mesmo que o item avulso
         if chave not in vistos:
             vistos.add(chave)
             saida.append(c)
@@ -157,6 +158,7 @@ class _OpcaoPessoa:
     sat: float
     lojas: frozenset[str]
     mascara: int = 0  # bit de cada loja (para testar o conjunto de lojas rápido)
+    n_lojas: int = 1  # lojas dos itens desta pessoa (regras_pedido.json: mesma loja sempre que der)
     eta_max: int = 0
     perecivel: bool = False
 
@@ -177,23 +179,38 @@ def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], tet
     principal = slots[0]
     varios = len(com_opcao) > 1
     listas = [([None] + validos[s]) if varios else validos[s] for s in com_opcao]
+    # slots com as mesmas opções = o mesmo pedido repetido ("2 cocas"): aí o mesmo item vale para os dois
+    opcoes_do_slot = {s: frozenset((c.loja_id, c.item_id, tuple(c.cobre)) for c in validos[s]) for s in com_opcao}
     opcoes: list[_OpcaoPessoa] = []
     for combo in itertools.product(*listas):
         escolhidos = tuple(c for c in combo if c is not None)
         if not escolhidos:
             continue
         if len({(c.loja_id, c.item_id) for c in escolhidos}) < len(escolhidos):
-            continue  # o mesmo item não vale por dois slots
+            slots_do_item: dict[tuple[str, str], set[frozenset]] = {}
+            for s, c in zip(com_opcao, combo):
+                if c is not None:
+                    slots_do_item.setdefault((c.loja_id, c.item_id), set()).add(opcoes_do_slot[s])
+            if any(len(conjuntos) > 1 for conjuntos in slots_do_item.values()):
+                continue  # o mesmo item não vale por dois slots de pedidos diferentes
+        # combo (A′F3): os slots que ele cobre não levam outro item (nada de "lanche + combo com lanche")
+        cobertos = {s for c in escolhidos for s in c.cobre}
+        if any(c is not None and s in cobertos for s, c in zip(com_opcao, combo)):
+            continue
+        if sum(len(c.cobre) for c in escolhidos) != len(cobertos):
+            continue  # 2 combos cobrindo o mesmo slot: redundante (e inflaria a nota; achado M2 do Milan)
         preco = round(sum(c.preco for c in escolhidos), 2)
         if teto is not None and preco > teto + 1e-9:
             continue
-        fora = [s for s, c in zip(com_opcao, combo) if c is None]
+        fora = [s for s, c in zip(com_opcao, combo) if c is None and s not in cobertos]
         penal = sum(PENAL_SLOT_PRINCIPAL_FORA if s == principal else PENAL_SLOT_EXTRA_FORA for s in fora)
         opcoes.append(_OpcaoPessoa(
             escolhidos=escolhidos, n_fora=len(fora), penal=penal, preco=preco,
-            sat=sum(c.nota for c in escolhidos) / len(escolhidos),
+            # o combo conta a nota dele para cada slot que atende
+            sat=sum(c.nota * (1 + len(c.cobre)) for c in escolhidos) / (len(escolhidos) + len(cobertos)),
             lojas=frozenset(c.loja_id for c in escolhidos),
             mascara=sum({bits[c.loja_id] for c in escolhidos}),
+            n_lojas=len({c.loja_id for c in escolhidos}),
             eta_max=max((c.eta_min for c in escolhidos if c.eta_min is not None), default=0),
             perecivel=any(c.perecivel and c.vertical == VERTICAL_RESTAURANTE for c in escolhidos),
         ))
@@ -286,6 +303,7 @@ def otimizar(
                 penal_slots = 0.0
                 atraso = 0
                 tem_perecivel = False
+                divididas = 0
                 for p, o in zip(ativas, escolha):
                     if o is None:
                         minimo = 0.0
@@ -296,6 +314,7 @@ def otimizar(
                     preco += o.preco
                     penal_slots += o.penal
                     atraso = max(atraso, o.eta_max)
+                    divididas += o.n_lojas - 1
                     tem_perecivel = tem_perecivel or o.perecivel
                 custo_total = round(preco + soma_taxas, 2)
                 penal = 0.0
@@ -304,7 +323,8 @@ def otimizar(
                 score = (soma_sat / len(ativas) + pesos.alfa_justica * minimo
                          - pesos.beta_custo * (custo_total / orcamento_ref)
                          - pesos.gama_atraso * (atraso / TEMPO_ALVO_MIN)
-                         - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots)
+                         - termo_lojas - pesos.epsilon_perecivel * penal - penal_slots
+                         - peso_mesma_loja() * divididas)
                 # 1º critério: atender o máximo de slots (deixar item de fora só se não couber no orçamento ou
                 # no limite de lojas); só depois o score. Assim δ/custo/perecível nunca "compram" um item cortado.
                 item = (-round(penal_slots, 4), round(score, 4), -custo_total, -next(contador), escolha)
@@ -349,7 +369,9 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
     termo_atraso = pesos.gama_atraso * (atraso_max / TEMPO_ALVO_MIN)
     termo_lojas = pesos.delta_lojas * (len(lojas) - 1)
     termo_perecivel = pesos.epsilon_perecivel * penal
-    score = (media + termo_justica - termo_custo - termo_atraso - termo_lojas - termo_perecivel - penal_slots)
+    termo_mesma_loja = peso_mesma_loja() * sum(o.n_lojas - 1 for o in escolha if o is not None)
+    score = (media + termo_justica - termo_custo - termo_atraso - termo_lojas - termo_perecivel - penal_slots
+             - termo_mesma_loja)
 
     componentes = {
         "media_nota": round(media, 4),
@@ -364,12 +386,14 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
         "termo_atraso": round(-termo_atraso, 4),
         "termo_lojas": round(-termo_lojas, 4),
         "termo_perecivel": round(-termo_perecivel, 4),
+        "termo_mesma_loja": round(-termo_mesma_loja, 4),
         "slots_fora": float(slots_fora),
         "termo_slots_fora": round(-penal_slots, 4),
         "pessoas_sem_opcao": float(len(sem_opcao) + len(fora_pessoas)),
     }
     combinacao = Combinacao(
         escolhas={c.participante_id: c for c in escolhidos},
+        cobertos={s: c.participante_id for c in escolhidos for s in c.cobre},
         lojas=lojas,
         score=round(score, 4),
         componentes=componentes,
