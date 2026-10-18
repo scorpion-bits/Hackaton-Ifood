@@ -42,7 +42,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Sala com QR e link | Chamar a turma | QR grande no projetor/tela, link para WhatsApp, lista "quem entrou" e "respondeu" | Padrão já conhecido de Uber Eats e DoorDash (ver `design-ifood.md` §4) |
 | "Rodar Match" | Sair da espera | Liberado com pelo menos 1 resposta; mensagem "A IA está lendo os desejos e consultando as lojas" | Espera com explicação parece trabalho, não travamento |
 | Leilão ao vivo | Ver como a escolha foi feita | Lojas disputam, falam e mostram preço e afinidade; botão **Pular** | Transparência (ver §4) |
-| Deck "É um Match!" | Escolher entre até 3 opções | 1 cartão por combinação, deslizar ou botões | Decidir sem tabela (ver §4) |
+| "O pedido do grupo" | Ver e confirmar o pedido que o IBits montou | Um cartão só, com a melhor combinação; mudar = "Ajustar com o IBits"; "Confirmar pedido" fixo no rodapé | O IBits já escolhe: o grupo não precisa comparar opções (ver §4) |
 | Junto ou separado | Definir quem paga | Duas opções com a consequência escrita ("na fatura aparecem N cobranças") | A pessoa escolhe sabendo o efeito |
 | Vaquinha | Receber de todos | Barra "x de N pagos", contador de prazo, botão "Recebi" para Pix e dinheiro | O organizador vê quem falta sem cobrar no grupo |
 | "Confira antes do ok" | Conferir tudo | Subtotal por loja, taxa do carrinho, total geral, aviso de N entregas | O último momento de corrigir |
@@ -56,10 +56,10 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Lê o QR | Entrar | Abre no navegador, sem app e sem login | Barreira zero |
 | "O que você quer?" | Dizer a vontade | Nome + frase livre + chips de 1 toque + orçamento opcional; "Lembrar de mim neste aparelho" | Meta de caber em 30 s (não medida); a preferência fica no celular dele |
 | Espera | Saber o que acontece | "Aguarde o organizador rodar o Match"; pode mudar o desejo | Sem ansiedade, sem refazer |
-| Leilão e deck | Ver o seu prato e o motivo | Mesmo leilão do organizador; deck só leitura | Todos veem a mesma coisa; só um decide |
+| Leilão e pedido | Ver o seu prato e o motivo | Mesmo leilão do organizador; no pedido, só a própria parte, em leitura, e a faixa "O organizador ajustou o pedido" quando ele muda algo | Todos veem a mesma coisa; só um decide |
 | Sua parte | Pagar a sua parte | Valor por pessoa (itens + rateio da taxa só das lojas dele); Pix, cartão ou dinheiro | Cada um paga só o que consumiu |
 
-## 4. Por que o leilão e por que o deck
+## 4. Por que o leilão e por que um pedido só
 
 ### Leilão ao vivo
 - **Torna visível o trabalho da IA.** Cada restaurante tem um agente vendedor que só enxerga o próprio cardápio (vindo
@@ -78,13 +78,16 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 - **Respeita o tempo.** Uma fala por vez (~0,8 s), botão **Pular** sempre visível, e o aparelho só vê o leilão uma vez
   por sala.
 
-### Deck
-- **Decidir entre 3 opções sem tabela.** Cada cartão é uma combinação inteira: afinidade %, "N de M bem atendidos", lojas e,
-  por pessoa, item · loja · preço · motivo.
-- **Gesto conhecido.** Deslizar para a direita = Match; para a esquerda = próxima. O padrão já é familiar de apps de
-  "match".
-- **Botões equivalentes.** Os mesmos dois botões ficam sempre na tela. Ninguém depende do gesto (ver §7).
-- **"É um Match!"** fecha a decisão com um momento de alegria, e leva direto a "junto ou separado".
+### Um pedido só (sem deck)
+- **O IBits já decide.** O otimizador calcula as melhores combinações, mas a tela mostra só a melhor. Uma versão
+  anterior tinha um deck para deslizar entre 3 opções e um "É um Match!"; saiu porque devolvia a escolha ao grupo e
+  lembrava app de namoro, quando a promessa é justamente tirar esse trabalho.
+- **Um cartão com tudo.** Afinidade %, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo, mais
+  os avisos honestos (item que ficou de fora, entregas em horários diferentes). Sem gesto: nada se perde por um toque.
+- **Mudar = conversar.** "Ajustar com o IBits" fica logo abaixo ("troca o sorvete do Milan por açaí"): o Match roda de
+  novo só com a mudança, o cartão ganha "Atualizado" e o item novo, "Novo".
+- **Confirmar sempre à mão.** "Confirmar pedido" fica fixo no rodapé e leva a "junto ou separado" (com 1 pessoa, direto
+  ao carrinho). Nada vai ao iFood nesse passo.
 
 ## 5. Confiança e segurança
 
@@ -118,9 +121,9 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   `#2F8A55` dá 4,3:1 → sempre em negrito e junto de palavra ou ícone ("pago", "respondeu"), nunca como única pista.
 - **Cor nunca é a única pista.** Status tem palavra ("⏳ aguardando", "pago"); Patrocinado tem texto, não só cor.
 - **Alvos de toque grandes** nos botões principais e chips; botões ocupam a largura no celular.
-- **Alternativa a todo gesto.** Deck: botões "próxima" e "dar match". Envio: botão "Confirmar envio" além do deslize.
-- **Movimento reduzido.** Com `prefers-reduced-motion`, o leilão mostra as falas sem animação e o deck troca de cartão
-  sem voo (o protótipo aprovado já trata isso; as telas do app seguem a mesma regra). **Pular** existe para todos.
+- **Alternativa a todo gesto.** O resultado não tem gesto, só botões. Envio: botão "Confirmar envio" além do deslize.
+- **Movimento reduzido.** Com `prefers-reduced-motion`, o leilão mostra as falas sem animação e o cartão do pedido
+  aparece sem transição (as telas do app seguem a mesma regra). **Pular** existe para todos.
 - **Leitores de tela.** Chips com `aria-pressed` e grupo rotulado (já no app), linha do tempo do pedido rotulada,
   ícones decorativos com `aria-hidden`; no leilão, o feed de falas é região viva (`aria-live`), como no protótipo.
 - **Linguagem simples.** Frases curtas, voz ativa, sem jargão: "Nada é enviado ao iFood ainda: você revisa antes."
@@ -146,8 +149,8 @@ Ainda **não temos dados de uso**. Não citamos números de pesquisa. Estas são
 |---|---|
 | Tempo da sala criada até o pedido enviado | O Match tira mesmo o trabalho do organizador? |
 | Tempo do convidado até enviar o desejo | A promessa de 30 s se cumpre? |
-| % de salas que viram pedido | Onde o grupo desiste (espera, deck, vaquinha, envio)? |
-| % de grupos que dão match no 1º cartão | A primeira combinação é boa o bastante? |
+| % de salas que viram pedido | Onde o grupo desiste (espera, resultado, vaquinha, envio)? |
+| % de grupos que confirmam sem usar o "Ajustar" | A primeira combinação é boa o bastante? |
 | % de "Pular" no leilão | O leilão ajuda ou atrapalha? |
 | % de vaquinhas que fecham no prazo, e quantas vezes o organizador cobre | O prazo e a cobrança funcionam? |
 | NPS do organizador e do convidado, em separado | Os dois lados saem satisfeitos? |
@@ -157,7 +160,7 @@ Ainda **não temos dados de uso**. Não citamos números de pesquisa. Estas são
 2. Comparar com o jeito atual (grupo de WhatsApp + um app de entrega): tempo total, mensagens trocadas e quem ficou
    satisfeito.
 3. Observar em silêncio e perguntar no fim: "Em que momento você ficou em dúvida?" e "Você confiou no total?".
-4. Variantes A/B: leilão ligado × direto ao deck; deck × lista simples.
+4. Variantes A/B: leilão ligado × direto ao pedido; um pedido só × as 3 melhores combinações para escolher.
 
 No evento, a equipe aplica um formulário curto com participantes; o resultado, se coletado, fica em
 `docs/pesquisa-usuarios.md`, com o número de respostas.
