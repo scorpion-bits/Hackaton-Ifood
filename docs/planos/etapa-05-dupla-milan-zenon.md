@@ -85,6 +85,10 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 01h41 — Integrados Thales (P2 IA real; endereço mock pelo `.env` + `options=[]`, bugs 16–20) e Zenon (bugs 8/11, B7).
+  **Carrinho real com taxa já sai** (BK, taxa R$ 9,99) com endereço mock. A6 CI ✅. Decisões do Milan: Z1 liberado até 05h
+  (B9), D1 fora, **bug 18: usar o Cartão de Teste** (nunca Pix; envio só com flag + consentimento). Em andamento: A3
+  (dev-backend, Sonnet, worktree) e bugs 17–20 (dev-mcp-ifood, Opus). 405 testes.
 - 18/10 01h04 — A1 (dev-mcp-ifood, Opus): bugs 1/2/3/5 do MCP real com as amostras do Thales. createCart com items,
   listPaymentMethods por merchantId, erro em resposta normal vira ErroMCP com código, parser de busca no formato real
   (antes descartava 100% dos itens reais), browseOffers com merchantType. 402 testes; demo igual à linha de base.
