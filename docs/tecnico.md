@@ -1,6 +1,6 @@
 # Match — desenho de solução e documentação técnica
 
-> Entregáveis 2 (desenho de solução) e 5 (documentação técnica) do Hackathon SEMCOMP 29 × iFood.
+> Entregáveis 2 (desenho de solução) e 5 (documentação técnica) do Hackathon SEMCOMP × iFood 2026.
 > Protótipo de hackathon, não afiliado ao iFood. Como rodar: [`README.md`](../README.md).
 > Estado do código em 18/10/2026 (manhã).
 

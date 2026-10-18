@@ -72,7 +72,7 @@ const ENTREGAVEIS = [
     desc: 'Leilão de agentes, otimizador, acerto em centavos, estados da sala, segurança, uso do MCP, limites e testes.',
     md: tec05, base: 'docs' },
   { n: '06', titulo: 'Feedback sobre os MCPs', fonte: 'docs/feedback-mcp.md',
-    desc: 'Top 3 problemas por gravidade, o que funcionou bem e o registro de dores durante o evento.',
+    desc: 'Top 4 problemas por gravidade, o que funcionou bem e o registro de dores durante o evento.',
     md: tirarH1(ler('docs/feedback-mcp.md')), base: 'docs' },
 ];
 

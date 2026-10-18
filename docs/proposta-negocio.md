@@ -104,8 +104,9 @@ E o iFood quer **multiplicar por 5** a frente de Ads até 2030 ([Startups, 12/11
 
 O Patrocinado leva essa regra ao extremo, no momento em que um **agente** compra:
 - A loja patrocinada tem o lance **mostrado primeiro**, com o rótulo "Patrocinado".
-- O pagamento **nunca** muda nota, filtro ou escolha do Match e não garante vaga entre as lojas consultadas. Na
-  demo, a patrocinada fala primeiro e **perde**.
+- O pagamento **nunca** muda nota, filtro ou escolha do Match e não garante vaga entre as lojas consultadas. O
+  mecanismo existe e é testado (`test_leilao.py`); na demo de hoje está **desligado**: a patrocinada falaria primeiro
+  e não ganharia por isso.
 - **O iFood vende atenção, não a decisão.** O agente comprador trabalha para o grupo; se ele pudesse ser comprado,
   ninguém confiaria nele, e o canal inteiro perderia valor.
 - Rótulo sempre visível, em texto (não só cor), cumprindo o princípio da identificação da publicidade do CDC
@@ -149,11 +150,11 @@ Não temos dado de quantos desses pedidos são de grupo; não estimamos.
 | Lojas por sessão | mais lojas atendidas por ocasião? |
 | % de vaquinhas que fecham no prazo | a trava de 100% funciona sem irritar? |
 | CTR do Patrocinado (abriu a loja depois de ver o lance) | a atenção vendida tem valor para a loja? |
-| % de grupos que dão match no 1º cartão | a IA acerta? |
+| % de grupos que confirmam sem usar o "Ajustar" | a IA acerta? |
 | NPS do organizador e do convidado, separados | os dois lados saem satisfeitos? |
 
 **Piloto proposto:** 4 semanas numa cidade universitária como São Carlos (muitas repúblicas e turmas).
-- Grupo A: entrada "Pedir em grupo? Dê um Match" na home. Grupo B: app como hoje.
+- Grupo A: banner "Fazer um match" na home. Grupo B: app como hoje.
 - Semana 1–2 sem Patrocinado; semana 3–4 com Patrocinado para lojas voluntárias, para medir se o rótulo muda a
   confiança (NPS e % de salas que viram pedido não podem cair).
 - Critério de sucesso: definido com o iFood antes de começar (não chutamos número).

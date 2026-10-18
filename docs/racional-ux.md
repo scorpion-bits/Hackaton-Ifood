@@ -21,7 +21,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 
 ## 2. Princípios de design
 
-1. **Dentro do app do iFood.** O Match é uma entrada na home ("Pedir em grupo? Dê um Match"), não um app novo.
+1. **Dentro do app do iFood.** O Match é uma entrada na home (banner "Fazer um match"), não um app novo.
    Familiaridade reduz o que a pessoa precisa aprender.
 2. **Um só login.** Só o organizador entra no iFood. Convidado entra por link ou QR, sem cadastro.
 3. **30 segundos para o convidado (meta, não medida).** Nome, uma frase livre e chips opcionais (sem glúten, sem lactose...). Nada mais.
@@ -43,7 +43,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 
 | Passo | Objetivo | Decisão de design | Por quê |
 |---|---|---|---|
-| Home → banner "Dê um Match" | Começar sem procurar | Banner na home e atalho na barra inferior (selo "protótipo"), no visual do app | Quem já usa o iFood acha sem aprender nada |
+| Home → banner "Fazer um match" | Começar sem procurar | Banner na home e atalho na barra inferior (selo "protótipo"), no visual do app | Quem já usa o iFood acha sem aprender nada |
 | "Quem vai comer?" (só eu / em grupo) | Mesmo fluxo para 1 ou N | O individual é o grupo de 1, sem sala | Um fluxo só para aprender e manter |
 | Sala com QR e link | Chamar a turma | QR grande no projetor/tela, link para WhatsApp, lista "quem entrou" e "respondeu" | Padrão já conhecido de Uber Eats e DoorDash (ver `design-ifood.md` §4) |
 | "Rodar Match" | Sair da espera | Liberado com pelo menos 1 resposta; mensagem "A IA está lendo os desejos e consultando as lojas" | Espera com explicação parece trabalho, não travamento |
@@ -97,7 +97,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   lembrava app de namoro, quando a promessa é justamente tirar esse trabalho.
 - **Um cartão com tudo.** Afinidade %, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo, mais
   os avisos honestos (item que ficou de fora, entregas em horários diferentes). Sem gesto: nada se perde por um toque.
-- **Mudar = conversar.** "Ajustar com o Match" fica logo abaixo ("troca o sorvete do Milan por açaí"): o Match roda de
+- **Mudar = conversar.** "Ajustar com o Match" fica logo abaixo ("troca o sorvete de Bruno por açaí"): o Match roda de
   novo só com a mudança, o cartão ganha "Atualizado" e o item novo, "Novo".
 - **Confirmar sempre à mão.** "Confirmar pedido" fica fixo no rodapé e leva a "junto ou separado" (com 1 pessoa, direto
   ao carrinho). Nada vai ao iFood nesse passo.
