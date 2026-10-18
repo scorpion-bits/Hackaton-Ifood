@@ -7,6 +7,8 @@
 - Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
 - **Plano vigente: `docs/planos/etapa-05-dupla-milan-zenon.md`** — Milan = back/MCP/integração (só ele integra);
   Zenon = front/entregáveis/pitch (**remoto, de casa: só tarefas via git**); Thales = testes guiados (`docs/testes/roteiro-testes.md`, sem editar código).
+- **O que o Thales precisa fazer → `docs/testes/para-o-thales.md`** (fila P1, P2…; o agente do Thales lê no começo de
+  cada rodada e guia o Thales). Milan, Thales e Zenon trabalham em paralelo, cada um numa coisa; não chamar ninguém.
 - **Ao fim de cada etapa** (pedido do Milan, para economizar token): registrar em "Próximo passo" do plano vigente e
   dizer ao humano a próxima etapa, o **modelo recomendado** (Haiku/Sonnet/Opus) e se dá `/clear` ou `/compact`.
 
