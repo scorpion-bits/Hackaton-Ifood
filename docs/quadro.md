@@ -20,6 +20,7 @@
 | Zenon | `zenon/b3-pitch-final` | B3 — pitch final (T24): ~5 min, frase única do aviso, Ajustar, Só eu, MCP real sem inventar número | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | ✅ | 18/10 00h02 | `ce9296a` (18/10 00h11), pronto para integrar. 10 slides, ~5 min, sem Patrocinado; disputa = avaliação simulada por nós. Pendente 👥: confirmar no PC do Thales as frases marcadas (`<!-- CONFIRMAR NO PC DO THALES -->` no slide 6 e `> ⚠️ confirmar` nos roteiros) e 3 ensaios cronometrados; regerar o `pitch.pdf` se mudar algo |
 | Zenon | `zenon/b4-fix-bolha-ajustar` | B4 — bolha do Ajustar mostra o nome duas vezes ("Entendi: Milan: Milan: açaí…"): o back já manda o `resumo` com o nome | `frontend/src/componentes/leilao/util.ts` | ✅ | 18/10 00h12 | `a6810d7` (18/10 00h14), pronto para integrar; typecheck, build e 377 testes ok. Visto pelo agente do pitch; não estava no `bugs.md` |
 | Zenon | `zenon/plano-nota-maxima` | Plano "rumo à nota máxima" (sugestões por pilar, dono e prazo) | `docs/plano-nota-maxima.md` (novo) | ✅ | 18/10 00h47 | `4194a3d` (18/10 00h48) — **para o Milan integrar** (só 1 arquivo novo) |
+| Zenon | `zenon/b6-smoke` | B6 — smoke 390×780 no modo demonstração (sala → 3 convidados → Rodar → disputa → deck → Ajustar → pagamento → pedido; Só eu; Recarregar demo) + capturas novas | `docs/testes/bugs.md` (só linhas novas), `docs/entrega/*` | 🔄 | 18/10 00h51 | |
 | Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
 
 ## Recados entre agentes
