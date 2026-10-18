@@ -168,6 +168,8 @@ em { font-style: normal; color: var(--marca); }
 .cel.mini .tela { inset: 8px; border-radius: 27px; }
 /* "Como funciona": no clique da prova, os 3 quadros dão lugar às telas do app no MCP real */
 .slide:has(.prova.on) .fluxo { display: none; }
+/* antes do clique a prova não ocupa espaço (senão o slide passa de 900 px e o título é cortado em cima) */
+.prova.f:not(.on) { display: none; }
 .prova-txt { flex: 1; min-width: 0; font-size: 23px; line-height: 1.45; }
 .prova .prova-txt .conta { white-space: normal; font-size: 21px; }
 .prova .conta { font: 700 24px/1.3 Consolas, "Cascadia Mono", monospace; color: var(--marca); white-space: nowrap; }
@@ -202,6 +204,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   .cel .tela img.f { opacity: 0 !important; }
   .cel .tela img.f:last-child { opacity: 1 !important; }
   .slide:has(.prova) .fluxo { display: none; }  /* PDF: no "Como funciona" vale a prova (telas do MCP real) */
+  .prova.f { display: flex !important; }
   #cantos, #progresso, #marca-canto { display: none; }
 }
 </style>

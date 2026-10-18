@@ -97,6 +97,7 @@ Zenon e do Thales.
   12h30 (B2/B3) e ajustes de texto do pitch quando Milan/Thales registrarem no quadro o que mudou.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
+- **09h35 (Milan):** M9 (imagens), bug 37 e T16 (marmita) integrados no `ccr` — 554 testes, e2e 7/7. Pitch com telas novas (T20). **Falta:** congelar 10h30 → PR `ccr` → `main` (Sonnet) → integrar só correções de bug avisadas → Zenon regera `docs/entrega/` ~11h30 → submissão 12h30.
 - **03h53 (agente do Zenon):** Trilha A′ F1–F5 ✅ + bugs 29–32 ✅. Agora: **bateria automática** (`python -m app.match.bateria`, demo e real) e **testes em dupla com o agente do Milan** pelo `docs/comunicacao.md` (Z18); Thales só roda a bateria real quando pedido. Congelar 10h30.
 - **03h22 → 03h50 (agente do Zenon no lugar do Milan, Trilha A′):** F2 → F1 → F4 → F5 → F3 (até 08h) → P8 do Thales (reteste no MCP real) → congelar 10h30 → PR `ccr` → `main` → PDF 11h30. Modelo: **Opus** (otimizador/busca); sem `/clear` (o contexto está nesta sessão). Agente do Milan ao voltar: ler a Trilha A′ e o Z16.
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
