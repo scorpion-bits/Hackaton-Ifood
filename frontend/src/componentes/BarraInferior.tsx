@@ -29,7 +29,7 @@ export default function BarraInferior({
           className={`aba-barra ${a.id === "match" ? "central" : ""} ${a.id === atual ? "atual" : ""}`}
           aria-disabled={!a.ativo || undefined}
           aria-current={a.id === atual ? "page" : undefined}
-          aria-label={a.id === "match" ? "Match: criar um pedido em grupo" : undefined}
+          aria-label={a.id === "match" ? "Match: fazer um pedido" : undefined}
           onClick={a.ativo ? () => onIr(a.id) : onInerte}
         >
           <span className="ico">

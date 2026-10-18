@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { chaveOrg, chaveUltimaSala, gravarLocal, lerLocal, chaveEu, ultimaSalaOrg, api, type Eu } from "../api";
 import BarraInferior from "../componentes/BarraInferior";
+import Folha from "../componentes/Folha";
 import Icone from "../componentes/Icone";
 import StatusIfood, { RecarregarDemo } from "../componentes/StatusIfood";
 import { MSG_FORA_PROTOTIPO, useToast } from "../componentes/Toast";
+import SoEu from "./SoEu";
 
 // Itens decorativos da home: aparecem apagados e não são botões.
 const CATS = [
@@ -54,10 +56,8 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
         <span />
       </header>
       <form className="tela" onSubmit={criar}>
-        <h1 className="titulo">Quem vai comer?</h1>
-        <p className="sub">
-          Pode ser só você ou a turma toda. Só você usa o iFood: a turma entra por link ou QR, sem login.
-        </p>
+        <h1 className="titulo">Chame a turma</h1>
+        <p className="sub">Só você usa o iFood: a turma entra por link ou QR, sem login.</p>
         <StatusIfood />
         <ol className="passos" aria-label="Como funciona">
           <li>
@@ -109,8 +109,39 @@ function CriarMatch({ onCancelar }: { onCancelar: () => void }) {
   );
 }
 
+/** Folha "Quem vai comer?": Só eu (tela única) ou Em grupo (sala com QR). */
+function QuemVaiComer({ onFechar, onSoEu, onGrupo }: { onFechar: () => void; onSoEu: () => void; onGrupo: () => void }) {
+  return (
+    <Folha titulo="Quem vai comer?" onFechar={onFechar}>
+      <div className="folha-acoes quem-opcoes">
+        <button type="button" className="quem-opcao" onClick={onSoEu}>
+          <span className="quem-ic" aria-hidden="true">
+            <Icone nome="pessoa" tamanho={28} />
+          </span>
+          <span className="quem-txt">
+            <strong>Só eu</strong>
+            <small>A IA acha o melhor pedido pra você em segundos</small>
+          </span>
+          <Icone nome="direita" tamanho={20} />
+        </button>
+        <button type="button" className="quem-opcao" onClick={onGrupo}>
+          <span className="quem-ic quem-ic-grupo" aria-hidden="true">
+            <Icone nome="celular" tamanho={28} />
+          </span>
+          <span className="quem-txt">
+            <strong>Em grupo</strong>
+            <small>A turma entra por link ou QR, sem login</small>
+          </span>
+          <Icone nome="direita" tamanho={20} />
+        </button>
+      </div>
+    </Folha>
+  );
+}
+
 export default function Inicio() {
-  const [criando, setCriando] = useState(false);
+  const [tela, setTela] = useState<"inicio" | "grupo" | "soeu">("inicio");
+  const [escolhendo, setEscolhendo] = useState(false);
   // null = ainda não sei (a resposta de /api/saude não chegou ou falhou); só afirmo "Demonstração" quando o servidor diz.
   const [demo, setDemo] = useState<boolean | null>(null);
   useEffect(() => {
@@ -132,7 +163,8 @@ export default function Inicio() {
   const fora = () => avisar(MSG_FORA_PROTOTIPO);
   const inicial = (lerLocal<Eu>(chaveEu)?.nome ?? "").trim().charAt(0).toUpperCase();
 
-  if (criando) return <CriarMatch onCancelar={() => setCriando(false)} />;
+  if (tela === "grupo") return <CriarMatch onCancelar={() => setTela("inicio")} />;
+  if (tela === "soeu") return <SoEu onCancelar={() => setTela("inicio")} />;
 
   return (
     <div className="home">
@@ -161,7 +193,7 @@ export default function Inicio() {
         </button>
 
         <div className="cats" aria-label="Categorias">
-          <button type="button" className="cat cat-match" onClick={() => setCriando(true)}>
+          <button type="button" className="cat cat-match" onClick={() => setEscolhendo(true)}>
             <i>
               <Icone nome="coracao" tamanho={26} />
               <em>novo</em>
@@ -176,7 +208,7 @@ export default function Inicio() {
           ))}
         </div>
 
-        <button type="button" className="hero" onClick={() => setCriando(true)} aria-label="Fazer um match">
+        <button type="button" className="hero" onClick={() => setEscolhendo(true)} aria-label="Fazer um match">
           <span className="hero-marca">
             <Icone nome="coracao" tamanho={30} />
             match
@@ -218,7 +250,20 @@ export default function Inicio() {
         <RecarregarDemo />
         <p className="rodape">Protótipo de hackathon · não afiliado ao iFood</p>
       </div>
-      <BarraInferior atual="inicio" onIr={(a) => a === "match" && setCriando(true)} onInerte={fora} />
+      <BarraInferior atual="inicio" onIr={(a) => a === "match" && setEscolhendo(true)} onInerte={fora} />
+      {escolhendo && (
+        <QuemVaiComer
+          onFechar={() => setEscolhendo(false)}
+          onSoEu={() => {
+            setEscolhendo(false);
+            setTela("soeu");
+          }}
+          onGrupo={() => {
+            setEscolhendo(false);
+            setTela("grupo");
+          }}
+        />
+      )}
       {toast}
     </div>
   );

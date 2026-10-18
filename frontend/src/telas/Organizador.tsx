@@ -7,6 +7,7 @@ import EsqueletoCartoes from "../componentes/Esqueleto";
 import Icone from "../componentes/Icone";
 import Rastro from "../componentes/Rastro";
 import { FormDesejo, contagemRespostas, lerPid } from "./Convidado";
+import { chaveSolo, salaSolo } from "./SoEu";
 import StatusIfood from "../componentes/StatusIfood";
 
 const ENDERECO_LOCAL = /^https?:\/\/(localhost|127\.|\[::1\])/;
@@ -30,6 +31,8 @@ export default function Organizador({
   const [rodando, setRodando] = useState(false);
   const [erro, setErro] = useState("");
   const [abrirDesejo, setAbrirDesejo] = useState(false);
+  // sala de uma pessoa só ("Só eu"): sem QR nem convite, a menos que a pessoa decida chamar mais gente
+  const [solo, setSolo] = useState(() => salaSolo(salaId));
 
   const link = `${base.replace(/\/+$/, "")}/#/s/${salaId}`;
   const ehLocal = ENDERECO_LOCAL.test(base);
@@ -63,6 +66,7 @@ export default function Organizador({
   const respondeu = cont?.resp ?? 0; // inclui o organizador: basta 1 resposta para rodar
   const convResp = cont?.convResp ?? 0;
   const convTotal = cont?.convTotal ?? 0;
+  const modoSolo = solo && convTotal === 0;
 
   async function copiar() {
     try {
@@ -118,6 +122,30 @@ export default function Organizador({
     <section className="tela">
       <StatusIfood />
 
+      {modoSolo ? (
+        <div className="solo-card">
+          <span className="solo-ic" aria-hidden="true">
+            <Icone nome="pessoa" tamanho={26} />
+          </span>
+          <span className="solo-txt">
+            <b>Pedido só seu{nomeOrg ? `, ${nomeOrg}` : ""}</b>
+            <small>
+              {eu?.respondeu ? "Seu desejo está salvo. É só procurar." : "Conte o que você quer para a IA procurar."}
+            </small>
+          </span>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              gravarLocal(chaveSolo(salaId), false);
+              setSolo(false);
+            }}
+          >
+            Chamar mais gente
+          </button>
+        </div>
+      ) : (
+        <>
       <div className="qrcard">
         {qr ? (
           <img className="qr" src={qr} alt="QR code do convite da sala" width={132} height={132} />
@@ -157,6 +185,11 @@ export default function Organizador({
         </label>
       </details>
 
+        </>
+      )}
+
+      {!modoSolo && (
+        <>
       <h2 className="sec2">
         Quem entrou
         <span>
@@ -194,6 +227,9 @@ export default function Organizador({
         </div>
       )}
 
+        </>
+      )}
+
       <button
         type="button"
         className="rrow add"
@@ -222,7 +258,7 @@ export default function Organizador({
           </div>
         )}
         <button className="primario" disabled={respondeu < 1} onClick={rodar}>
-          {erro ? "Tentar de novo" : "Rodar Match"}
+          {erro ? "Tentar de novo" : modoSolo ? "Encontrar meu pedido" : "Rodar Match"}
         </button>
         {respondeu < 1 && <p className="dica">Precisa de pelo menos 1 resposta para rodar.</p>}
       </div>
