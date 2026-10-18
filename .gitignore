@@ -1,5 +1,8 @@
 # segredos
 .env
+# tokens do login OAuth do iFood (MCP real)
+backend/.tokens_ifood.json
+backend/.tokens_ifood.json.tmp
 
 # python
 backend/.venv/

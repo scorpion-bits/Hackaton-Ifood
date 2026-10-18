@@ -16,8 +16,9 @@ from fastapi import APIRouter, Body, Header
 from pydantic import BaseModel
 
 from . import config
-from .ifood_mcp.cliente import ErroMCP, abrir_cliente
+from .ifood_mcp.cliente import MSG_ENVIO_DESLIGADO, ErroMCP, abrir_cliente
 from .match import checkout, motor, salas
+from .match.ajuste import interpretar_ajuste
 from .match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from .match.modelos import Candidato, Desejo, para_dict
 from .match.pix import gerar_pix_copia_e_cola
@@ -29,6 +30,9 @@ CIDADE_PIX = "SAO CARLOS"
 FORMAS = ("pix", "cartao_simulado", "dinheiro")
 MODOS = ("junto", "separado")
 STATUS_INICIAL_PEDIDO = {"code": "SUBMITTED", "description": "Pedido enviado ao iFood."}
+STATUS_INICIAL_DEMO = {"code": "SUBMITTED", "description": "Pedido enviado ao iFood (demonstração)."}
+MSG_ENVIO_DESLIGADO_SALA = ("Conta de teste: o envio real está desligado (IFOOD_MCP_PERMITIR_ENVIO). "
+                            "Os carrinhos ficaram prontos no iFood.")
 
 _travas: dict[str, asyncio.Lock] = {}
 
@@ -71,6 +75,10 @@ class CorpoResolver(BaseModel):
     acao: str | None = None
 
 
+class CorpoAjuste(BaseModel):
+    texto: str = ""
+
+
 # ---------- utilidades ----------
 def _desembrulhar(erro: BaseException) -> BaseException:
     """O SDK do MCP usa grupos de tarefas: uma falha pode chegar embrulhada num ExceptionGroup."""
@@ -80,16 +88,41 @@ def _desembrulhar(erro: BaseException) -> BaseException:
 
 
 def _erro_do_ifood(bruto: BaseException) -> ErroSala:
+    """Exceção do cliente MCP → `ErroSala` legível (nunca traceback nem token na mensagem).
+
+    Login/token (sem login, sem client_id/secret, sessão expirada, renovação recusada, 401 do MCP) → 401;
+    falta de conexão com o login → 502 sem prefixo; erro de tool → 502 "O iFood respondeu com erro: …"."""
+    from .ifood_mcp import oauth
+    from .ifood_mcp.cliente import MSG_401
+
+    mensagens_de_login = {oauth.MSG_SEM_TOKEN, oauth.MSG_SEM_CREDENCIAIS, oauth.MSG_SESSAO_EXPIRADA, MSG_401}
+
+    def de_login(x: BaseException) -> ErroSala | None:
+        texto = oauth.sem_segredos(x)
+        # O cliente embrulha o ErroOAuth num ErroMCP (`from None`): a origem fica em __cause__/__context__.
+        origem = next((o for o in (x, x.__cause__, x.__context__) if isinstance(o, oauth.ErroOAuth)), None)
+        if isinstance(origem, oauth.SemConexao):
+            return ErroSala(502, texto)
+        if origem is not None or (isinstance(x, ErroMCP) and texto in mensagens_de_login):
+            return ErroSala(401, texto)
+        if isinstance(x, ErroMCP) and "recusou o login (401)" in texto:  # MCP recusou o token no meio da sessão
+            return ErroSala(401, oauth.MSG_SESSAO_EXPIRADA)
+        return None
+
     e = _desembrulhar(bruto)
     if isinstance(e, ErroSala):
         return e
     if isinstance(e, checkout.ErroCheckout):
-        return ErroSala(502, e.mensagem)
-    if isinstance(e, NotImplementedError):
-        return ErroSala(501, "O modo real do MCP do iFood ainda não está disponível nesta versão (etapa 03).")
+        causa = e.__cause__
+        login = de_login(causa) if causa is not None else None
+        return login if login and login.status == 401 else ErroSala(502, oauth.sem_segredos(e.mensagem))
+    login = de_login(e)
+    if login is not None:
+        return login
+    texto = oauth.sem_segredos(e)
     if isinstance(e, ErroMCP):
-        return ErroSala(502, f"O iFood respondeu com erro: {e}")
-    return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {e}")
+        return ErroSala(502, f"O iFood respondeu com erro: {texto}")
+    return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {texto}")
 
 
 async def _usar_cliente(sala_id: str, operacao):
@@ -285,28 +318,50 @@ def registrar_desejo(sala_id: str, pid: str, corpo: CorpoDesejo):
 
 
 # ---------- Match ----------
+MSG_AJUSTE_NAO_ENTENDIDO = 'Não entendi quem ou o quê. Ex.: "troca o sorvete do Milan por açaí"'
+MAX_TEXTO_AJUSTE = 200
+
+
+def _desejos_da_sala(sala: dict) -> list[Desejo]:
+    return [
+        Desejo(p["id"], p["nome"], p["desejo"]["texto"], p["desejo"]["orcamento_max"], list(p["desejo"]["chips"]))
+        for p in sala["participantes"] if p["respondeu"] and p["desejo"]
+    ]
+
+
+async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
+    """Roda o Match (leilão incluído) com o MCP e valida o resultado. Não grava nada na sala além do rastro:
+    sem endereço ou sem combinação → `ErroSala` 409 legível; erro do iFood → o mesmo tratamento de sempre."""
+    async def operacao(cfg, cliente):
+        return await motor.rodar_match(cfg, cliente, desejos)
+
+    resultado = await _usar_cliente(sala_id, operacao)
+    resultado.pop("rastro", None)  # o rastro vai acumulado na sala
+
+    if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
+        raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
+    if not resultado.get("combinacoes"):
+        avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
+        raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+    return resultado
+
+
+def _resultado_com_rastro(sala_id: str) -> dict:
+    pub = salas.publica(salas.obter(sala_id))
+    return {**pub["resultado"], "rastro": pub["rastro"]}
+
+
 @router.post("/salas/{sala_id}/rodar")
 async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
     async with _trava(sala_id):
         sala = salas.obter(sala_id)
         salas.exigir_organizador(sala, x_organizador)
         salas.exigir_estado(sala, COLETANDO, MATCH_PRONTO, acao="rodar o Match")
-        desejos = [
-            Desejo(p["id"], p["nome"], p["desejo"]["texto"], p["desejo"]["orcamento_max"], list(p["desejo"]["chips"]))
-            for p in sala["participantes"] if p["respondeu"] and p["desejo"]
-        ]
+        desejos = _desejos_da_sala(sala)
         if not desejos:
             raise ErroSala(409, "Ninguém respondeu ainda. Peça para o grupo escrever o que quer pedir.")
 
-        async def operacao(cfg, cliente):
-            return await motor.rodar_match(cfg, cliente, desejos)
-
-        resultado = await _usar_cliente(sala_id, operacao)
-        resultado.pop("rastro", None)  # o rastro vai acumulado na sala
-
-        if not resultado.get("combinacoes"):
-            avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
-            raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+        resultado = await _rodar_motor(sala_id, desejos)
 
         def gravar(s: dict) -> None:
             salas.exigir_estado(s, COLETANDO, MATCH_PRONTO, acao="rodar o Match")
@@ -314,8 +369,59 @@ async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
             salas.transicionar(s, MATCH_PRONTO)
 
         salas.atualizar(sala_id, gravar)
-        pub = salas.publica(salas.obter(sala_id))
-        return {**pub["resultado"], "rastro": pub["rastro"]}
+        return _resultado_com_rastro(sala_id)
+
+
+@router.post("/salas/{sala_id}/ajustar")
+async def ajustar(sala_id: str, corpo: CorpoAjuste, x_organizador: str | None = Header(default=None)):
+    """"Ajustar com o IBits" (C14): frase do organizador → mudanças nos desejos → Match de novo.
+
+    Transação: os desejos novos só são gravados junto com o resultado novo. Se o Match não achar combinação (ou o
+    iFood falhar), a sala continua com os desejos e o resultado anteriores."""
+    async with _trava(sala_id):
+        sala = salas.obter(sala_id)
+        salas.exigir_organizador(sala, x_organizador)
+        salas.exigir_estado(sala, MATCH_PRONTO, acao="ajustar o pedido")
+        texto = _texto_limpo(corpo.texto, "o que você quer ajustar", MAX_TEXTO_AJUSTE)
+        participantes = [
+            {"id": p["id"], "nome": p["nome"], "organizador": p["id"] == sala["organizador_id"],
+             "respondeu": bool(p["respondeu"] and p["desejo"]),
+             "texto": (p["desejo"] or {}).get("texto") if p["respondeu"] else None,
+             "orcamento_max": (p["desejo"] or {}).get("orcamento_max"),
+             "chips": list((p["desejo"] or {}).get("chips") or [])}
+            for p in sala["participantes"]
+        ]
+        mudancas = await interpretar_ajuste(config.carregar(), texto, participantes)
+        if not mudancas:
+            raise ErroSala(422, MSG_AJUSTE_NAO_ENTENDIDO)
+
+        por_id = {m.participante_id: m for m in mudancas}
+        nomes = {p["id"]: p["nome"] for p in sala["participantes"]}
+        desejos = []
+        for d in _desejos_da_sala(sala):
+            m = por_id.get(d.participante_id)
+            if m is not None:
+                d = Desejo(d.participante_id, d.nome, m.novo_texto,
+                           m.novo_orcamento if m.novo_orcamento is not None else d.orcamento_max, d.chips)
+            desejos.append(d)
+        entendido = [{"participante_id": m.participante_id, "nome": nomes[m.participante_id], "resumo": m.resumo}
+                     for m in mudancas]
+
+        resultado = await _rodar_motor(sala_id, desejos)  # 409/502 aqui: nada dos desejos novos foi gravado
+
+        def gravar(s: dict) -> None:
+            salas.exigir_estado(s, MATCH_PRONTO, acao="ajustar o pedido")
+            for p in s["participantes"]:
+                m = por_id.get(p["id"])
+                if m is not None and p["desejo"]:
+                    p["desejo"]["texto"] = m.novo_texto
+                    if m.novo_orcamento is not None:
+                        p["desejo"]["orcamento_max"] = m.novo_orcamento
+            s["resultado"] = resultado
+            salas.registrar_ajuste(s, texto, entendido)
+
+        salas.atualizar(sala_id, gravar)
+        return {"entendido": entendido, "resultado": _resultado_com_rastro(sala_id)}
 
 
 @router.post("/salas/{sala_id}/escolher")
@@ -333,7 +439,8 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
         combinacao = combinacoes[idx]
         endereco_id = (sala["resultado"].get("endereco") or {}).get("id")
         if not endereco_id:
-            raise ErroSala(409, "O Match não achou um endereço de entrega; rode o Match de novo.")
+            raise ErroSala(409, motor.MSG_ENDERECO_SEM_ID if sala["resultado"].get("endereco") else
+                           "O Match não achou um endereço de entrega; rode o Match de novo.")
 
         async def operacao(cfg, cliente):
             return await checkout.montar_carrinhos(cliente, combinacao, endereco_id)
@@ -472,13 +579,15 @@ async def resolver(sala_id: str, pid: str, corpo: CorpoResolver, x_organizador: 
 
 
 # ---------- envio ----------
-def _pedido_de(envio: dict, carrinho: dict) -> dict:
+def _pedido_de(envio: dict, carrinho: dict, demonstracao: bool = False) -> dict:
+    demonstracao = demonstracao or bool(envio.get("demonstracao"))
+    status = STATUS_INICIAL_DEMO if demonstracao else STATUS_INICIAL_PEDIDO
     return {
         "order_id": envio["order_id"], "cart_id": envio["cart_id"], "loja_id": envio["loja_id"],
         "loja_nome": envio.get("loja_nome") or carrinho["loja_nome"], "total": envio["total"],
-        "itens": carrinho["itens"], "status": dict(STATUS_INICIAL_PEDIDO),
-        "status_code": STATUS_INICIAL_PEDIDO["code"], "encerrado": False,
-        "demonstracao": bool(envio.get("demonstracao")),
+        "itens": carrinho["itens"], "status": dict(status),
+        "status_code": status["code"], "encerrado": False,
+        "demonstracao": demonstracao,
     }
 
 
@@ -510,13 +619,20 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
 
         por_cart = {c["cart_id"]: c for c in carrinhos}
         problema = next((r for r in resultados if r["status"] in ("falhou", "total_mudou")), None)
+        # conta de teste com `submitOrder` desligado: não é falha para "tentar de novo"; os carrinhos ficam prontos
+        desligado = bool(problema and problema["status"] == "falhou" and problema.get("erro") == MSG_ENVIO_DESLIGADO)
 
         def gravar(s: dict) -> None:
             for r in resultados:
                 if r["status"] == "enviado":
-                    s["pedidos"] = [*s["pedidos"], _pedido_de(r, por_cart[r["cart_id"]])]
+                    s["pedidos"] = [*s["pedidos"], _pedido_de(r, por_cart[r["cart_id"]], bool(s.get("demonstracao")))]
                     s["ja_enviados"] = [*s["ja_enviados"], r["cart_id"]]
-            if problema:
+            if desligado:  # a sala continua pronta para enviar (se o envio for ligado); nada foi enviado
+                s["ultimo_erro_envio"] = {
+                    "status": "envio_desligado", "erro": MSG_ENVIO_DESLIGADO_SALA,
+                    "nao_enviados": [c["cart_id"] for c in s["carrinhos"] if c["cart_id"] not in s["ja_enviados"]],
+                }
+            elif problema:
                 s["ultimo_erro_envio"] = {k: v for k, v in problema.items()}
             else:
                 s["ultimo_erro_envio"] = None
@@ -530,6 +646,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
         if problema is None:
             return {"estado": ENVIADO, "pedidos": salas.obter(sala_id)["pedidos"]}
 
+        if desligado:
+            raise ErroSala(409, MSG_ENVIO_DESLIGADO_SALA)
         loja = problema.get("loja_nome") or problema.get("loja_id")
         ficou = f"{feitos} de {total} pedidos já foram enviados e foram mantidos."
         if problema["status"] == "falhou":

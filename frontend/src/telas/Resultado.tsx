@@ -1,29 +1,60 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, lerToken } from "../api";
-import type { Candidato, EstadoSala, ModoPagamento } from "../tipos";
+import type { Combinacao, EstadoSala, Leilao as LeilaoDados, ModoPagamento, ResultadoMatch } from "../tipos";
 import CartaoPessoa, { brl } from "../componentes/CartaoPessoa";
 import Rastro from "../componentes/Rastro";
+import {
+  agruparPorPessoa,
+  assinatura,
+  juntarIguais,
+  leilaoVisto,
+  marcarLeilaoVisto,
+  reduzirMovimento,
+  resumoAjuste,
+  textoEntendido,
+} from "../componentes/leilao/util";
+import Ajustar, { type ItemHistorico, type Troca } from "../componentes/leilao/Ajustar";
 import { lerPid } from "./Convidado";
+import Leilao from "./Leilao";
+import Deck from "./Deck";
+import "../leilao.css";
 
-/** Slots "pid" e "pid#k" viram uma lista por pessoa. */
-function agruparPorPessoa(escolhas: Record<string, Candidato>): Record<string, Candidato[]> {
-  const g: Record<string, Candidato[]> = {};
-  for (const [slot, c] of Object.entries(escolhas)) {
-    const pid = slot.split("#")[0];
-    (g[pid] ??= []).push(c);
+type Fase = "leilao" | "leilao-curto" | "deck" | "escolha";
+
+const MS_DESTAQUE = 8000;
+const MS_FAIXA = 10000;
+const ESPERA = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
+
+/** Mensagem amigável: falha de rede vira texto claro; 422/409 já chegam com a frase do servidor. */
+function mensagemAjuste(x: unknown): string {
+  const m = x instanceof Error ? x.message : "";
+  if (!m || /failed to fetch|networkerror|load failed|erro 5\d\d/i.test(m)) {
+    return "Não consegui falar com o servidor agora. Tente de novo em instantes.";
   }
-  return g;
+  if (/^erro 4\d\d$/i.test(m)) return "Não entendi esse ajuste. Tente algo como: troca o sorvete do Milan por açaí.";
+  return m;
 }
 
-const MODOS: { id: ModoPagamento; titulo: string; texto: string }[] = [
-  { id: "junto", titulo: "Pagar tudo de uma vez", texto: "Você paga o total no iFood e acerta com o pessoal depois." },
-  {
-    id: "separado",
-    titulo: "Cada um paga a sua parte (vaquinha)",
-    texto: "Cada pessoa paga a própria parte e os pedidos só saem quando todos pagarem.",
-  },
-];
+function textoModos(nPedidos: number): { id: ModoPagamento; titulo: string; texto: string; destaque?: string }[] {
+  return [
+    {
+      id: "junto",
+      titulo: "Pagar tudo de uma vez",
+      texto: "Você paga o total no iFood e acerta com o pessoal depois.",
+      destaque: nPedidos === 1 ? "É 1 pedido: 1 cobrança." : `São ${nPedidos} pedidos: ${nPedidos} cobranças.`,
+    },
+    {
+      id: "separado",
+      titulo: "Cada um paga a sua parte (vaquinha)",
+      texto: "Cada pessoa paga a própria parte e os pedidos só saem quando todos pagarem.",
+    },
+  ];
+}
 
+/**
+ * match_pronto (C13): disputa das lojas (1 vez por aparelho) -> deck -> "É um Match!" -> escolha de pagamento.
+ * Convidado vê a disputa e o deck só para leitura.
+ */
 export default function Resultado({
   salaId,
   sala,
@@ -33,17 +64,133 @@ export default function Resultado({
   sala: EstadoSala;
   organizador: boolean;
 }) {
-  const [idx, setIdx] = useState(0);
+  const solo = sala.participantes.length === 1;
+  const resSala = sala.resultado;
+  const sigSala = assinatura(resSala);
+
+  // C14: depois de "Ajustar", usa a resposta do servidor até a sala (polling de 2 s) trazer o mesmo resultado.
+  const [local, setLocal] = useState<{ res: ResultadoMatch; base: string } | null>(null);
+  // Enquanto o IBits refaz o pedido, o deck não muda por baixo da pessoa.
+  const [retido, setRetido] = useState<ResultadoMatch | null>(null);
+  const res = retido ?? (local && sigSala === local.base ? local.res : resSala);
+  const sig = assinatura(res);
+  const leilao = res?.leilao;
+
+  const [fase, setFase] = useState<Fase>(() => (leilao && !leilaoVisto(salaId, sig) ? "leilao" : "deck"));
+  const [escolhida, setEscolhida] = useState(0);
   const [modo, setModo] = useState<ModoPagamento>("junto");
   const [montando, setMontando] = useState(false);
   const [erro, setErro] = useState("");
 
-  const res = sala.resultado;
+  // C14: conversa com o IBits, opções de antes do ajuste (para marcar o que mudou) e destaques.
+  const [troca, setTroca] = useState<Troca | null>(null);
+  const [histLocal, setHistLocal] = useState<ItemHistorico[]>([]);
+  const [ocupado, setOcupado] = useState(false);
+  const [anteriores, setAnteriores] = useState<Combinacao[] | undefined>(undefined);
+  const [leilaoCurto, setLeilaoCurto] = useState<LeilaoDados | null>(null);
+  const [pendDestaque, setPendDestaque] = useState(false);
+  const [atualizado, setAtualizado] = useState(false);
+  const [faixa, setFaixa] = useState("");
+  const tDestaque = useRef<number | undefined>(undefined);
+  const tFaixa = useRef<number | undefined>(undefined);
+  const anterior = useRef({ sig, res });
+
+  // O servidor já trouxe o resultado novo (ou outro): a resposta local não vale mais.
+  useEffect(() => {
+    if (local && sigSala !== local.base) setLocal(null);
+  }, [sigSala, local]);
+
+  // Convidado: o organizador ajustou o pedido -> faixa e deck atualizado (o leilão "visto" é por assinatura).
+  useEffect(() => {
+    const antes = anterior.current;
+    anterior.current = { sig, res };
+    if (organizador || !antes.sig || antes.sig === sig) return;
+    setAnteriores(antes.res?.combinacoes);
+    setFaixa("O organizador ajustou o pedido");
+    setPendDestaque(true);
+    setEscolhida(0);
+    marcarLeilaoVisto(salaId, sig);
+    setFase((f) => (f === "leilao" ? "deck" : f));
+  }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // O destaque "Atualizado" só começa a contar quando o deck está na tela.
+  useEffect(() => {
+    if (fase !== "deck" || !pendDestaque) return;
+    setPendDestaque(false);
+    setAtualizado(true);
+    window.clearTimeout(tDestaque.current);
+    tDestaque.current = window.setTimeout(() => setAtualizado(false), MS_DESTAQUE);
+    window.clearTimeout(tFaixa.current);
+    tFaixa.current = window.setTimeout(() => setFaixa(""), MS_FAIXA);
+  }, [fase, pendDestaque]);
+  useEffect(
+    () => () => {
+      window.clearTimeout(tDestaque.current);
+      window.clearTimeout(tFaixa.current);
+    },
+    [],
+  );
+
+  // Trocou de fase interna (disputa -> opções -> como pagar): volta ao topo, sem herdar a rolagem anterior.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [fase]);
+
   const combinacoes = res?.combinacoes ?? [];
-  const comb = combinacoes[Math.min(idx, Math.max(combinacoes.length - 1, 0))];
   const meuPid = lerPid(salaId);
 
-  async function montar() {
+  function fimLeilao() {
+    marcarLeilaoVisto(salaId, sig);
+    setFase("deck");
+  }
+
+  // C14: manda a frase ao servidor, mostra o que ele entendeu, toca a disputa curta e volta ao deck.
+  async function ajustar(texto: string) {
+    if (ocupado) return;
+    const id = Date.now();
+    const token = lerToken(salaId);
+    if (!token) {
+      setTroca({ id, texto, estado: "erro", erro: "Sem permissão de organizador neste aparelho." });
+      return;
+    }
+    const antes = res;
+    const base = sigSala;
+    setOcupado(true);
+    setRetido(antes ?? null);
+    setTroca({ id, texto, estado: "pensando" });
+    try {
+      const r = await api.ajustar(salaId, token, texto);
+      const entendido = textoEntendido(r.entendido);
+      setTroca({ id, texto, estado: "refazendo", entendido });
+      await ESPERA(reduzirMovimento() ? 500 : 1100);
+      setAnteriores(antes?.combinacoes);
+      setLocal({ res: r.resultado, base });
+      setRetido(null);
+      setEscolhida(0);
+      setPendDestaque(true);
+      setHistLocal((h) => [...h, { texto, resumo: entendido }]);
+      setTroca({ id, texto, estado: "pronto", entendido });
+      if (r.resultado.leilao) {
+        setLeilaoCurto(r.resultado.leilao);
+        setFase("leilao-curto");
+      } else {
+        marcarLeilaoVisto(salaId, assinatura(r.resultado));
+        setFase("deck");
+      }
+    } catch (x) {
+      setRetido(null);
+      setTroca({ id, texto, estado: "erro", erro: mensagemAjuste(x) });
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  function fimLeilaoCurto() {
+    marcarLeilaoVisto(salaId, sig);
+    setFase("deck");
+  }
+
+  async function montar(idx = escolhida, formaPag: ModoPagamento = modo) {
     const token = lerToken(salaId);
     if (!token) {
       setErro("Sem permissão de organizador neste aparelho.");
@@ -52,7 +199,7 @@ export default function Resultado({
     setMontando(true);
     setErro("");
     try {
-      await api.escolher(salaId, token, idx, modo);
+      await api.escolher(salaId, token, idx, formaPag);
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não consegui montar o pedido.");
     } finally {
@@ -60,6 +207,14 @@ export default function Resultado({
     }
   }
 
+  if (fase === "leilao" && leilao) {
+    return <Leilao leilao={leilao} rastro={sala.rastro} organizador={organizador} onFim={fimLeilao} />;
+  }
+  if (fase === "leilao-curto" && leilaoCurto) {
+    return <Leilao leilao={leilaoCurto} rastro={[]} organizador={organizador} onFim={fimLeilaoCurto} compacto />;
+  }
+
+  const comb = combinacoes[Math.min(escolhida, Math.max(combinacoes.length - 1, 0))];
   if (!comb) {
     return (
       <section className="tela">
@@ -77,44 +232,82 @@ export default function Resultado({
     );
   }
 
+  if (fase === "deck" || fase === "leilao-curto" || !organizador) {
+    const servidor: ItemHistorico[] = (sala.ajustes ?? []).map((a) => ({ texto: a.texto, resumo: resumoAjuste(a) }));
+    const todos = servidor.length >= histLocal.length ? servidor : histLocal;
+    // A última troca já aparece em bolhas; o recolhível guarda só as anteriores.
+    const historico = troca?.estado === "pronto" ? todos.slice(0, -1) : todos;
+    return (
+      <>
+        <Deck
+          key={sig}
+          sala={sala}
+          combinacoes={combinacoes}
+          avisos={[...new Set(res?.avisos ?? [])]}
+          organizador={organizador}
+          meuPid={meuPid}
+          textoPrimario={solo ? "Fechar meu pedido" : undefined}
+          fechando={solo && montando}
+          erroFechar={solo ? erro : ""}
+          onEscolher={(i) => {
+            setEscolhida(i);
+            // Sala de 1 pessoa: não há o que dividir, então fecha direto como "junto".
+            if (solo) void montar(i, "junto");
+            else setFase("escolha");
+          }}
+          onVerLeilao={leilao ? () => setFase("leilao") : undefined}
+          ocupado={ocupado}
+          atualizado={atualizado}
+          faixa={faixa}
+          onFecharFaixa={() => setFaixa("")}
+          anteriores={anteriores}
+          rodape={
+            organizador ? (
+              <Ajustar
+                participantes={sala.participantes}
+                troca={troca}
+                historico={historico}
+                ocupado={ocupado}
+                onEnviar={ajustar}
+              />
+            ) : undefined
+          }
+        />
+        <Rastro itens={sala.rastro} />
+      </>
+    );
+  }
+
+  // Fase "escolha" (só organizador): detalhe da opção que deu match + junto/separado.
   const grupos = agruparPorPessoa(comb.escolhas);
   const nomeDe = (pid: string) => sala.participantes.find((p) => p.id === pid)?.nome ?? "Convidado";
-  // Convidado: só a parte dele (se não sabemos quem é, mostra tudo em leitura).
-  const pids = Object.keys(grupos).filter((pid) => organizador || !meuPid || pid === meuPid);
+  const pids = Object.keys(grupos);
   const totalItens = Math.round(Object.values(comb.escolhas).reduce((s, c) => s + c.preco, 0) * 100) / 100;
   const nLojas = comb.lojas.length;
+  const explicacao = comb.explicacao ?? "";
+  const avisos = [...new Set(res?.avisos ?? [])].filter((a) => !explicacao.includes(a));
+  const modos = textoModos(nLojas);
 
   return (
     <section className="tela">
-      <h1>{organizador ? "Resultado do Match" : "Sua parte no Match"}</h1>
-
-      {organizador && combinacoes.length > 1 && (
-        <div className="segmentado" role="tablist" aria-label="Alternativas">
-          {combinacoes.slice(0, 3).map((_, i) => (
-            <button
-              key={i}
-              role="tab"
-              aria-selected={i === idx}
-              className={i === idx ? "on" : ""}
-              onClick={() => setIdx(i)}
-            >
-              Opção {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+      <button type="button" className="link-btn ld-voltar" onClick={() => setFase("deck")}>
+        ‹ Voltar às opções
+      </button>
+      <h1>Como pagar?</h1>
 
       <div className="cartao">
         <h2>
           {nLojas} {nLojas === 1 ? "loja" : "lojas"} · itens {brl(totalItens)}
         </h2>
-        <p className="suave">
-          {comb.taxa_conhecida
-            ? "A taxa de entrega já está considerada na escolha."
-            : "Taxa de entrega: calculada ao montar o carrinho."}
-        </p>
+        {!/taxa/i.test(comb.explicacao ?? "") && !avisos.some((a) => /taxa/i.test(a)) && (
+          <p className="suave">
+            {comb.taxa_conhecida
+              ? "A taxa de entrega já está considerada na escolha."
+              : "Taxa de entrega: calculada ao montar o carrinho."}
+          </p>
+        )}
         {comb.explicacao && <p>{comb.explicacao}</p>}
-        {res?.avisos.map((a, i) => (
+        {avisos.map((a, i) => (
           <p key={i} className="aviso">
             {a}
           </p>
@@ -123,33 +316,28 @@ export default function Resultado({
 
       <div className="pessoas">
         {pids.map((pid) => (
-          <CartaoPessoa key={pid} nome={nomeDe(pid)} itens={grupos[pid]} destaque={pid === meuPid && !!meuPid} />
+          <CartaoPessoa key={pid} nome={nomeDe(pid)} itens={juntarIguais(grupos[pid])} destaque={pid === meuPid && !!meuPid} />
         ))}
       </div>
 
-      {organizador ? (
-        <>
-          <fieldset className="modos">
-            <legend>Como pagar?</legend>
-            {MODOS.map((m) => (
-              <label key={m.id} className={`modo ${modo === m.id ? "on" : ""}`}>
-                <input type="radio" name="modo" checked={modo === m.id} onChange={() => setModo(m.id)} />
-                <span>
-                  <strong>{m.titulo}</strong>
-                  <small>{m.texto}</small>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-          {erro && <p className="erro">{erro}</p>}
-          <button className="primario" disabled={montando} onClick={montar}>
-            {montando ? "Montando carrinhos…" : "Montar pedido"}
-          </button>
-          <p className="suave centro-txt">Nada é enviado ao iFood ainda: você revisa antes.</p>
-        </>
-      ) : (
-        <p className="suave centro-txt">O organizador está escolhendo a opção e o modo de pagamento.</p>
-      )}
+      <fieldset className="modos">
+        <legend>Como pagar?</legend>
+        {modos.map((m) => (
+          <label key={m.id} className={`modo ${modo === m.id ? "on" : ""}`}>
+            <input type="radio" name="modo" checked={modo === m.id} onChange={() => setModo(m.id)} />
+            <span>
+              <strong>{m.titulo}</strong>
+              <small>{m.texto}</small>
+              {m.destaque && <small className="ld-cobrancas">{m.destaque}</small>}
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      {erro && <p className="erro">{erro}</p>}
+      <button className="primario" disabled={montando} onClick={() => montar()}>
+        {montando ? "Montando carrinhos…" : "Montar pedido"}
+      </button>
+      <p className="suave centro-txt">Nada é enviado ao iFood ainda: você revisa antes.</p>
 
       <Rastro itens={sala.rastro} />
     </section>

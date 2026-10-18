@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { api, lerLocal } from "./api";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { api, lerLocal, ultimaSalaOrg } from "./api";
 import type { EstadoSala } from "./tipos";
+import StatusIfood from "./componentes/StatusIfood";
 import Selo from "./componentes/Selo";
 import Rastro from "./componentes/Rastro";
 import Inicio from "./telas/Inicio";
@@ -10,13 +11,23 @@ import Resultado from "./telas/Resultado";
 import Pagamento from "./telas/Pagamento";
 import Pedidos from "./telas/Pedidos";
 
+// Fixture do leilão: só existe em desenvolvimento (fica fora do pacote de produção).
+const PaginaExemplo = import.meta.env.DEV ? lazy(() => import("./componentes/leilao/PaginaExemplo")) : null;
+
 type Rota =
+  | { tipo: "exemplo"; organizador: boolean }
   | { tipo: "inicio" }
+  | { tipo: "conectado"; erro: string }
   | { tipo: "convidado"; id: string }
   | { tipo: "org"; id: string };
 
 function lerRota(): Rota {
-  const h = window.location.hash.replace(/^#/, "");
+  const h0 = window.location.hash.replace(/^#/, "");
+  const [h, consulta = ""] = h0.split("?");
+  if (import.meta.env.DEV && /^\/leilao-exemplo(\/convidado)?\/?$/.test(h)) {
+    return { tipo: "exemplo", organizador: !/convidado/.test(h) };
+  }
+  if (/^\/conectado\/?$/.test(h)) return { tipo: "conectado", erro: new URLSearchParams(consulta).get("erro") ?? "" };
   const m = h.match(/^\/s\/([^/]+)(\/org)?\/?$/);
   if (m) return m[2] ? { tipo: "org", id: decodeURIComponent(m[1]) } : { tipo: "convidado", id: decodeURIComponent(m[1]) };
   return { tipo: "inicio" };
@@ -61,6 +72,10 @@ function useSala(id: string): { sala: EstadoSala | null; erro: string } {
 }
 
 function FaseSala({ salaId, sala, organizador }: { salaId: string; sala: EstadoSala; organizador: boolean }) {
+  // Mudou a fase da sala: começa do topo (a rolagem da fase anterior não vale na nova tela).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [sala.estado]);
   switch (sala.estado) {
     case "match_pronto":
       return <Resultado salaId={salaId} sala={sala} organizador={organizador} />;
@@ -85,7 +100,7 @@ function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }>
         <strong>Match</strong>
         <span />
       </header>
-      <Selo ativo={!!sala?.demonstracao} />
+      <Selo ativo={!!sala?.demonstracao} contaTeste={!!sala?.conta_teste && !sala?.demonstracao} />
       {erro && !sala && (
         <div className="cartao centro">
           <p className="erro">{erro}</p>
@@ -107,8 +122,35 @@ function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }>
           {sala.estado === "coletando" && sala.rastro.length > 0 && <Rastro itens={sala.rastro} />}
         </>
       )}
-      <p className="rodape">Protótipo de hackathon · não é o app oficial do iFood</p>
+      <p className="rodape">Protótipo de hackathon · não afiliado ao iFood</p>
     </div>
+  );
+}
+
+function Conectado({ erro }: { erro: string }) {
+  const sala = ultimaSalaOrg();
+  return (
+    <section className="tela tela-conectado">
+      <div className="cartao centro">
+        {erro ? (
+          <>
+            <h1>Não consegui conectar</h1>
+            <p className="erro">{erro}</p>
+            <StatusIfood />
+          </>
+        ) : (
+          <>
+            <div className="grande">✅</div>
+            <h1>iFood conectado</h1>
+            <p className="suave">Já pode voltar e rodar o Match.</p>
+          </>
+        )}
+        <a className="primario" style={{ display: "block", textDecoration: "none", textAlign: "center" }}
+          href={sala ? `#/s/${encodeURIComponent(sala)}/org` : "#/"}>
+          Voltar
+        </a>
+      </div>
+    </section>
   );
 }
 
@@ -116,7 +158,19 @@ export default function App() {
   const rota = useRota();
   return (
     <div className="app">
-      {rota.tipo === "inicio" ? <Inicio /> : <TelaSala rota={rota} />}
+      {rota.tipo === "exemplo" ? (
+        PaginaExemplo && (
+          <Suspense fallback={null}>
+            <PaginaExemplo organizador={rota.organizador} />
+          </Suspense>
+        )
+      ) : rota.tipo === "inicio" ? (
+        <Inicio />
+      ) : rota.tipo === "conectado" ? (
+        <Conectado erro={rota.erro} />
+      ) : (
+        <TelaSala rota={rota} />
+      )}
     </div>
   );
 }

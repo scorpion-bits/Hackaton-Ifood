@@ -3,7 +3,7 @@
 > Escrito pelo engenheiro-chefe (Opus). Este arquivo é a memória da etapa: depois de um `/clear`,
 > `/continuar` lê só o `CLAUDE.md` e este plano e segue daqui.
 
-- **Status da etapa:** em execução (rodada 1 desde 17/10 ~21h)
+- **Status da etapa:** concluída 17/10 ~23h45
 - **Objetivo (1 frase):** o fluxo inteiro do Match em grupo roda de ponta a ponta contra um **MCP de demonstração**
   (mesmos nomes de tools do iFood, dados gravados com selo), sem depender de credencial nem de internet.
 - **Pronto quando:** em `./iniciar.sh` (e `iniciar.bat`), em viewport 390×780: organizador cria a sala → 3 convidados
@@ -164,7 +164,7 @@ Ações do organizador exigem header `X-Organizador: <token>`.
 | 02.6 | Front A: rotas, tipos, api, Início, Sala do organizador (QR), Convidado | dev-frontend | sonnet | medium | `frontend/src/App.tsx`, `main.tsx`, `api.ts`, `tipos.ts`, `estilo.css`, `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `frontend/src/componentes/Selo.tsx`, `Rastro.tsx`, `BarraInferior.tsx`, `frontend/package.json` (+ `qrcode`) | contratos C7/C8 | `npm run build` ok; home estilo iFood com banner e aba Match; criar sala e entrar como convidado funcionam contra o backend | ✅ |
 | 02.7 | Front B: Resultado, Revisão e pagamento, Pedidos | dev-frontend | sonnet | high | `frontend/src/telas/Resultado.tsx`, `Pagamento.tsx`, `Pedidos.tsx`, `frontend/src/componentes/CartaoPessoa.tsx`, `ContadorPrazo.tsx` | 02.6 | build ok; fluxo do "Pronto quando" no navegador 390×780 sem erro no console | ✅ |
 | 02.8 | Pitch v1 + roteiro da demo | pitch-demo | opus | medium | `pitch/index.html`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | — | 8–10 slides com a narrativa (problema → Match → IA indispensável → demo → negócio/LCM/Ailo → internacional → viabilidade), fatos só da 01b com fonte; roteiro de 2 min com as frases dos 3 convidados | ✅ |
-| 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | 🔄 |
+| 02.9 | Revisão da etapa | qa-testador | opus | high | (só leitura) | todas | nada "bloqueia a demo"; Windows: nada exige Docker/bash | ✅ |
 
 Status: ⬜ a fazer · 🔄 em andamento · ✅ feito · ❌ falhou (ver registro) · ⏸️ adiado
 
@@ -211,5 +211,13 @@ integração (engenheiro-chefe: `./iniciar.sh --testes`, build, Playwright no fl
 - 17/10 ~23h20 — 02.5 ✅ (95 testes, curl no fluxo inteiro). Commit 4d855a0. Ajustes no front (id do organizador,
   rótulo "organizador cobre"). Rodar sem combinação → 409 com avisos e sala segue em `coletando`. 02.9 (QA) disparada.
 
+- 17/10 ~23h40 — 02.9 ✅ QA: fluxo separado e junto completos no Playwright, 0 erros de console/HTTP, valores
+  conferidos. Bloqueio (Windows): `npm install` só rodava sem `node_modules` → corrigido (d95de8f). Também corrigido:
+  convidado com o nome do organizador virava organizador. Demais achados → etapa 03 (03.2, 03.3).
+
 ## Fechamento
-(preenchido ao concluir: o que entregou, o que ficou para a próxima etapa, próxima etapa sugerida)
+- **Entregou:** Match ponta a ponta em modo demonstração (MCP de demonstração com as tools da doc, motor com IA +
+  fallback offline, otimizador com justiça e vários itens por pessoa, até 3 lojas, checkout com consentimento,
+  vaquinha com Pix real, acompanhamento), home no estilo do app, pitch v1 e roteiro. 95 testes.
+- **Ficou para a 03:** modo real (OAuth + MCP), achados do QA (lista na 03.2/03.3).
+- **Próxima:** `etapa-03-mcp-real.md`.

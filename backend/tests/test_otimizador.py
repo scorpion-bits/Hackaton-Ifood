@@ -164,7 +164,7 @@ def test_poda_com_muitas_pessoas_nao_explode():
 def test_explicacao_e_para_dict_serializavel():
     candidatos = {"ana": [cand("ana", "A", "a1", 82.4, 0.75)]}
     comb = otimizar(candidatos, Pesos())[0]
-    assert comb.explicacao.startswith("1 loja · todos com nota ≥ 0,7 · R$ 82,40 sem taxa")
+    assert comb.explicacao.startswith("1 loja · todos bem atendidos · R$ 82,40 sem taxa")
     dados = para_dict(comb)
     json.dumps(dados)
     assert dados["escolhas"]["ana"]["preco"] == 82.4
@@ -237,3 +237,42 @@ def test_pessoa_sem_opcao_no_conjunto_de_lojas_fica_de_fora_sem_zerar_o_resultad
     assert combos and all(len(c.lojas) <= 2 for c in combos)
     assert len(combos[0].escolhas) == 2
     assert combos[0].componentes["pessoas_sem_opcao"] == 1
+
+
+def test_explicacao_em_linguagem_simples_sem_nota():
+    """Sem jargão: nada de "nota ≥ 0,7"; diz se todos ficaram bem atendidos ou se alguém ficou longe do pedido."""
+    from app.match import leilao
+    from app.match.otimizador import BEM_ATENDIDO
+
+    assert leilao.FELIZ == BEM_ATENDIDO  # "bem atendido" é o mesmo limiar do fechamento do leilão
+    bem = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)], "bia": [cand("bia", "A", "b1", 20, 0.6)]}, Pesos())[0]
+    longe = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)], "bia": [cand("bia", "A", "b1", 20, 0.3)]},
+                     Pesos())[0]
+    sem = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)],
+                    "caio": [cand("caio", "A", "x", 30, 0.9, viola=["sem_gluten"])]}, Pesos())[0]
+    assert "todos bem atendidos" in bem.explicacao
+    assert "alguém ficou longe do que pediu" in longe.explicacao
+    assert "quem entrou está bem atendido" in sem.explicacao and "sem opção válida para caio" in sem.explicacao
+    for comb in (bem, longe, sem):
+        assert "nota" not in comb.explicacao and "≥" not in comb.explicacao
+
+
+def test_slot_extra_entra_quando_ha_folga_no_limite_de_lojas():
+    """Regressão (A5, etapa 05): o açaí/sorvete era cortado porque δ + custo + perecível > penalidade do slot,
+    mesmo com folga no limite de 3 lojas. Atender o pedido vale mais que economizar uma loja."""
+    candidatos = {
+        "milan": [cand("milan", "japones", "guioza", 22.9, 0.73, eta=45)],
+        "milan#2": [cand("milan#2", "acai", "acai300", 16.9, 0.73, eta=20, perecivel=True)],
+        "zenon": [cand("zenon", "burger", "smash", 29.9, 0.9, eta=35)],
+    }
+    pesos = Pesos(alfa_justica=0.5, beta_custo=0.5, gama_atraso=0.2, delta_lojas=0.1667, epsilon_perecivel=0.3)
+    combos = otimizar(candidatos, pesos, max_lojas=3, orcamentos={"milan": 45.0, "zenon": 50.0},
+                      pessoa_de={"milan": "milan", "milan#2": "milan", "zenon": "zenon"})
+    melhor = combos[0]
+    assert set(melhor.escolhas) == {"milan", "milan#2", "zenon"}
+    assert set(melhor.lojas) == {"japones", "acai", "burger"}
+    assert melhor.componentes["slots_fora"] == 0
+    # com o limite de 2 lojas o extra sai (aí sim por causa do limite)
+    dois = otimizar(candidatos, pesos, max_lojas=2, orcamentos={"milan": 45.0, "zenon": 50.0},
+                    pessoa_de={"milan": "milan", "milan#2": "milan", "zenon": "zenon"})
+    assert "milan#2" not in dois[0].escolhas

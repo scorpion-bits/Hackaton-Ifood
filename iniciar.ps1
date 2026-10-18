@@ -24,10 +24,9 @@ if (-not (Test-Path $Py)) {
 & $Py -m pip install -q -r backend\requirements.txt
 if ($LASTEXITCODE -ne 0) { throw "Falha no pip install (veja o README, seção Windows)" }
 
-if (-not (Test-Path "frontend\node_modules")) {
-  Push-Location frontend; npm install --no-fund --no-audit; Pop-Location
-  if ($LASTEXITCODE -ne 0) { throw "Falha no npm install" }
-}
+# Sempre roda npm install: rápido quando nada mudou e instala dependências novas após um git pull
+Push-Location frontend; npm install --no-fund --no-audit; $rNpm = $LASTEXITCODE; Pop-Location
+if ($rNpm -ne 0) { throw "Falha no npm install" }
 
 if ($Testes) {
   Push-Location backend; & $Py -m pytest -q; $r1 = $LASTEXITCODE; Pop-Location

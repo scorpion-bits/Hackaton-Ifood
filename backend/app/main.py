@@ -1,21 +1,18 @@
 """API FastAPI. Também serve o frontend compilado (frontend/dist) em http://localhost:8000."""
 
-import uuid
+import socket
 from contextlib import asynccontextmanager
-from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
-from . import acoes, config, db
-from .agente import responder
-from .ifood import ErroIFood, obter_cliente
+from . import config, db
 from .ifood_mcp import resetar_demo as resetar_demo_mcp
 from .match import salas as salas_match
 from .rotas_match import router as router_match
+from .rotas_oauth import router as router_oauth
 
 FRONT_DIST = config.RAIZ / "frontend" / "dist"
 
@@ -26,77 +23,43 @@ async def ciclo(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Comércio com Agentes — Hackathon iFood", lifespan=ciclo)
+app = FastAPI(title="Match — Hackathon iFood", lifespan=ciclo)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(router_match)
-
-
-class PedidoChat(BaseModel):
-    mensagem: str
-    lado: Literal["vendedor", "comprador"] = "comprador"
-    conversa_id: str | None = None
+app.include_router(router_oauth)
 
 
 @app.get("/api/saude")
-def saude():
+def saude(request: Request):
     cfg = config.carregar()
     return {
         "ok": True, "llm_provedor": cfg.llm_provedor, "llm_modelo": cfg.llm_modelo,
-        "ifood_modo": cfg.ifood_modo, "demonstracao": cfg.ifood_modo != "real",
+        "ifood_modo": cfg.ifood_mcp_modo, "demonstracao": cfg.ifood_mcp_modo != "real",
+        # `submitOrder` liberado? No demo sempre (pedido simulado); no real só com IFOOD_MCP_PERMITIR_ENVIO=true
+        "envio_real_permitido": cfg.ifood_mcp_modo != "real" or bool(cfg.ifood_mcp_permitir_envio),
+        "ip_local": ip_local(request.url.port or 8000),
     }
 
 
-@app.post("/api/chat")
-async def chat(pedido: PedidoChat):
-    conversa_id = pedido.conversa_id or uuid.uuid4().hex[:12]
-    with db.conectar() as con:
-        historico = [dict(r) for r in con.execute(
-            "SELECT papel, texto FROM mensagens WHERE conversa_id = ? ORDER BY id", (conversa_id,)
-        ).fetchall()]
+def _ip_da_interface() -> str | None:
     try:
-        resposta = await responder(pedido.mensagem, pedido.lado, historico[-20:])
-    except Exception as e:  # erro de provedor (chave, modelo, rede) vira mensagem legível
-        raise HTTPException(502, f"Falha no agente ({type(e).__name__}): {e}") from e
-    with db.conectar() as con:
-        con.execute("INSERT INTO mensagens (conversa_id, papel, texto, criado_em) VALUES (?, 'usuario', ?, ?)",
-                    (conversa_id, pedido.mensagem, db.agora()))
-        con.execute("INSERT INTO mensagens (conversa_id, papel, texto, criado_em) VALUES (?, 'agente', ?, ?)",
-                    (conversa_id, resposta["texto"], db.agora()))
-    return resposta | {"conversa_id": conversa_id}
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))  # UDP: só escolhe a interface, nada é enviado
+            return s.getsockname()[0]
+    except OSError:
+        return None
 
 
-@app.get("/api/acoes")
-def listar_acoes(status: str | None = None):
-    return acoes.listar(status)
-
-
-@app.post("/api/acoes/{acao_id}/confirmar")
-def confirmar_acao(acao_id: str):
-    try:
-        return acoes.confirmar(acao_id)
-    except ErroIFood as e:
-        raise HTTPException(409, str(e)) from e
-
-
-@app.post("/api/acoes/{acao_id}/recusar")
-def recusar_acao(acao_id: str):
-    try:
-        return acoes.recusar(acao_id)
-    except ErroIFood as e:
-        raise HTTPException(409, str(e)) from e
-
-
-@app.get("/api/lojas")
-def lojas():
-    try:
-        return obter_cliente().listar_lojas()
-    except ErroIFood as e:
-        raise HTTPException(502, str(e)) from e
+def ip_local(porta: int) -> str | None:
+    """URL da máquina na rede local (para o celular dos convidados abrir o link). None se não achar."""
+    ip = _ip_da_interface()
+    if not ip or ip.startswith("127.") or ip == "0.0.0.0":
+        return None
+    return f"http://{ip}:{porta}"
 
 
 @app.post("/api/demo/resetar")
 def resetar_demo():
-    db.resetar_demo()
     salas_match.limpar()  # salas do Match
     resetar_demo_mcp()  # carrinhos e pedidos do MCP de demonstração
     return {"ok": True}

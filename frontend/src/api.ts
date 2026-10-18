@@ -3,8 +3,10 @@ import type {
   EstadoSala,
   FormaPagamento,
   ModoPagamento,
+  RespostaAjuste,
   ResultadoMatch,
   SalaCriada,
+  StatusIfood,
 } from "./tipos";
 
 async function chamar<T>(
@@ -32,6 +34,15 @@ async function chamar<T>(
   return (await r.json()) as T;
 }
 
+/** GET /api/saude. `envio_real_permitido` pode não existir (backend antigo): só `=== false` muda a tela. */
+export interface Saude {
+  ok?: boolean;
+  ip_local?: string | null;
+  demonstracao?: boolean;
+  ifood_modo?: string;
+  envio_real_permitido?: boolean;
+}
+
 const S = (id: string) => `/api/salas/${encodeURIComponent(id)}`;
 
 export const api = {
@@ -47,6 +58,9 @@ export const api = {
     }),
   rodar: (id: string, token: string) =>
     chamar<ResultadoMatch>(`${S(id)}/rodar`, { metodo: "POST", corpo: {}, token }),
+  /** C14: 422 = não entendeu, 409 = sem combinação ou fora de hora (a sala mantém o resultado anterior). */
+  ajustar: (id: string, token: string, texto: string) =>
+    chamar<RespostaAjuste>(`${S(id)}/ajustar`, { corpo: { texto }, token }),
   escolher: (id: string, token: string, combinacao: number, modo_pagamento: ModoPagamento) =>
     chamar<unknown>(`${S(id)}/escolher`, { corpo: { combinacao, modo_pagamento }, token }),
   pagar: (id: string, pid: string, forma: FormaPagamento) =>
@@ -61,6 +75,9 @@ export const api = {
     chamar<unknown>(`${S(id)}/enviar`, { corpo: { confirmo: true }, token }),
   atualizarPedido: (id: string, orderId: string) =>
     chamar<unknown>(`${S(id)}/pedidos/${encodeURIComponent(orderId)}/atualizar`, { metodo: "POST", corpo: {} }),
+  saude: () => chamar<Saude>("/api/saude"),
+  ifoodStatus: () => chamar<StatusIfood>("/api/ifood/status"),
+  ifoodSair: () => chamar<unknown>("/api/ifood/sair", { metodo: "POST", corpo: {} }),
   resetar: () => chamar<unknown>("/api/demo/resetar", { metodo: "POST", corpo: {} }),
 };
 
@@ -96,3 +113,40 @@ export interface Eu {
   chips: string[];
 }
 export const lerToken = (salaId: string) => lerLocal<string>(chaveOrg(salaId));
+
+export const chaveUltimaSala = "match.ultima_sala";
+/** Sala que já terminou (pedidos enviados): a home não oferece mais "Sua sala está aberta" para ela. */
+export const chaveEncerrada = (salaId: string) => `match.encerrada.${salaId}`;
+export const salaEncerrada = (salaId: string) => lerLocal<boolean>(chaveEncerrada(salaId)) === true;
+
+/** Apaga todas as chaves `match.*` deste aparelho. */
+export function limparMatchLocal(): void {
+  try {
+    const ks: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("match.")) ks.push(k);
+    }
+    ks.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* ignora */
+  }
+}
+
+/** Sala do organizador mais recente salva neste aparelho (ou null). */
+export function ultimaSalaOrg(): string | null {
+  const u = lerLocal<string>(chaveUltimaSala);
+  if (u && lerLocal<string>(chaveOrg(u)) && !salaEncerrada(u)) return u;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("match.org.")) {
+        const id = k.slice("match.org.".length);
+        if (!salaEncerrada(id)) return id;
+      }
+    }
+  } catch {
+    /* ignora */
+  }
+  return null;
+}

@@ -46,6 +46,7 @@ ROTULO_ESTADO = {
     ENVIADO: "com os pedidos já enviados",
 }
 MAX_PARTICIPANTES = 6  # limite do otimizador (C4)
+MAX_AJUSTES = 10  # histórico do "Ajustar com o IBits" guardado na sala
 
 _trava = threading.RLock()
 
@@ -91,7 +92,7 @@ def criar(organizador_nome: str, chave_pix: str | None, demonstracao: bool) -> d
         "id": sala_id,
         "token": secrets.token_urlsafe(24),
         "organizador_id": organizador_id,
-        "organizador_reivindicado": False,  # vira True quando o front do organizador pede para "entrar"
+        "organizador_reivindicado": True,  # o id do organizador já volta no POST /api/salas; ninguém o "reivindica" pelo nome
         "chave_pix": chave_pix or None,
         "demonstracao": demonstracao,
         "estado": COLETANDO,
@@ -112,6 +113,7 @@ def criar(organizador_nome: str, chave_pix: str | None, demonstracao: bool) -> d
         "rastro": [],
         "avisos": [],
         "ultimo_erro_envio": None,
+        "ajustes": [],  # "Ajustar com o IBits" (C14): [{texto, entendido, em}], os últimos MAX_AJUSTES
     }
     with _trava, db.conectar() as con:
         _garantir(con)
@@ -180,6 +182,13 @@ def acumular_rastro(sala: dict, rastro: list[dict]) -> None:
     sala["rastro"] = [*sala["rastro"], *rastro]
 
 
+def registrar_ajuste(sala: dict, texto: str, entendido: list[dict]) -> dict:
+    """Guarda um ajuste do organizador (C14); mantém só os últimos `MAX_AJUSTES`."""
+    ajuste = {"texto": texto, "entendido": entendido, "em": iso_z(agora_utc())}
+    sala["ajustes"] = [*(sala.get("ajustes") or []), ajuste][-MAX_AJUSTES:]
+    return ajuste
+
+
 # ---------- visão pública (sem segredos) ----------
 def mascarar_chave(chave: str | None) -> str | None:
     """"12345678901" → "12•••••••01": nunca devolve a chave inteira."""
@@ -210,6 +219,7 @@ def publica(sala: dict) -> dict:
         "id": sala["id"],
         "estado": sala["estado"],
         "demonstracao": sala["demonstracao"],
+        "conta_teste": not sala["demonstracao"],  # modo real só roda com as contas de teste do Portal
         "link_convite": f"#/s/{sala['id']}",
         "organizador_id": sala["organizador_id"],
         "tem_chave_pix": bool(sala["chave_pix"]),
@@ -227,4 +237,5 @@ def publica(sala: dict) -> dict:
         "avisos": sala["avisos"],
         "ultimo_erro_envio": sala["ultimo_erro_envio"],
         "rastro": sala["rastro"],
+        "ajustes": sala.get("ajustes") or [],
     }

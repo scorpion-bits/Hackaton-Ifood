@@ -1,0 +1,130 @@
+/* CSS de impressão do pacote de entregáveis (A4). Vermelho só em títulos e detalhes. */
+:root {
+  --marca: #EA1D2C;
+  --marca-escura: #C8101E;
+  --marca-suave: #FDECEE;
+  --tinta: #1A1A1A;
+  --tinta-2: #5F5F5F;
+  --linha: #DCDCDC;
+  --fundo: #F7F7F7;
+}
+@page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  font-size: 9.6pt;
+  line-height: 1.45;
+  color: var(--tinta);
+}
+a { color: var(--marca-escura); text-decoration: none; word-break: break-word; }
+p { margin: 0 0 6pt; orphans: 3; widows: 3; }
+ul, ol { margin: 0 0 7pt; padding-left: 16pt; }
+li { margin: 1.5pt 0; }
+li > p { margin: 0; }
+strong { font-weight: 650; }
+hr { border: 0; border-top: 1px solid var(--linha); margin: 10pt 0; }
+
+/* Cabeçalho de cada entregável */
+.entregavel-cabecalho {
+  border-bottom: 3px solid var(--marca);
+  padding-bottom: 8pt;
+  margin-bottom: 12pt;
+}
+.entregavel-cabecalho .num {
+  font-size: 30pt; font-weight: 800; color: var(--marca); line-height: 1; letter-spacing: -0.5pt;
+}
+.entregavel-cabecalho h1 {
+  font-size: 22pt; font-weight: 750; margin: 2pt 0 3pt; color: var(--tinta); letter-spacing: -0.3pt;
+}
+.entregavel-cabecalho .fonte { font-size: 8.5pt; color: var(--tinta-2); }
+
+h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+h2 { font-size: 13.5pt; color: var(--marca); margin: 14pt 0 5pt; font-weight: 700; }
+h3 { font-size: 11pt; color: var(--tinta); margin: 10pt 0 4pt; font-weight: 700; }
+h4 { font-size: 10pt; margin: 8pt 0 3pt; }
+
+blockquote {
+  margin: 0 0 9pt; padding: 6pt 10pt; background: var(--fundo);
+  border-left: 3px solid var(--marca); color: var(--tinta-2); font-size: 8.8pt;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+code {
+  font-family: "JetBrains Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: 0.86em; background: #F2F2F2; padding: 0.5pt 3pt; border-radius: 3px;
+  word-break: break-word;
+}
+pre {
+  background: #F4F4F4; border: 1px solid var(--linha); border-radius: 6px; padding: 7pt 9pt;
+  white-space: pre-wrap; word-break: break-word; font-size: 8pt; break-inside: avoid;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+table {
+  width: 100%; border-collapse: collapse; margin: 3pt 0 10pt; font-size: 8.4pt; line-height: 1.35;
+  page-break-inside: auto;
+}
+thead { display: table-header-group; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+th {
+  text-align: left; background: var(--marca-suave); color: var(--tinta); font-weight: 700;
+  border-bottom: 2px solid var(--marca); padding: 4pt 5pt; vertical-align: bottom;
+}
+td { border-bottom: 1px solid var(--linha); padding: 3.5pt 5pt; vertical-align: top; }
+td code, th code { word-break: break-all; }
+
+/* Diagramas Mermaid (SVG gerado localmente) */
+.diagrama {
+  break-inside: avoid; page-break-inside: avoid;
+  margin: 6pt 0 12pt; padding: 8pt; border: 1px solid var(--linha); border-radius: 8px; background: #FFF;
+  text-align: center;
+}
+.diagrama svg { max-width: 100% !important; height: auto; max-height: 205mm; }
+.diagrama.alto svg { max-height: 225mm; }
+
+/* Galeria de telas (entregável 04) */
+.galeria {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 9pt 8pt; margin-top: 6pt;
+}
+.galeria figure {
+  margin: 0; break-inside: avoid; page-break-inside: avoid;
+}
+.galeria img {
+  width: 100%; display: block; border: 1px solid var(--linha); border-radius: 10px;
+}
+.galeria figcaption { font-size: 7.6pt; line-height: 1.3; color: var(--tinta-2); margin-top: 4pt; }
+.galeria figcaption b { color: var(--tinta); }
+
+/* Capa */
+.capa {
+  height: 262mm; display: flex; flex-direction: column; justify-content: space-between;
+  break-after: page; page-break-after: always;
+}
+.capa .faixa { height: 10pt; background: var(--marca); border-radius: 5pt; width: 70mm; }
+.capa .wordmark { font-size: 15pt; font-weight: 800; color: var(--marca); letter-spacing: 0.5pt; margin-top: 22mm; }
+.capa .telas-capa { display: flex; gap: 7mm; margin-top: 14mm; }
+.capa .telas-capa img { width: 44mm; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.capa h1 { font-size: 34pt; line-height: 1.08; margin: 6pt 0 10pt; font-weight: 800; letter-spacing: -0.8pt; }
+.capa h1 span { color: var(--marca); }
+.capa .sub { font-size: 14pt; color: var(--tinta-2); }
+.capa .bloco { font-size: 10.5pt; line-height: 1.6; }
+.capa .bloco b { display: inline-block; min-width: 26mm; color: var(--tinta-2); font-weight: 600; }
+.capa .aviso {
+  font-size: 9pt; color: var(--tinta-2); border-top: 1px solid var(--linha); padding-top: 8pt;
+}
+
+/* Sumário */
+.sumario h2 { font-size: 20pt; color: var(--tinta); margin: 0 0 12pt; }
+.sumario ol { list-style: none; padding: 0; margin: 0; }
+.sumario li {
+  display: flex; align-items: baseline; gap: 8pt; padding: 9pt 0; border-bottom: 1px solid var(--linha);
+}
+.sumario .n { font-size: 18pt; font-weight: 800; color: var(--marca); min-width: 30pt; }
+.sumario .t { font-size: 12.5pt; font-weight: 700; }
+.sumario .d { display: block; font-size: 8.8pt; color: var(--tinta-2); font-weight: 400; margin-top: 2pt; }
+.sumario .tx { flex: 1; }
+.sumario .p { font-size: 11pt; font-weight: 700; color: var(--tinta-2); }
+.sumario .extra { margin-top: 16pt; font-size: 9pt; color: var(--tinta-2); }
+.sumario .extra p { margin: 0 0 4pt; }

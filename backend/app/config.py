@@ -1,7 +1,7 @@
 """Configuração lida do .env (na raiz do repositório). Lida a cada chamada para facilitar testes."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,18 +25,24 @@ PROVEDORES = ["mock", "anthropic", *PRESETS_OPENAI]
 class Config:
     llm_provedor: str
     llm_modelo: str
-    llm_chave: str
+    llm_chave: str = field(repr=False)
     llm_base_url: str | None
     llm_esforco: str
     ifood_modo: str
     ifood_base_url: str
     ifood_client_id: str
-    ifood_client_secret: str
+    ifood_client_secret: str = field(repr=False)
     db_path: Path
-    # MCP do consumidor do iFood (Match): "demo" = servidor de demonstração em processo; "real" = etapa 03.
+    # MCP do consumidor do iFood (Match): "demo" = servidor de demonstração em processo; "real" = MCP oficial com OAuth.
     ifood_mcp_modo: str = "demo"
     ifood_mcp_client_id: str = ""
-    ifood_mcp_client_secret: str = ""
+    ifood_mcp_client_secret: str = field(default="", repr=False)
+    # OAuth do MCP real: redirect cadastrada no Portal e scopes (vazio = não envia scope).
+    ifood_mcp_redirect: str = "http://localhost:8000/oauth/callback"
+    ifood_mcp_scope: str = ""
+    ifood_mcp_permitir_envio: bool = False  # modo real: `submitOrder` desligado por padrão (conta de teste)
+    # Leilão de agentes por loja no Match (MATCH_LEILAO=off volta ao motor sem leilão).
+    match_leilao: bool = True
 
 
 def carregar() -> Config:
@@ -72,4 +78,8 @@ def carregar() -> Config:
         ifood_mcp_modo=os.getenv("IFOOD_MCP_MODO", "demo").strip().lower() or "demo",
         ifood_mcp_client_id=os.getenv("IFOOD_MCP_CLIENT_ID", ""),
         ifood_mcp_client_secret=os.getenv("IFOOD_MCP_CLIENT_SECRET", ""),
+        ifood_mcp_redirect=os.getenv("IFOOD_MCP_REDIRECT", "").strip() or "http://localhost:8000/oauth/callback",
+        ifood_mcp_scope=" ".join(os.getenv("IFOOD_MCP_SCOPE", "").replace(",", " ").split()),
+        ifood_mcp_permitir_envio=os.getenv("IFOOD_MCP_PERMITIR_ENVIO", "").strip().lower() in ("1", "true", "sim"),
+        match_leilao=os.getenv("MATCH_LEILAO", "on").strip().lower() not in ("off", "0", "false", "nao", "não"),
     )

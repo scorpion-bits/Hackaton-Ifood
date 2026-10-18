@@ -3,204 +3,345 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Match — a IA que monta o pedido do grupo</title>
-  <!-- Reveal.js local (node_modules): funciona sem internet. Abra este arquivo direto no navegador. -->
+  <title>Match — pedido em grupo sem dor</title>
+  <!-- Reveal.js local (node_modules): funciona sem internet. Abra este arquivo direto no navegador.
+       Fonte: Inter se estiver instalada; senão Segoe UI (Windows) ou Arial. Nada é baixado da internet. -->
   <link rel="stylesheet" href="node_modules/reveal.js/dist/reset.css">
   <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
   <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/white.css">
   <style>
-    :root { --r-main-font-size: 32px; --r-heading-color: #1d1d1f; --r-link-color: #ea1d2c; }
-    .reveal h1, .reveal h2, .reveal h3 { text-transform: none; letter-spacing: -0.01em; }
-    .reveal h2 { margin-bottom: .5em; }
-    .reveal .marca { color: #ea1d2c; }
-    .reveal .preencher { background: #fff4d6; color: #6b4e00; padding: 0 .3em; border-radius: 4px; }
-    .reveal .pequeno { font-size: .6em; color: #6b6b70; }
-    .reveal .fluxo { display: flex; justify-content: center; align-items: center; gap: .4em; flex-wrap: wrap; margin: .6em 0; }
-    .reveal .fluxo span { border: 2px solid #ea1d2c; border-radius: 12px; padding: .3em .6em; font-size: .7em; }
-    .reveal .fluxo b { color: #6b6b70; }
-    .reveal ul { font-size: .85em; }
-    .reveal li { margin: .25em 0; }
-    .reveal .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; text-align: left; font-size: .8em; }
-    .reveal .duas h3 { font-size: 1em; margin-bottom: .3em; }
-    .reveal .caixa { border: 2px solid #eee; border-radius: 14px; padding: .5em .8em; }
-    .reveal .desejo { font-size: .75em; text-align: left; margin: .2em auto; max-width: 80%; }
-    .reveal .selo { display: inline-block; background: #ea1d2c; color: #fff; font-size: .45em; padding: .15em .6em; border-radius: 999px; vertical-align: middle; }
-    .reveal .fonte { position: absolute; left: 0; right: 0; bottom: -1.2em; font-size: .38em; color: #8a8a90; text-align: left; line-height: 1.35; }
-    .reveal .fonte a { color: #8a8a90; }
+    :root {
+      --vermelho: #ea1d2c; --vermelho-escuro: #b8131f; --tinta: #1d1d1f; --cinza: #6b6b70; --linha: #ececef;
+      --fundo-suave: #f7f7f8; --amarelo: #fff4d6; --amarelo-tinta: #6b4e00; --verde: #0f7a3f;
+      --r-main-font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
+      --r-heading-font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
+      --r-main-font-size: 30px; --r-heading-color: var(--tinta); --r-main-color: var(--tinta); --r-link-color: var(--vermelho);
+    }
+    .reveal { font-family: var(--r-main-font); }
+    .reveal .slides { text-align: left; }
+    .reveal .slides section { box-sizing: border-box; height: 720px !important; min-height: 720px; padding: 56px 72px 64px !important; top: 0 !important; }
+    /* PDF (?print-pdf): o reveal.css zera o layout; repõe o mesmo enquadramento da tela. */
+    html.print-pdf .reveal .slides .pdf-page > section { box-sizing: border-box !important; width: 1280px !important;
+      height: 720px !important; padding: 56px 72px 64px !important; position: relative !important; overflow: hidden !important; }
+    .reveal .slides section::after {
+      content: "Protótipo de hackathon · não afiliado ao iFood";
+      position: absolute; right: 72px; top: 22px; font-size: 13px; color: #a0a0a6; letter-spacing: .02em;
+    }
+    .reveal h1, .reveal h2, .reveal h3 { text-transform: none; letter-spacing: -0.02em; font-weight: 800; }
+    .reveal h2 { font-size: 46px; margin: 0 0 .45em; }
+    .reveal h3 { font-size: 26px; margin: 0 0 .3em; }
+    .reveal p { margin: .35em 0; line-height: 1.35; }
+    .reveal ul { margin: 0 0 0 1em; font-size: 26px; }
+    .reveal li { margin: .28em 0; line-height: 1.3; }
+    .reveal code { font-size: .85em; background: var(--fundo-suave); padding: 0 .25em; border-radius: 5px; color: var(--vermelho-escuro); }
+    .reveal .marca { color: var(--vermelho); }
+    .reveal .cinza { color: var(--cinza); }
+    .reveal .pequeno { font-size: 18px; color: var(--cinza); }
+    .reveal .preencher { background: var(--amarelo); color: var(--amarelo-tinta); padding: 0 .3em; border-radius: 5px; font-weight: 700; border: 2px dashed #e0b000; }
+    .reveal .selo { display: inline-block; background: var(--vermelho); color: #fff; font-size: 14px; font-weight: 700; padding: .2em .7em; border-radius: 999px; vertical-align: middle; letter-spacing: .03em; }
+    .reveal .selo.amarelo { background: var(--amarelo); color: var(--amarelo-tinta); }
+    .reveal .selo.cinza { background: var(--cinza); color: #fff; }
+    .reveal .fonte { position: absolute; left: 72px; right: 72px; bottom: 18px; font-size: 13px; color: #8a8a90; line-height: 1.4; }
+    .reveal .fonte a { color: #8a8a90; text-decoration: underline; }
+    .reveal .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .reveal .tres { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+    .reveal .caixa { border: 2px solid var(--linha); border-radius: 18px; padding: 18px 22px; background: #fff; }
+    .reveal .caixa.vermelha { border-color: var(--vermelho); }
+    .reveal .caixa.suave { background: var(--fundo-suave); border-color: var(--fundo-suave); }
+    .reveal .caixa ul { font-size: 22px; }
+    .reveal .caixa p { font-size: 22px; }
+    .reveal .grande { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+    .reveal .celular { height: 470px; border-radius: 26px; box-shadow: 0 10px 30px rgba(0,0,0,.18); border: 6px solid #1d1d1f; margin: 0; }
+    .reveal .celular.menor { height: 420px; }
+    .reveal .lado { display: grid; grid-template-columns: 1.25fr 1fr; gap: 36px; align-items: center; }
+    .reveal .fluxo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .reveal .fluxo span { border: 2px solid var(--vermelho); border-radius: 12px; padding: 5px 10px; font-size: 18px; font-weight: 600; font-family: ui-monospace, Consolas, monospace; background: #fff; }
+    .reveal .fluxo span.trava { background: var(--vermelho); color: #fff; }
+    .reveal .fluxo b { color: var(--cinza); font-size: 18px; }
+    .reveal table { font-size: 18px; border-collapse: collapse; width: 100%; }
+    .reveal table th, .reveal table td { border-bottom: 1px solid var(--linha); padding: 7px 8px; text-align: left; vertical-align: top; }
+    .reveal table th { font-weight: 700; color: var(--cinza); font-size: 16px; }
+    .reveal table td.nosso, .reveal table th.nosso { background: #fff0f1; font-weight: 700; }
+    .reveal .sim { color: var(--verde); font-weight: 700; }
+    .reveal .nao { color: #a0a0a6; }
+    /* capa */
+    .reveal .capa { background: var(--vermelho); color: #fff; }
+    .reveal .capa::after { color: rgba(255,255,255,.75) !important; }
+    .reveal .capa h1 { color: #fff; font-size: 104px; margin: 40px 0 0; letter-spacing: -0.04em; }
+    .reveal .capa .frase { font-size: 34px; line-height: 1.35; font-weight: 600; max-width: 1000px; margin-top: 26px; }
+    .reveal .capa .frase strong { background: #fff; color: var(--vermelho); padding: 0 .2em; border-radius: 6px; }
+    .reveal .capa .rodape-capa { position: absolute; left: 72px; bottom: 40px; font-size: 18px; color: rgba(255,255,255,.85); }
+    /* 4 passos da frase única */
+    .reveal .passos4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 6px; }
+    .reveal .passos4 .caixa { padding: 16px 16px; }
+    .reveal .passos4 .num { display: inline-block; width: 38px; height: 38px; border-radius: 999px; background: var(--vermelho); color: #fff; font-weight: 800; font-size: 22px; text-align: center; line-height: 38px; margin-bottom: 8px; }
+    .reveal .passos4 h3 { font-size: 24px; }
+    .reveal .passos4 p { font-size: 19px; color: var(--cinza); }
+    /* conversa do Ajustar */
+    .reveal .conversa { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px; }
+    .reveal .bolha { max-width: 88%; border-radius: 18px; padding: 10px 16px; font-size: 21px; line-height: 1.3; }
+    .reveal .bolha.org { align-self: flex-end; background: var(--vermelho); color: #fff; border-bottom-right-radius: 6px; }
+    .reveal .bolha.ia { align-self: flex-start; background: #fff0f1; color: var(--tinta); border-bottom-left-radius: 6px; }
+    /* agente -> MCP -> iFood */
+    .reveal .arq { display: grid; grid-template-columns: 1.1fr auto .9fr auto 1fr; gap: 12px; align-items: center; margin: 4px 0 14px; }
+    .reveal .meio { text-align: center; font-size: 19px; }
+    .reveal .meio .mcp { border: 3px solid var(--tinta); border-radius: 16px; padding: 16px 10px; font-weight: 800; font-size: 24px; }
+    .reveal .meio .seta { font-size: 30px; color: var(--vermelho); line-height: 1; margin: 6px 0; }
+    .reveal .ibits { border: 3px solid var(--vermelho); border-radius: 18px; padding: 16px 18px; background: #fff0f1; font-size: 20px; }
+    .reveal .ibits b { color: var(--vermelho); font-size: 26px; }
+    .reveal .equipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 18px; }
+    .reveal .equipe .caixa { text-align: center; padding: 16px 10px; }
+    .reveal .equipe .nome { font-weight: 800; font-size: 24px; }
+    .reveal .equipe .papel { font-size: 17px; color: var(--cinza); }
   </style>
 </head>
 <body>
 <div class="reveal"><div class="slides">
 
-  <!-- 1. Título -->
-  <section>
-    <h1><span class="marca">Match</span></h1>
-    <h3>a IA que monta o pedido do grupo</h3>
-    <p style="font-size:.7em">Cada um fala o que quer. O Match monta o pedido, mostra a conta e só envia com o seu ok.</p>
-    <p class="pequeno">Thales Miguel Hajes · Milan · Zenon · Antonio</p>
-    <p class="pequeno">Hackathon SEMCOMP × iFood "Vendendo com Agentes" · São Carlos · 17–18/10/2026</p>
+  <!-- 1. Abertura (0:00–0:15) -->
+  <section class="capa">
+    <h1>Match</h1>
+    <p class="frase">Pedido em grupo sem dor:<br>
+      cada um fala o que quer, o <strong>IBits</strong> monta, divide a conta<br>e pede pelo iFood.</p>
+    <p class="rodape-capa">Thales Miguel Hajes · Milan · Zenon · Antonio — Hackathon SEMCOMP × iFood "Vendendo com Agentes" · São Carlos · 18/10/2026</p>
+    <aside class="notes">Thales, olhando para a banca: "Sexta à noite, quatro amigos, quatro vontades e um grupo de WhatsApp.
+      O Match resolve isso numa frase: cada um fala o que quer, o IBits monta, divide a conta e pede pelo iFood." (15 s)</aside>
   </section>
 
-  <!-- 2. Problema -->
+  <!-- 2. Problema (0:15–0:35) -->
   <section>
-    <h2>Pedir em grupo hoje</h2>
-    <ul>
-      <li>Cada um quer uma coisa: japonês, hambúrguer, "algo vegetariano"</li>
-      <li>Cada um tem um orçamento diferente</li>
-      <li>Um pedido = <strong>um restaurante</strong></li>
-      <li>E no fim: <strong>quem paga, e quanto?</strong></li>
-    </ul>
-    <p style="font-size:.75em">Resultado: alguém vira "gerente do pedido" no grupo do WhatsApp.</p>
-    <div class="fonte">"1 carrinho = 1 loja": documentação do MCP do iFood para consumidor —
-      <a href="https://mcp-developer.ifood.com.br/llms-full.txt">mcp-developer.ifood.com.br/llms-full.txt</a></div>
-  </section>
-
-  <!-- 3. Solução -->
-  <section>
-    <h2>A solução</h2>
-    <p>Frases livres de <strong>1 ou N pessoas</strong> viram um pedido real: itens, lojas, preços e motivo de cada escolha.</p>
-    <div class="fluxo">
-      <span>Entende</span><b>→</b><span>Busca</span><b>→</b><span>Decide</span><b>→</b><span>Fecha</span>
+    <h2>Todo grupo tem um <span class="marca">"gerente do pedido"</span></h2>
+    <div class="lado">
+      <div>
+        <ul>
+          <li>Pergunta no WhatsApp o que cada um quer</li>
+          <li>Procura loja que agrade todo mundo (e o vegetariano?)</li>
+          <li>Confere se cabe no bolso de cada um</li>
+          <li>Monta o carrinho, adianta o dinheiro e <strong>cobra o Pix depois</strong></li>
+        </ul>
+      </div>
+      <div class="caixa vermelha">
+        <h3>E quanto tempo isso leva?</h3>
+        <p>No Brasil, <strong>não achamos nenhum número público</strong> sobre pedido em grupo.</p>
+        <p>Fora daqui: no Reino Unido, quase metade dos entrevistados diz que um grupo leva em média <strong>25 minutos</strong> para escolher onde comer.</p>
+        <p class="pequeno">Pesquisa de 2018, encomendada, amostra não informada, sobre restaurante (não delivery). Só como apoio.</p>
+      </div>
     </div>
-    <ul>
-      <li>Convidados entram por <strong>link ou QR</strong>, sem login, e respondem com uma frase</li>
-      <li>Só o organizador usa a conta do iFood</li>
-      <li>Pode juntar <strong>mais de uma loja</strong> e mostra o custo de cada uma</li>
-    </ul>
+    <div class="fonte">Busca de dado brasileiro: nenhum encontrado (docs/pesquisa-mercado.md §4, 17/10/2026) ·
+      25 min: OnePoll para Meerkat Meals, 2018 — <a href="https://publicsectorcatering.co.uk/news/guess-how-long-brits-spend-deciding-where-eat-out">Public Sector Catering, 01/10/2018</a></div>
+    <aside class="notes">"Todo grupo tem alguém que vira gerente do pedido. Procuramos dado brasileiro sobre isso e não existe.
+      O que achamos é de fora: 25 minutos para um grupo decidir, no Reino Unido." (20 s)
+      <!-- Se a pesquisa da equipe (docs/pesquisa-usuarios.md) tiver resultado tabulado, trocar a caixa pela pesquisa com n. --></aside>
   </section>
 
-  <!-- 4. Demo -->
+  <!-- 3. Solução (0:35–0:55) -->
+  <section>
+    <h2>Uma frase de cada um. <span class="marca">O resto é com o IBits.</span></h2>
+    <div class="passos4">
+      <div class="caixa"><div class="num">1</div><h3>Cada um fala</h3><p>Entra pelo QR, sem login, e escreve do seu jeito: "japonês e um sorvete, até R$ 45".</p></div>
+      <div class="caixa"><div class="num">2</div><h3>O IBits monta</h3><p>Lê o cardápio de cada loja no iFood e combina itens de até 3 lojas, com o motivo de cada escolha.</p></div>
+      <div class="caixa"><div class="num">3</div><h3>Divide a conta</h3><p>Junto ou cada um paga a sua parte. A taxa de cada loja só entre quem pediu dela.</p></div>
+      <div class="caixa vermelha"><div class="num">4</div><h3>Pede pelo iFood</h3><p>Carrinho pelo MCP do iFood. Nada sai sem o ok do organizador.</p></div>
+    </div>
+    <div class="duas" style="margin-top:22px;align-items:center">
+      <p style="font-size:24px">Só o organizador usa o iFood. <strong>Comendo sozinho?</strong> "Só eu": uma tela, uma frase, o mesmo agente.</p>
+      <div style="display:flex;gap:14px;justify-content:flex-end">
+        <img class="celular" style="height:250px;border-width:4px;border-radius:18px" src="img/f3-convidado.png" alt="Convidado escreve o que quer">
+        <img class="celular" style="height:250px;border-width:4px;border-radius:18px" src="img/f10-soeu.png" alt="Tela Só eu: o que você quer?">
+      </div>
+    </div>
+    <div class="fonte">Capturas do protótipo em modo demonstração (dados simulados).</div>
+    <aside class="notes">"Cada um fala, o IBits monta, divide a conta e pede pelo iFood. E se for só você, o mesmo agente resolve numa tela." (20 s)</aside>
+  </section>
+
+  <!-- 4. Demo (0:55–2:55) -->
   <section>
     <h2>Demo ao vivo <span class="selo">DEMONSTRAÇÃO</span></h2>
-    <p style="font-size:.7em">Thales organiza no projetor. Três convidados respondem no celular:</p>
-    <p class="desejo">Milan: <em>"japonês e um sorvete, até R$ 45"</em></p>
-    <p class="desejo">Zenon: <em>"hambúrguer e sorvete, até R$ 40"</em></p>
-    <p class="desejo">Antonio: <em>"algo barato e vegetariano, até R$ 25"</em></p>
-    <p style="font-size:.7em">Rodar Match → quadro do grupo → pagamento separado → enviar pedidos</p>
-    <p class="pequeno">Plano B: vídeo gravado. <span class="preencher">[preencher: print do quadro do Match]</span></p>
-  </section>
-
-  <!-- 5. Por que IA -->
-  <section>
-    <h2>Por que IA?</h2>
-    <div class="duas">
-      <div class="caixa">
-        <h3 class="marca">O que um filtro não faz</h3>
-        <ul>
-          <li>Entender "algo leve", "barato mas gostoso"</li>
-          <li>Separar <strong>regra</strong> (vegetariano, até R$ 25) de <strong>vontade</strong></li>
-          <li>Dar nota de quanto cada prato combina com cada pessoa, com motivo</li>
-          <li>Explicar a escolha em português</li>
-        </ul>
+    <div class="lado" style="grid-template-columns: 1fr 1.25fr">
+      <div>
+        <p style="font-size:24px">Thales organiza no projetor. Três amigos entram pelo QR, <strong>sem login</strong>:</p>
+        <div class="caixa suave" style="margin-top:10px">
+          <p>Milan: <em>"japonês e um sorvete, até R$ 45"</em></p>
+          <p>Zenon: <em>"hambúrguer e sorvete, até R$ 50"</em></p>
+          <p>Antonio: <em>"algo barato e vegetariano, até R$ 25"</em></p>
+        </div>
+        <p class="pequeno" style="margin-top:12px">Sala → frases → Rodar Match → opções → <strong>Ajustar com o IBits</strong> → divisão da conta → carrinho.<br>Plano B: vídeo gravado com o mesmo roteiro.</p>
       </div>
-      <div class="caixa">
-        <h3>O que fica em código</h3>
-        <ul>
-          <li>Preço, taxa, prazo e disponibilidade: <strong>só do MCP</strong></li>
-          <li>Orçamento e restrição: eliminam opções</li>
-          <li>Contas, divisão da taxa, centavos</li>
-          <li>Escolha da melhor combinação, com justiça: ninguém fica sem opção boa</li>
-        </ul>
+      <div style="display:flex;gap:16px;justify-content:flex-end">
+        <img class="celular menor" src="img/f2-org.png" alt="Sala do organizador com QR e convidados que responderam">
+        <img class="celular menor" src="img/f9-ajustar.png" alt="Opções atualizadas depois do ajuste">
       </div>
     </div>
-    <p class="pequeno">A IA nunca inventa preço.</p>
+    <div class="fonte">Capturas do protótipo em modo demonstração (lojas e preços fictícios). Se a demo rodar no MCP real, a tela mostra o selo "iFood real · conta de teste".</div>
+    <aside class="notes">Roteiro clique a clique: docs/roteiro-demo.md (2 min).</aside>
   </section>
 
-  <!-- 6. Uso correto do MCP -->
+  <!-- 5. Agente conversacional (2:55–3:10) -->
   <section>
-    <h2>Uso correto do MCP do iFood</h2>
+    <h2>Conversa com o agente. <span class="marca">Conta com o código.</span></h2>
+    <div class="lado" style="grid-template-columns: 1.3fr 1fr">
+      <div>
+        <div class="conversa">
+          <div class="bolha org">troca o sorvete do Milan e do Zenon por açaí</div>
+          <div class="bolha ia">Entendi: Milan: açaí no lugar do sorvete · Zenon: açaí no lugar do sorvete. Pronto, atualizei as opções.</div>
+        </div>
+        <ul style="font-size:22px">
+          <li><strong>O agente entende</strong> quem e o quê, e muda só o pedido dessas pessoas</li>
+          <li><strong>As ferramentas decidem</strong>: busca no MCP, combinação, preço e divisão são código</li>
+          <li>Não entendeu? Ele diz: <em>"Não entendi quem ou o quê"</em>, com um exemplo. Não chuta</li>
+        </ul>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <img class="celular" src="img/f9-ajustar.png" alt="Opção atualizada: Kaigan Sushi + Açaí do Campus + Brasa Burger, itens novos marcados">
+      </div>
+    </div>
+    <div class="fonte">Saída do protótipo em modo demonstração: depois do ajuste, Kaigan Sushi + Açaí do Campus + Brasa Burger, 3 de 3 bem atendidos, R$ 99,50 só itens (lojas fictícias).
+      Rota <code>POST /api/salas/{id}/ajustar</code>; teste <code>backend/tests/test_ajuste.py</code>.</div>
+    <aside class="notes">"É isso que o regulamento pede: agente conversacional e ferramentas determinísticas trabalhando juntos."
+      <!-- CONFIRMAR NO PC DO THALES: com chave de IA no .env, quem entende a frase é o LLM (JSON validado); sem chave, é o intérprete determinístico. Dizer qual está ligado. --></aside>
+  </section>
+
+  <!-- 6. Como funciona: agente -> MCP -> iFood (3:10–3:35) -->
+  <section>
+    <h2 style="font-size:38px">Do restaurante ao fechamento do carrinho, <span class="marca">pelo MCP</span></h2>
+    <div class="arq" style="margin-bottom:6px">
+      <div class="ibits"><b>IBits</b> — agente do grupo
+        <ul style="font-size:18px;margin-top:6px">
+          <li>Entende a frase de cada um</li>
+          <li>Avalia cada loja: um avaliador por loja, que só lê o cardápio dela</li>
+          <li>Escolhe a melhor combinação</li>
+        </ul>
+      </div>
+      <div class="meio"><div class="seta">⇄</div></div>
+      <div class="meio"><div class="mcp">MCP do iFood<br><span style="font-weight:500;font-size:16px">consumidor · OAuth</span></div></div>
+      <div class="meio"><div class="seta">⇄</div></div>
+      <div class="caixa" style="font-size:19px"><strong>iFood</strong><br>lojas, cardápio, preço, taxa, carrinho e pedido.<br><span class="cinza">Número só vem daqui.</span></div>
+    </div>
     <div class="fluxo">
       <span>listAddresses</span><b>→</b><span>searchOffers</span><b>→</b><span>getMerchant</span><b>→</b>
-      <span>createCart</span><b>→</b><span>getCart</span><b>→</b><span>submitOrder</span><b>→</b><span>trackOrder</span>
+      <span>createCart</span><b>→</b><span>addItemToCart</span><b>→</b><span>setCartDelivery</span><b>→</b>
+      <span>setCartPayment</span><b>→</b><span>getCart</span><b>→</b><span class="trava">submitOrder (userConsent)</span>
     </div>
-    <ul>
-      <li><strong>Consentimento:</strong> <code>submitOrder</code> só com <code>userConsent: true</code>, depois do ok na tela</li>
-      <li><strong>Rastro visível:</strong> cada chamada ao MCP aparece na tela</li>
-      <li><strong>1 carrinho = 1 loja:</strong> 2 lojas = 2 pedidos, 2 taxas, 2 entregas. A tela avisa antes</li>
-      <li>Total conferido com <code>getCart</code> antes de enviar; se mudou, para e pede ok de novo</li>
-    </ul>
-    <div class="fonte">Sequência e regras: documentação oficial do MCP do iFood —
-      <a href="https://mcp-developer.ifood.com.br/llms-full.txt">mcp-developer.ifood.com.br/llms-full.txt</a></div>
-  </section>
-
-  <!-- 7. Pagamento -->
-  <section>
-    <h2>Quem paga?</h2>
-    <div class="duas">
-      <div class="caixa">
-        <h3 class="marca">Junto</h3>
-        <p>O organizador paga tudo com o meio dele no iFood.</p>
+    <div class="duas" style="gap:20px">
+      <div class="caixa vermelha" style="padding:12px 18px">
+        <h3 style="font-size:22px">Já verificado no MCP real</h3>
+        <p style="font-size:20px">Agente IBits aprovado no portal · conta de teste · login OAuth · <code>list_tools</code> com 23 tools.</p>
       </div>
-      <div class="caixa">
-        <h3 class="marca">Separado (vaquinha)</h3>
-        <ul>
-          <li>Cada um vê a <strong>sua parte</strong>, com a taxa dividida</li>
-          <li>Pix para a chave do organizador, cartão <span class="selo">DEMONSTRAÇÃO</span> ou dinheiro</li>
-          <li>O pedido <strong>só sai com 100% pago</strong></li>
-        </ul>
+      <div class="caixa" style="padding:12px 18px">
+        <h3 style="font-size:22px">Pedido real, com trava</h3>
+        <!-- CONFIRMAR NO PC DO THALES: a frase abaixo depende do pedido real de ponta a ponta (tarefa A1). -->
+        <p style="font-size:20px">No modo real, o carrinho vai para a conta de teste e taxa e total vêm do <code>getCart</code>.</p>
+        <p style="font-size:20px"><code>submitOrder</code> só com o ok na tela e <code>IFOOD_MCP_PERMITIR_ENVIO=true</code>. No real, nunca Pix nem cartão online: só pagamento sem cobrança no app (ex.: dinheiro na entrega).</p>
       </div>
     </div>
-    <p style="font-size:.7em">No produto: quem guarda o dinheiro do grupo é o <strong>iFood Pago</strong>, não o nosso app.</p>
-    <div class="fonte">iFood Pago citado no relatório FY2026 da Prosus —
-      <a href="https://www.prosus.com/~/media/Files/P/prosus-corp-v2/results-reports-and-events-archive/annual-report/2026/fy2026-media-release.pdf">prosus.com (FY2026 media release)</a></div>
+    <div class="fonte">A disputa na tela é a forma visual de mostrar essa avaliação: é simulada por nós a partir do cardápio que o MCP devolve; as lojas não rodam nada.
+      Sequência: <a href="https://mcp-developer.ifood.com.br/llms-full.txt">doc oficial do MCP (llms-full.txt)</a> · código: <code>backend/app/match/busca.py</code>, <code>checkout.py</code> · diagnóstico real: 17/10/2026.</div>
+    <aside class="notes">"Cada loja é avaliada por um agente que só enxerga o cardápio dela. É isso que a disputa mostra. Tudo passa pelo MCP do iFood, do restaurante ao fechamento do carrinho."</aside>
   </section>
 
-  <!-- 8. Valor para o iFood -->
+  <!-- 7. Agente confiável (3:35–3:55) -->
   <section>
-    <h2>Valor para o iFood</h2>
-    <ul>
-      <li>O iFood já tem a IA <strong>Ailo</strong> para pedir conversando. O Match é uma capacidade que ela poderia usar: o pedido <strong>de várias pessoas</strong></li>
-      <li>Pedido em grupo no iFood: <strong>não encontramos</strong>. O iFood testa dividir o <em>pagamento</em>; o Match compõe o <em>pedido</em></li>
-      <li>Funciona sem histórico: quem pede pouco ainda recebe boa sugestão, porque a pessoa <strong>diz</strong> o que quer. O histórico pesa mais conforme cresce</li>
-    </ul>
+    <h2>Um agente em quem dá para confiar</h2>
+    <div class="tres">
+      <div class="caixa">
+        <h3 class="marca">Explica o porquê</h3>
+        <p>Cada item vem com o motivo ("combina com o pedido: japonês"). O rastro mostra cada tool chamada no MCP.</p>
+        <p class="pequeno">Afinidade = quanto os pratos combinam com o que cada um pediu, segundo a IA. Não é satisfação medida.</p>
+      </div>
+      <div class="caixa">
+        <h3 class="marca">Respeita limites</h3>
+        <p>Orçamento de cada um. Restrição só é afirmada se o cardápio tem a etiqueta. Passou de 3 lojas? Avisa o que ficou de fora.</p>
+      </div>
+      <div class="caixa">
+        <h3 class="marca">Pede o seu ok</h3>
+        <p>Nada sai sem confirmação. Na vaquinha, só com 100% pago. <code>getCart</code> de novo antes de enviar: se o total mudou, para e pergunta.</p>
+      </div>
+    </div>
+    <div class="caixa suave" style="margin-top:22px"><p><strong>A IA nunca escreve preço.</strong> Preço, taxa e prazo vêm das tools do MCP; fala com número que não veio de lá é trocada por texto conferido.</p></div>
+    <div class="fonte">Regras e testes: <code>docs/tecnico.md</code>; <code>backend/tests/test_leilao.py</code>, <code>test_checkout.py</code>, <code>test_acerto_pix.py</code>.</div>
+    <aside class="notes">"Ele explica o porquê, respeita o orçamento e a restrição de cada um, e não faz nada sem o seu ok." (20 s)</aside>
+  </section>
+
+  <!-- 8. Impacto (3:55–4:20) -->
+  <section>
+    <h2>Pedido em grupo já existe. <span class="marca">Montado por agente, não.</span></h2>
+    <table>
+      <tr><th></th><th>Rappi (Brasil)</th><th>Uber Eats</th><th>DoorDash</th><th>Ailo (iFood)</th><th class="nosso">Match</th></tr>
+      <tr><td>Pedido em grupo por link</td><td class="sim">sim</td><td class="sim">sim</td><td class="sim">sim</td><td class="nao">não citado</td><td class="nosso">sim, convidado sem login</td></tr>
+      <tr><td>Mais de 1 loja</td><td class="nao">não encontrado</td><td>2 lojas próximas</td><td>DoubleDash</td><td class="nao">não citado</td><td class="nosso">até 3 (avisa as taxas)</td></tr>
+      <tr><td>Quem escolhe os itens</td><td>cada um, à mão</td><td>cada um, à mão</td><td>cada um, à mão</td><td>IA, para 1 pessoa</td><td class="nosso">agente, para o grupo</td></tr>
+      <tr><td>Só sai com 100% pago</td><td class="nao">não encontrado</td><td class="nao">não encontrado</td><td class="nao">não encontrado</td><td class="nao">—</td><td class="nosso">sim</td></tr>
+    </table>
+    <div class="duas" style="margin-top:16px">
+      <p style="font-size:22px">O Ailo já fecha <strong>um</strong> pedido em ~30 segundos. Falta o pedido <strong>da turma</strong>.</p>
+      <p style="font-size:20px">Escala do iFood: <strong>180 mi+</strong> pedidos/mês, <strong>65 mi</strong> de clientes, <strong>500 mil+</strong> lojas. Quantos são de grupo? Não há dado público; não estimamos.
+        <span class="selo cinza">HIPÓTESE</span> mais pedidos de grupo e mais lojas por ocasião.</p>
+    </div>
     <div class="fonte">
-      Ailo: <a href="https://institucional.ifood.com.br/inovacao/ailo-assistente-de-ia-pedidos/">institucional.ifood.com.br/inovacao/ailo-assistente-de-ia-pedidos</a> ·
-      Teste "combinar pagamentos": <a href="https://tecnoblog.net/noticias/ifood-testa-opcao-de-dividir-pagamento-com-outra-pessoa/">Tecnoblog (06/2026)</a> ·
-      Pedido em grupo: busca da equipe em 17/10, sem anúncio encontrado
-    </div>
+      Rappi: <a href="https://www.supervarejo.com.br/varejo/rappi-lanca-recurso-que-permite-fazer-pedidos-em-grupo">Supervarejo, 11/2023</a> ·
+      Uber Eats: <a href="https://techcrunch.com/2022/03/09/uber-eats-now-lets-you-split-the-bill">TechCrunch 03/2022</a>, <a href="https://techcrunch.com/2023/10/11/uber-eats-now-lets-you-order-from-two-nearby-stores-at-the-same-time">10/2023</a> ·
+      DoorDash: <a href="https://help.doordash.com/en-us/business/article/guide-to-group-orders">grupo</a>, <a href="https://about.doordash.com/en-us/news/introducing-doubledash-a-new-way-to-shop-multiple-stores-in-one-order">DoubleDash</a> ·
+      Ailo: <a href="https://institucional.ifood.com.br/inovacao/ailo-assistente-de-ia-pedidos/">iFood, 10/10/2025</a> ·
+      30 s: <a href="https://canaltech.com.br/apps/nova-ia-do-i-food-deixa-voce-fazer-pedidos-no-whats-app-com-apenas-um-clique">Canaltech, 16/07/2026</a> ·
+      Escala: <a href="https://institucional.ifood.com.br/portal-de-dados-ifood/">Portal de Dados iFood</a> ·
+      "não encontrado" = busca da equipe em 17/10/2026.</div>
+    <aside class="notes">"A Rappi já tem pedido em grupo, mas cada um escolhe à mão. O Ailo já fecha um pedido em 30 segundos. Falta o pedido da turma." (25 s)</aside>
   </section>
 
-  <!-- 9. Visão internacional -->
-  <section>
-    <h2>Visão: além do Brasil <span class="selo" style="background:#6b6b70">HIPÓTESE</span></h2>
-    <ul>
-      <li>A Prosus, dona do iFood, concluiu a compra da <strong>Just Eat Takeaway</strong> em 2025</li>
-      <li>O Match não depende de hábito local: entra texto em qualquer idioma, sai um pedido com pagamento local</li>
-      <li>Hipótese: a mesma camada roda sobre qualquer marketplace do grupo que fale MCP</li>
-    </ul>
-    <p class="pequeno">Visão, não resultado. Teste proposto: o mesmo motor com cardápio em espanhol e inglês.</p>
-    <div class="fonte">Compra da JET concluída (10/2025):
-      <a href="https://www.retaildetail.eu/news/food/acquisition-of-just-eat-takeaway-completed-the-hard-work-is-just-beginning/">RetailDetail</a></div>
-  </section>
-
-  <!-- 10. Próximos passos -->
+  <!-- 9. Próximos passos (4:20–4:40) -->
   <section>
     <h2>Próximos passos</h2>
     <div class="duas">
-      <div class="caixa">
-        <h3>Nós</h3>
+      <div class="caixa vermelha">
+        <h3>Piloto em São Carlos <span class="selo cinza">PROPOSTA</span></h3>
         <ul>
-          <li>Pedido real em conta de teste do MCP <span class="preencher">[preencher: status]</span></li>
-          <li>Testar com grupos reais</li>
-          <li>Mais categorias: mercado, bebidas</li>
+          <li>4 semanas, repúblicas e turmas</li>
+          <li>Grupo A com "Dê um Match" na home; grupo B como hoje</li>
+          <li>Meta combinada com o iFood antes (não chutamos número)</li>
         </ul>
       </div>
       <div class="caixa">
-        <h3 class="marca">O que precisamos do iFood</h3>
+        <h3>O que pedimos ao MCP</h3>
         <ul>
-          <li>Várias lojas com <strong>uma entrega</strong></li>
-          <li><strong>Pagamento dividido</strong> no MCP</li>
-          <li><strong>Cancelamento</strong> pelo MCP</li>
+          <li>Documentar o <code>userLocation</code> (sem ele a busca volta vazia)</li>
+          <li>Doc com 24 tools; servidor com 23</li>
+          <li>Publicar o formato de resposta (<code>listAddresses</code> veio diferente)</li>
         </ul>
+        <p class="pequeno">Ideias para o MCP: pagamento dividido e várias lojas numa entrega.</p>
       </div>
     </div>
-    <p class="marca" style="margin-top:.8em"><strong>Match: cada um pede o que quer, ninguém vira gerente do pedido.</strong> Obrigado!</p>
+    <div class="fonte">Piloto: <code>docs/proposta-negocio.md</code> §5 · Feedback completo do MCP (entregável 6): <code>docs/feedback-mcp.md</code>, testes da equipe em 17/10/2026.</div>
+    <aside class="notes">"Queremos testar em São Carlos com o iFood. E deixamos para o time do MCP três ajustes que achamos usando de verdade." (20 s)</aside>
+  </section>
+
+  <!-- 10. Fechamento + equipe (4:40–5:00) -->
+  <section>
+    <p class="grande" style="margin-top:30px">Cada um fala o que quer, o <span class="marca">IBits</span> monta,<br>divide a conta e pede pelo iFood.</p>
+    <div class="equipe">
+      <div class="caixa"><div class="nome">Thales</div><div class="papel">pitch, front, testes</div></div>
+      <div class="caixa"><div class="nome">Milan</div><div class="papel">IA, back, design</div></div>
+      <div class="caixa"><div class="nome">Zenon</div><div class="papel">front, entregáveis, pitch</div></div>
+      <div class="caixa"><div class="nome">Antonio</div><div class="papel">testes</div></div>
+    </div>
+    <p style="font-size:28px;margin-top:34px"><strong class="marca">Match:</strong> ninguém mais vira gerente do pedido. <strong>Obrigado!</strong></p>
+    <div class="fonte">Código, doc técnico e os 6 entregáveis no repositório da equipe. Dados da demo simulados (selo DEMONSTRAÇÃO).</div>
   </section>
 
 </div></div>
 <script src="node_modules/reveal.js/dist/reveal.js"></script>
 <script>
-  Reveal.initialize({ hash: true, width: 1280, height: 720, pdfSeparateFragments: false });
+  // PDF (`npm run pdf`): o exportador espera `window.Reveal.isReady()`, mas o layout de impressão do Reveal termina
+  // depois (evento `pdf-ready`). Sem isto o PDF às vezes sai com 1 página em branco. Então, no modo ?print-pdf,
+  // o objeto só volta a ser global quando o layout de impressão acabou.
+  const R = window.Reveal;
+  const impressao = /print-pdf/.test(location.search);
+  if (impressao) {
+    delete window.Reveal;
+    R.on("pdf-ready", () => setTimeout(() => { window.Reveal = R; }, 300));
+  }
+  window.addEventListener("load", () => {
+    R.initialize({ hash: true, width: 1280, height: 720, margin: 0, center: false, pdfSeparateFragments: false });
+  });
 </script>
 </body>
 </html>

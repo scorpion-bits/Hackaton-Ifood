@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Icone from "./Icone";
 
 /** Interpreta o ISO do servidor; sem fuso informado, assume UTC. */
 export function paraMs(iso: string): number {
@@ -25,7 +26,10 @@ export default function ContadorPrazo({ prazoFim }: { prazoFim: string }) {
   if (resta <= 0) {
     return (
       <div className="contador contador-fim" role="timer">
-        <span>Prazo para pagar</span>
+        <span className="contador-rotulo">
+          <Icone nome="relogio" tamanho={18} />
+          Prazo para pagar
+        </span>
         <strong>Prazo encerrado</strong>
       </div>
     );
@@ -35,7 +39,10 @@ export default function ContadorPrazo({ prazoFim }: { prazoFim: string }) {
   const ss = String(seg % 60).padStart(2, "0");
   return (
     <div className={`contador ${seg <= 60 ? "contador-urgente" : ""}`} role="timer" aria-live="off">
-      <span>Prazo para pagar</span>
+      <span className="contador-rotulo">
+        <Icone nome="relogio" tamanho={18} />
+        Prazo para pagar
+      </span>
       <strong>
         {mm}:{ss}
       </strong>

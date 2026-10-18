@@ -1,5 +1,15 @@
 # CLAUDE.md — memória operacional (só estado vigente; máx. 250 linhas — o hook arquiva o excesso)
 
+## ⚠️ Aviso (17/10 ~23h20) — vale acima de qualquer plano
+- **Leia `docs/AVISO-EQUIPE.md` e `docs/quadro.md` antes de qualquer tarefa.**
+- Foco único: **MCP real + Match em pedido em grupo funcionando**. Leilão/deck/Patrocinado congelados (só bug). Nada novo.
+- Todo commit com autor humano: pergunte "quem é você?", use `git commit --author="Nome <email>"` + `Responsável: Nome`.
+- Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
+- **Plano vigente: `docs/planos/etapa-05-dupla-milan-zenon.md`** — Milan = back/MCP/integração (só ele integra);
+  Zenon = front/entregáveis/pitch; Thales = testes guiados (`docs/testes/roteiro-testes.md`, sem editar código).
+- **Ao fim de cada etapa** (pedido do Milan, para economizar token): registrar em "Próximo passo" do plano vigente e
+  dizer ao humano a próxima etapa, o **modelo recomendado** (Haiku/Sonnet/Opus) e se dá `/clear` ou `/compact`.
+
 ## Evento
 - Hackathon SEMCOMP × iFood "Vendendo com Agentes", São Carlos. Prêmios R$ 4.000 / 2.000 / 1.000.
 - **Desafio oficial:** agente de IA que opera o **MCP do iFood (consumidor)** para fazer pedidos — da escolha do
@@ -31,7 +41,7 @@
   convidados entram por link/QR sem login; só o organizador usa o iFood. Pagamento "junto" ou "separado" (vaquinha:
   Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
   2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
-- **Plano vigente:** `docs/planos/etapa-02-fatia-demo.md`. Etapas 02–05: `docs/planos/README.md`.
+- **Plano vigente:** `docs/planos/etapa-05-dupla-milan-zenon.md` (divisão de tarefas); contratos C11–C16 em `docs/planos/etapa-04-leilao-e-entrega.md` (leilão de agentes por loja + MCP real + entrega; branch de integração `ccr-4c429dbb-lp7btg`, 1 branch por tarefa). Etapas: `docs/planos/README.md`.
 - ✅ Agente "IBits" **aprovado** (17/10). Portal: https://mcp-developer.ifood.com.br/pt-BR ("Faça login"). 3 contas de teste
   (`unique-`, `safe-`, `fair-thales@test.ifood.com.br`, expiram em ~16 dias; OTP no portal). Redirect URLs: `http://localhost:8000/oauth/callback` (app),
   `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).
@@ -52,15 +62,19 @@
   (topo, com data e motivo; arquivar, nunca apagar) e voltar a ~180 linhas. Um hook avisa automaticamente.
 
 ## Estado do código
-- `backend/app/main.py` — FastAPI: `/api/saude`, `/api/chat`, `/api/acoes[/{id}/confirmar|recusar]`, `/api/lojas`, `/api/demo/resetar`; serve `frontend/dist`.
-- `backend/app/agente/` — laço do agente (`laco.py`) + provedores (`provedores.py`: mock, OpenAI-compatível [groq/gemini/ollama/openai], anthropic). Lado `vendedor` ou `comprador` filtra ferramentas pelo prefixo.
-- `backend/app/mcp_server.py` — servidor MCP (SDK `mcp` 2.x, `MCPServer`). Ferramentas `vendedor_*`, `comprador_*`, `consultar_acao`. `propor_*` só cria ação pendente.
-- `backend/app/acoes.py` — ações pendentes; `EXECUTORES` mapeia tipo → chamada no cliente iFood.
-- `backend/app/ifood/` — interface única; `mock.py` (SQLite, dados de `dados_demo.json`), `real.py` (token + leitura; escrita = `NaoSuportado`).
-- `backend/mcp_stdio.py` — servidor MCP sozinho (stdio; `--http` em :8001/mcp).
-- `frontend/src/App.tsx` — chat mobile first, abas Cliente/Lojista, cartões de confirmação, selo DEMONSTRAÇÃO, "Recarregar demo".
-- `pitch/` — Reveal.js local; `npm run pdf` gera `pitch/pitch.pdf` (versionado).
-- Testes: `backend/tests` (13, pytest). Typecheck: `cd frontend && npm run typecheck`.
+- `backend/app/match/` — Match: `motor.py` (intérprete → busca MCP → juiz → otimizador; até 3 lojas), `llm.py`
+  (provedor do `.env`, fallback offline), `otimizador.py` (pontuação §4 da 01b, vários itens por pessoa = slots `pid#k`),
+  `acerto.py` (partes em centavos, prazo 10+2/pessoa), `pix.py` (BR Code), `checkout.py` (sequência MCP, consentimento),
+  `salas.py` (estado em SQLite). Campos das tools só em `busca.py` e `checkout.py`.
+- `backend/app/rotas_match.py` — API da sala (`/api/salas...`, contrato C7 da etapa 02). `main.py` serve `frontend/dist`.
+- `backend/app/ifood_mcp/` — `cliente.py` (`abrir_cliente(cfg)`, rastro; modo real adapta args ao `input_schema` →
+  `userLocation`; `submitOrder` real só com `IFOOD_MCP_PERMITIR_ENVIO=true`), `oauth.py`, `diagnostico.py`,
+  `demo_server.py` + `dados_demo_match.json` (7 lojas fictícias). `rotas_oauth.py`: `/oauth/*`, `/api/ifood/*`.
+- `frontend/src/` — home estilo iFood (`telas/Inicio.tsx`), `Organizador`, `Convidado`, `Resultado` (disputa `Leilao.tsx`
+  → `Deck.tsx` → escolha), `Pagamento`, `Pedidos`. Fixture do leilão em dev: `#/leilao-exemplo`.
+- Legado do esqueleto removido (T9); ficam `agente/provedores.py` e `listar_modelos.py`. `/api/saude` traz `ip_local`.
+- `pitch/` — slides do Match; `docs/roteiro-demo.md`. Testes: `./iniciar.sh --testes` (177 + os da etapa 04).
+- Entregáveis: `docs/tecnico.md`, `docs/racional-ux.md`, `docs/pesquisa-mercado.md`, `docs/feedback-mcp.md`, `docs/avaliacao-jurado.md`.
 
 ## Como rodar
 - Linux: `./iniciar.sh` (app em :8000) · `--dev` · `--testes`.
@@ -69,8 +83,9 @@
 ## Pendências conhecidas
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
-- Credenciais do MCP só no `.env` do PC da equipe (não no container da nuvem). Nomes das tools vêm da doc → confirmar com `list_tools`.
-- O domínio antigo do esqueleto (lojas/vendedor/comprador, Merchant API) não é usado pelo Match; remover só depois da etapa 03.
+- Credenciais do MCP só no `.env` do **PC Windows do Thales** (não no container da nuvem). MCP real: 23 tools (sem `listItemTaxonomy`);
+  `searchOffers`/`getRecommendations` exigem `userLocation`; formato real do `listAddresses` ainda sem amostra no git.
+- Campos legados em `config.py` (`ifood_modo`, `ifood_base_url`, `ifood_client_id/secret`) e no `conftest.py` → remover.
 
 ## Docs
 - `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`

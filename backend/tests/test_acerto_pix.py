@@ -4,7 +4,7 @@ import pytest
 
 from app.match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from app.match.modelos import Candidato
-from app.match.pix import crc16_ccitt_false, gerar_pix_copia_e_cola, ler_campos
+from app.match.pix import crc16_ccitt_false, gerar_pix_copia_e_cola, ler_campos, normalizar_chave_pix
 
 
 def cand(pid, loja, item, preco):
@@ -122,3 +122,42 @@ def test_pix_valor_formatado_e_txid():
 def test_pix_entradas_invalidas(chave, nome, cidade, valor, txid):
     with pytest.raises(ValueError):
         gerar_pix_copia_e_cola(chave, nome, cidade, valor, txid=txid)
+
+
+@pytest.mark.parametrize(
+    "entrada, esperado",
+    [
+        ("123.456.789-09", ("12345678909", "cpf")),
+        ("52998224725", ("52998224725", "cpf")),
+        ("12.345.678/0001-95", ("12345678000195", "cnpj")),
+        ("12345678000195", ("12345678000195", "cnpj")),
+        ("+55 (16) 99999-0000", ("+5516999990000", "telefone")),
+        ("+5516999990000", ("+5516999990000", "telefone")),
+        ("(16) 99999-0000", ("+5516999990000", "telefone")),
+        ("16 99999-0000", ("+5516999990000", "telefone")),
+        ("5516999990000", ("+5516999990000", "telefone")),
+        ("16999990000", ("+5516999990000", "telefone")),  # 11 dígitos, DV de CPF não fecha, 3º dígito 9
+        ("(16) 3333-4444", ("+551633334444", "telefone")),
+        ("  Ana.Silva@Exemplo.COM ", ("ana.silva@exemplo.com", "email")),
+        ("123E4567-E12B-12D1-A456-426655440000", ("123e4567-e12b-12d1-a456-426655440000", "aleatoria")),
+    ],
+)
+def test_normalizar_chave_pix(entrada, esperado):
+    assert normalizar_chave_pix(entrada) == esperado
+
+
+@pytest.mark.parametrize("entrada", ["", "   ", "abc", "12345678900", "123.456.789-00", "+1 202 555 0100",
+                                     "(00) 99999-0000", "ana@", "João@exemplo.com", "12345"])
+def test_normalizar_chave_pix_invalida(entrada):
+    with pytest.raises(ValueError):
+        normalizar_chave_pix(entrada)
+
+
+def test_pix_usa_chave_normalizada_e_crc_continua_valido():
+    for crua, normal in [("123.456.789-09", "12345678909"), ("+55 (16) 99999-0000", "+5516999990000"),
+                         ("16999990000", "+5516999990000"), ("ANA@Exemplo.com", "ana@exemplo.com"),
+                         ("12.345.678/0001-95", "12345678000195")]:
+        codigo = gerar_pix_copia_e_cola(crua, "Ana", "Sao Carlos", 12.5)
+        assert ler_campos(codigo)["26"] == f"0014br.gov.bcb.pix01{len(normal):02d}{normal}"
+        assert codigo[-4:] == f"{crc16_ccitt_false(codigo[:-4]):04X}"
+        assert codigo == gerar_pix_copia_e_cola(normal, "Ana", "Sao Carlos", 12.5)  # idempotente

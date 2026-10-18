@@ -9,7 +9,9 @@ import pytest
 from app.config import carregar
 from app.ifood_mcp import abrir_cliente, resetar_demo
 from app.ifood_mcp.demo_server import ARQUIVO_DADOS
+from app.match import busca as busca_mod
 from app.match import interprete, juiz, llm
+from app.match import motor as motor_mod
 from app.match.busca import buscar, buscar_detalhado, ler_endereco
 from app.match.interprete import interpretar, interpretar_fallback
 from app.match.modelos import Candidato, Desejo, Intencao
@@ -89,7 +91,24 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     assert {c["tool"] for c in r["rastro"][1:]} <= {"searchOffers", "getMerchant", "browseOffers"}
     assert all(c["ok"] for c in r["rastro"])
     assert r["endereco"]["id"] == "end-demo-sao-carlos"
+    # relevância: o roteiro não ganha aviso de "opção aproximada" nem de restrição sem confirmação
+    assert not any("Não achei" in a or "Nenhum item confirma" in a for a in r["avisos"])
+    assert len(r["avisos"]) == 2
+    assert not any(e["motivo"].startswith("Opção aproximada") for c in combos for e in c["escolhas"].values())
     json.dumps(r)
+
+
+async def test_acai_e_sorvete_nao_sao_cortados_com_folga_de_lojas_e_aviso_diz_o_motivo_real():
+    """Regressão (A5, etapa 05): Milan pede açaí, Zenon sorvete. Antes o top 1 usava 2 lojas, cortava os dois e
+    culpava o limite de 3 lojas. Agora usa as 3 lojas; só o que exige a 4ª loja fica de fora (e o aviso diz isso)."""
+    r = await _rodar([Desejo("milan", "Milan", "japonês e um açaí, até 45"), *ROTEIRO[1:]])
+    melhor = r["combinacoes"][0]
+    assert len(melhor["lojas"]) == 3
+    assert melhor["componentes"]["slots_fora"] == 1  # japonês + açaí + burger + sorvete = 4 lojas: um não cabe
+    assert {"milan", "zenon", "antonio"} <= {s.split("#")[0] for s in melhor["escolhas"]}
+    fora = [a for a in r["avisos"] if "ficou de fora" in a]
+    assert len(fora) == 1 and "em até 3 lojas" in fora[0]
+    assert any(a.startswith("Com 4 lojas dá para incluir") for a in r["avisos"])
 
 
 async def test_pessoa_sem_opcao_vira_aviso_legivel():
@@ -106,6 +125,82 @@ async def test_nada_cabe_vira_aviso_e_lista_vazia():
     assert r["combinacoes"] == []
     assert any("Nenhuma combinação coube" in a for a in r["avisos"])
     assert any("Não achei pizza até R$ 5 para Ana" in a for a in r["avisos"])
+
+
+@pytest.fixture
+def sem_consulta_livre(monkeypatch):
+    """Força o intérprete a não gerar consulta para item fora do dicionário (pedido vai para a exploração)."""
+    monkeypatch.setattr(interprete, "_consulta_livre", lambda *a, **k: "")
+
+
+async def test_item_fora_do_dicionario_busca_pelo_proprio_texto(monkeypatch):
+    # T17c: "feijoada completa" vira a consulta do searchOffers (no MCP real, é o que a pessoa pediu)
+    consultas: list[str] = []
+    original = busca_mod.buscar_detalhado
+
+    async def espiao(cliente, intencao, endereco):
+        consultas.append(intencao.consultas)
+        return await original(cliente, intencao, endereco)
+
+    monkeypatch.setattr(motor_mod, "buscar_detalhado", espiao)
+    r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
+                      Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    assert ["feijoada completa"] in consultas
+    # o demo não tem feijoada: a busca específica volta vazia, cai no browseOffers perto do endereço (C16) e o
+    # aviso é honesto ("a opção mais próxima é X"); a pessoa que achou o que queria segue
+    assert "browseOffers" in [c["tool"] for c in r["rastro"]]
+    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
+    assert r["combinacoes"]
+
+
+async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada(sem_consulta_livre):
+    # Milan acha o que quer; a feijoada da Ana não existe nos cardápios do demo
+    r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
+                      Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    aviso = next(a for a in r["avisos"] if a.startswith("Não achei feijoada completa para Ana"))
+    assert "a opção mais próxima é " in aviso and aviso.endswith("Quer mudar o pedido?")
+    assert "R$" not in aviso  # o orçamento não entra no nome do que foi pedido
+    assert r["combinacoes"]  # a pessoa que achou o que queria segue
+    escolhas = r["combinacoes"][0]["escolhas"]
+    assert escolhas["ana"]["motivo"].startswith("Opção aproximada: ") and len(escolhas["ana"]["motivo"]) <= 90
+    assert f"{escolhas['ana']['item_nome']} ({escolhas['ana']['loja_nome']})" in aviso
+    assert not escolhas["milan"]["motivo"].startswith("Opção aproximada")
+    assert not any("Nada do que foi pedido" in a for a in r["avisos"])
+
+
+async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consulta_livre):
+    r = await _rodar([Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
+    assert r["combinacoes"] == []
+    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
+    assert any("Nada do que foi pedido está nos cardápios" in a for a in r["avisos"])
+    # pizza sem glúten: as pizzas violam a restrição e o resto não tem nada a ver com o pedido
+    r = await _rodar([Desejo("ana", "Ana", "pizza", None, ["sem_gluten"])])
+    assert r["combinacoes"] == []
+    aviso = next(a for a in r["avisos"] if a.startswith("Não achei pizza sem glúten para Ana"))
+    assert "Refrigerante" not in aviso and "Suco" not in aviso  # bebida nunca é a "mais próxima" de comida
+    assert r["avisos"][-1] == "Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?"
+    assert sum("Quer mudar o pedido?" in a for a in r["avisos"]) == 1  # a pergunta não se repete
+
+
+async def test_restricao_sem_tag_que_confirme_avisa_sem_eliminar(monkeypatch):
+    original = motor_mod.buscar_detalhado
+
+    async def sem_tags(cliente, intencao, endereco):  # como uma loja que não informa nenhuma tag
+        candidatos, detalhes = await original(cliente, intencao, endereco)
+        return candidatos, {k: {**v, "tags": []} for k, v in detalhes.items()}
+
+    with monkeypatch.context() as m:
+        m.setattr(motor_mod, "buscar_detalhado", sem_tags)
+        r = await _rodar([Desejo("ana", "Ana", "hambúrguer", None, ["vegetariano"])])
+        assert "Nenhum item confirma 'vegetariano' — confirme com a loja." in r["avisos"]
+        assert r["combinacoes"] and not any("Não achei" in a for a in r["avisos"])  # o item segue na lista
+        # com mais de uma pessoa, o aviso diz de quem é
+        r = await _rodar([Desejo("ana", "Ana", "smash burger", None, ["sem_gluten"]),
+                          Desejo("milan", "Milan", "japonês, até R$ 45")])
+        assert "Nenhum item confirma 'sem glúten' para Ana — confirme com a loja." in r["avisos"]
+    # com tag confirmando (vegetariano no demo) não há aviso
+    r = await _rodar([Desejo("ana", "Ana", "hambúrguer", None, ["vegetariano"])])
+    assert not any("Nenhum item confirma" in a for a in r["avisos"])
 
 
 # ---------- intérprete (fallback) ----------
@@ -259,3 +354,99 @@ def test_extrair_json():
     assert llm.extrair_json('[1, 2] e depois {"b": {"c": 2}}') == {"b": {"c": 2}}
     assert llm.extrair_json("{quebrado") is None
     assert llm.extrair_json(None) is None
+
+
+# ---------- correções do QA (T17b): intérprete e endereço ----------
+@pytest.mark.parametrize("texto", ["qualquer coisa barata", "o mais barato", "algo baratinho", "o de menor preço"])
+def test_frases_de_barato_ativam_o_perfil_barato(texto):
+    assert all(i.perfil == "barato" for i in interpretar_fallback(Desejo("a", "Ana", texto)))
+
+
+def test_perfil_barato_do_texto_vale_mesmo_se_o_llm_disser_outro():
+    dados = {"itens": [{"consultas": ["lanche"], "verticais": ["RESTAURANT"], "vontades": []}],
+             "restricoes": [], "orcamento_max": None, "perfil": "equilibrado"}
+    intencoes = interprete.validar_resposta_llm(dados, Desejo("a", "Ana", "o mais barato"))
+    assert intencoes[0].perfil == "barato"
+
+
+def test_quantidade_vira_slots_repetidos_ate_3():
+    intencoes = interpretar_fallback(Desejo("a", "Ana", "2 sorvetes"))
+    assert [(i.participante_id, i.consultas) for i in intencoes] == [("a", ["sorvete"]), ("a#2", ["sorvete"])]
+    duas = interpretar_fallback(Desejo("a", "Ana", "dois hambúrgueres e um açaí"))
+    assert [i.consultas[0] for i in duas] == ["hambúrguer", "hambúrguer", "açaí"]
+    assert [i.participante_id for i in duas] == ["a", "a#2", "a#3"]
+
+
+def test_quantidade_acima_do_limite_ou_sem_item_gera_aviso(monkeypatch):
+    desejo = Desejo("a", "Ana", "5 pizzas e um sorvete")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    assert [i.consultas[0] for i in intencoes] == ["pizza", "pizza", "pizza", "sorvete"]
+    assert avisos == ["Ana pediu '5 pizzas': o Match põe 3 no pedido (até 3 iguais por pessoa); o resto foi ignorado."]
+    desejo = Desejo("a", "Ana", "2 sorvetes e 3 coxinhas até 99")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    # "coxinhas" agora é um slot com consulta própria; o limite de 4 slots por pessoa corta a 3ª coxinha
+    assert [i.consultas[0] for i in intencoes] == ["sorvete", "sorvete", "coxinhas", "coxinhas"]
+    assert all(i.orcamento_max == 99 for i in intencoes)
+    assert avisos == ["Ana pediu '3 coxinhas': o Match põe 2 no pedido (até 3 iguais por pessoa); o resto foi ignorado."]
+    # sem consulta livre (comportamento antigo), item que o Match não separa continua avisando
+    monkeypatch.setattr(interprete, "_consulta_livre", lambda *a, **k: "")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    assert len(intencoes) == 2 and all(i.orcamento_max == 99 for i in intencoes)
+    assert avisos == ["A quantidade em '3 coxinhas' (Ana) foi ignorada: o Match escolhe 1 item para esse pedido."]
+
+
+def test_quantidade_e_idempotente_e_ignora_numero_do_nome_do_prato():
+    desejo = Desejo("a", "Ana", "2 sorvetes")
+    uma_vez = interpretar_fallback(desejo)
+    assert interprete.aplicar_quantidades(desejo, uma_vez) == (uma_vez, [])
+    pizza = Desejo("a", "Ana", "pizza 4 queijos até 60 reais")
+    assert interprete.aplicar_quantidades(pizza, interpretar_fallback(pizza)) == (interpretar_fallback(pizza), [])
+
+
+async def test_motor_avisa_quantidade_ignorada_e_monta_os_dois_itens(sem_consulta_livre):
+    r = await _rodar([Desejo("a", "Ana", "2 sorvetes"), Desejo("b", "Bia", "duas coxinhas")])
+    assert next(p for p in r["pessoas"] if p["participante_id"] == "a")["slots"] == ["a", "a#2"]
+    assert any("'duas coxinhas' (Bia) foi ignorada" in a for a in r["avisos"])
+    assert len(r["avisos"]) == len(set(r["avisos"]))  # slots repetidos não repetem aviso
+
+
+class _ClienteEndereco:
+    """Cliente de demonstração com o `listAddresses` trocado; sem coordenadas, a busca não acha nada."""
+
+    def __init__(self, cliente, enderecos):
+        self._cli, self._enderecos, self.modo = cliente, enderecos, "demo"
+
+    async def chamar(self, tool, **args):
+        if tool == "listAddresses":
+            return self._enderecos
+        if tool in ("searchOffers", "browseOffers") and "latitude" not in args:
+            return {"items": [], "merchants": []}
+        return await self._cli.chamar(tool, **args)
+
+    def rastro_como_dicts(self):
+        return self._cli.rastro_como_dicts()
+
+
+async def _rodar_com_endereco(enderecos, desejos=None):
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        return await rodar_match(cfg, _ClienteEndereco(cli, enderecos), desejos or ROTEIRO)
+
+
+async def test_sem_endereco_marca_problema_de_endereco():
+    r = await _rodar_com_endereco({"addresses": []})
+    assert r["problema"] == "endereco" and r["avisos"] == [motor_mod.MSG_SEM_ENDERECO]
+
+
+async def test_endereco_sem_coordenadas_avisa_em_vez_de_nao_achei():
+    r = await _rodar_com_endereco({"addresses": [{"addressId": "a1", "formattedAddress": "Rua X, 1"}]})
+    assert r["problema"] == "endereco" and r["combinacoes"] == []
+    assert r["avisos"] == [motor_mod.MSG_ENDERECO_SEM_COORDENADAS]
+    assert not any(a.startswith("Não achei") for a in r["avisos"])
+
+
+async def test_endereco_sem_id_avisa_ja_ao_rodar():
+    r = await _rodar_com_endereco({"addresses": [{"formattedAddress": "Rua X, 1",
+                                                  "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
+    assert "problema" not in r and r["combinacoes"]
+    assert motor_mod.MSG_ENDERECO_SEM_ID in r["avisos"]

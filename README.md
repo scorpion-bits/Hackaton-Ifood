@@ -1,99 +1,213 @@
-# Comércio com Agentes — Hackathon iFood × SEMCOMP 29
+# Match — pedido em grupo com agentes no MCP do iFood
 
-Esqueleto do projeto: um agente de IA que **vende** (lado do lojista) e **compra** (lado do cliente) usando
-ferramentas expostas por um **servidor MCP** que fala com as **APIs do iFood**. Toda ação com dinheiro, preço ou
-pedido é só uma **proposta**; a pessoa confirma na tela.
+> Protótipo do Hackathon SEMCOMP 29 × iFood ("Vendendo com Agentes"), São Carlos, out/2026.
+> **Não é afiliado ao iFood** e não é o app oficial. Dados simulados aparecem com o selo **DEMONSTRAÇÃO**.
+
+**O que é, em 3 linhas**
+1. Cada pessoa escreve o que quer em uma frase ("japonês e um sorvete, até 45"). A IA compõe **um pedido para 1 ou N
+   pessoas**, em **uma ou mais lojas** (até 3), respeitando orçamento e restrições de cada um.
+2. Cada restaurante tem um **agente vendedor** que só enxerga o próprio cardápio e disputa o pedido; o **IBits** é o
+   **agente comprador** do grupo, que escolhe a melhor combinação com uma conta justa e explicada.
+3. Tudo passa pelo **MCP do iFood (consumidor)**: busca, cardápio, carrinho, entrega, pagamento, pedido e
+   acompanhamento. Preço e taxa só vêm das tools do MCP; nada sai sem o "ok" do organizador.
+
+Detalhes e estado de cada parte: [`docs/tecnico.md`](docs/tecnico.md).
+
+## Avaliar em 5 minutos
+
+**O que é:** um app web em que um grupo diz o que quer comer em frases livres; agentes das lojas disputam o pedido,
+o IBits escolhe a melhor combinação (até 3 lojas) e o organizador monta os carrinhos pelo MCP do iFood e dá o ok.
+Sem chave de IA e sem internet, tudo roda no modo demonstração (selo DEMONSTRAÇÃO).
+
+**Rodar (3 comandos)** — precisa de Python 3.11+ e Node 20+:
+```bash
+git clone https://github.com/scorpion-bits/Hackaton-Ifood && cd Hackaton-Ifood
+./iniciar.sh            # Windows: iniciar.bat (duplo clique)
+# abra http://localhost:8000
+```
+
+**Testar sozinho (1 aba normal + 3 abas anônimas):**
+1. Aba normal = organizador: "Fazer um match" → crie a sala e copie o link dos convidados.
+2. Em cada aba anônima, abra o link, ponha um nome e uma frase:
+   - aba 1: `Japonês e um sorvete, até 45`
+   - aba 2: `Hambúrguer e sorvete, até 50`
+   - aba 3: `Algo barato e vegetariano, até 25`
+3. Opcional, na aba do organizador ("Também quero pedir"): `feijoada completa, até 60` — mostra o aviso
+   "Não achei feijoada completa…" em vez de inventar um prato (com essa 4ª frase o resultado muda).
+4. "Rodar Match" → veja a disputa das lojas (o Patrocinado fala primeiro e não vence) → deck → "Separado" →
+   pagamentos → "Deslize para enviar" → abra o rastro das tools MCP.
+
+Resultado esperado das 3 primeiras frases e falas da disputa: [`docs/roteiro-demo.md`](docs/roteiro-demo.md).
+Os 6 entregáveis estão na [tabela abaixo](#entregáveis); slides em [`pitch/pitch.pdf`](pitch/pitch.pdf).
+
+**Rede:** para usar celulares de verdade, eles precisam alcançar o PC (`http://<IP-do-PC>:8000`). Se o Wi-Fi
+isolar os aparelhos (comum em rede de evento), use o hotspot do celular ou as abas anônimas no próprio PC.
+
+## Como funciona (fluxo da demo)
 
 ```
-Pessoa ─▶ Frontend (React) ─▶ FastAPI ─▶ Agente (LLM) ─▶ Servidor MCP ─▶ Cliente iFood (mock | real)
-                                              ▲                                   │
-                                              └──── confirmação humana ◀──────────┘
+Organizador (PC, único logado no iFood)          Convidados (celular, sem login)
+  1. Cria a sala ─────── QR + link ──────────────▶ 2. Nome + frase + orçamento + chips
+  3. "Rodar Match"
+       listAddresses → searchOffers → getMerchant (MCP)
+       IA interpreta → IA dá nota a cada item → leilão: 1 agente vendedor por loja (falas validadas)
+       → otimizador (justiça, custo, prazo, nº de lojas)
+  4. Disputa ao vivo + deck com até 3 combinações ("É um Match!"); quadro: por pessoa, item · loja · preço · nota · motivo (+ 2 alternativas)
+  5. Escolhe "junto" (paga tudo) ou "separado" (vaquinha)
+       1 carrinho por loja: createCart → addItemToCart → getCartDeliveryMethods → setCartDelivery
+                            → listPaymentMethods → setCartPayment → getCart (taxa real)
+  6. Separado: partes exatas ao centavo ───────────▶ 7. Pix (para a chave do organizador),
+     prazo: 10 min + 2 min por pessoa acima de 2         cartão simulado (só demo) ou dinheiro
+  8. Com 100% pago, confirma → getCart de novo → submitOrder(userConsent: true) → trackOrder
+  Rastro: cada chamada de tool aparece na tela, com o nome da documentação oficial.
 ```
 
-> Modo padrão: **tudo offline** (`LLM_PROVIDER=mock`, `IFOOD_MODE=mock`). Os dados são fictícios e aparecem com o
-> selo **DEMONSTRAÇÃO**.
+O roteiro de 2 minutos com as falas e o resultado esperado está em [`docs/roteiro-demo.md`](docs/roteiro-demo.md).
 
-## Rodar no Windows (sem Docker) — passo a passo
+## Rodar no Windows (sem Docker)
 
-1. Instale **Python 3.11+** ([python.org](https://www.python.org/downloads/), marque *Add python.exe to PATH*) e
-   **Node.js 20+** ([nodejs.org](https://nodejs.org/)). Confira no PowerShell:
-   ```powershell
-   python --version
-   node --version
-   ```
+1. Instale **Python 3.11 a 3.14** ([python.org](https://www.python.org/downloads/), marque *Add python.exe to PATH*)
+   e **Node.js 20+** ([nodejs.org](https://nodejs.org/)). Confira no PowerShell: `python --version` e `node --version`.
 2. Baixe o projeto (`git clone` ou ZIP) e abra a pasta.
 3. Dê **duplo clique em `iniciar.bat`**. Ou, no PowerShell, dentro da pasta:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\iniciar.ps1
+   powershell -ExecutionPolicy Bypass -File .\iniciar.ps1          # app em http://localhost:8000
+   powershell -ExecutionPolicy Bypass -File .\iniciar.ps1 -Dev     # backend com reload + Vite em :5173
+   powershell -ExecutionPolicy Bypass -File .\iniciar.ps1 -Testes  # testes do backend + tipos do frontend
    ```
-   Na primeira vez ele cria `backend\.venv`, instala dependências, cria o `.env` e compila o frontend (alguns minutos).
-4. O navegador abre em **http://localhost:8000**. Para parar: `Ctrl+C` na janela.
+   Na primeira vez o script cria `backend\.venv`, instala as dependências, copia `.env.example` para `.env`
+   (tudo offline) e compila o frontend. Leva alguns minutos.
+4. O navegador abre em **http://localhost:8000** quando o servidor responde. Para parar: `Ctrl+C`.
 
-Outros modos: `.\iniciar.ps1 -Dev` (hot reload em http://localhost:5173) · `.\iniciar.ps1 -Testes`.
+**Celulares dos convidados:** na mesma rede Wi-Fi, use o endereço que o script imprime (`http://<IP-do-PC>:8000`).
+Na sala do organizador, preencha **"Base do link"** com esse IP (ex. `192.168.x.x`; evite `172.x`) para o QR
+apontar para o PC. Se o Windows perguntar, permita o acesso em rede privada.
 
-**Se o `pip install` falhar no Python 3.14** (algum pacote sem versão pronta para 3.14): instale o Python 3.13,
-apague `backend\.venv` e rode de novo com `py -3.13 -m venv backend\.venv` antes do script.
+**Se der erro:** `pip install` falhou → confira a versão do Python e rode de novo; porta 8000 ocupada → feche o
+outro processo; "Preencha IFOOD_MCP_CLIENT_ID" com o `.env` preenchido → reinicie o app e veja se não há a mesma
+variável repetida e vazia mais abaixo no `.env` (vale a última).
 
-## Rodar no Linux/macOS
+## Rodar no Linux / macOS
 
 ```bash
-./iniciar.sh            # http://localhost:8000
-./iniciar.sh --dev      # backend com reload + Vite em :5173
-./iniciar.sh --testes   # pytest + checagem de tipos
+./iniciar.sh            # instala o que faltar, compila o frontend e sobe http://localhost:8000
+./iniciar.sh --dev      # backend com reload (8000) + Vite com hot reload (5173)
+./iniciar.sh --testes   # pytest do backend + typecheck do frontend
 ```
 
-## Ligar uma IA gratuita
+## Modos (no `.env`)
 
-Edite o `.env` (criado na primeira execução):
-
-| Provedor | `.env` | Chave |
+| Variável | Valores | Para quê |
 |---|---|---|
-| Groq | `LLM_PROVIDER=groq` + `GROQ_API_KEY=...` | https://console.groq.com/keys |
-| Gemini | `LLM_PROVIDER=gemini` + `GEMINI_API_KEY=...` | https://aistudio.google.com/apikey |
-| Ollama (local) | `LLM_PROVIDER=ollama` | sem chave; instale https://ollama.com e baixe um modelo |
+| `IFOOD_MCP_MODO` | `demo` (padrão) · `real` | `demo`: servidor MCP de demonstração dentro do app, com os **mesmos nomes de tools** da doc oficial e lojas fictícias (selo DEMONSTRAÇÃO); funciona sem internet. `real`: MCP oficial `https://consumer-mcp.ifood.com.br/marketplace` com login OAuth. |
+| `LLM_PROVIDER` | `mock` (padrão) · `groq` · `gemini` · `ollama` · `openai` · `anthropic` | `mock` não usa IA nem chave: tudo cai no modo determinístico e a demo inteira roda. Os outros usam o modelo do `.env`. |
+| `LLM_MODEL` | nome do modelo | Não chute: rode `python -m app.agente.listar_modelos` dentro de `backend/` (com o venv). |
+| `LLM_API_KEY` | chave | Ou `GROQ_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. |
+| `MATCH_LEILAO` | `on` (padrão) · `off` | `off` pula o leilão dos agentes das lojas e vai direto ao otimizador. |
+| `IFOOD_MCP_PERMITIR_ENVIO` | `false` (padrão) · `true` | Só no modo real: com `false`, `submitOrder` fica travado e o pedido para no carrinho (a API responde 409 explicando). |
 
-Depois escolha o modelo **sem chutar o nome**:
+Com qualquer provedor, se a IA falhar ou demorar (limite de 8 s por chamada), o motor segue com o modo
+determinístico. A IA nunca escreve preço, taxa ou prazo.
+
+## Conectar o iFood real (conta de teste)
+
+1. No [Portal do Desenvolvedor do MCP](https://mcp-developer.ifood.com.br/pt-BR) ("Faça login"), abra o agente
+   aprovado e copie o **client id** e o **client secret**.
+2. Cadastre a Redirect URL **exatamente** `http://localhost:8000/oauth/callback` (sem curinga).
+3. No `.env` (que nunca vai para o git):
+   ```
+   IFOOD_MCP_MODO=real
+   IFOOD_MCP_CLIENT_ID=...
+   IFOOD_MCP_CLIENT_SECRET=...
+   IFOOD_MCP_REDIRECT=http://localhost:8000/oauth/callback
+   ```
+4. Reinicie o app e toque em **"Conectar iFood"** na tela inicial (ou abra `http://localhost:8000/oauth/login`).
+   Entre com uma **conta de teste** do Portal (e-mail `@test.ifood.com.br` + código gerado em "Gerar código").
+5. O login volta para o app (`/#/conectado`). Os tokens ficam em `backend/.tokens_ifood.json`, que está no
+   `.gitignore`, e são renovados sozinhos 5 min antes de expirar.
+
+O login só funciona no PC onde o app roda (o retorno vai para o `localhost` dele).
+
+> **Nunca pague o Pix de um pedido de teste: não há reembolso.** Na conta de teste o pedido não vai ao restaurante.
+> O cartão simulado da vaquinha só existe no modo `demo`.
+
+**Diagnóstico do MCP real** (só leitura, nunca chama `submitOrder`; grava amostras sanitizadas em `docs/mcp-real/`):
 ```bash
 cd backend
-.venv/bin/python -m app.agente.listar_modelos          # Linux
-.venv\Scripts\python.exe -m app.agente.listar_modelos  # Windows
+.venv/bin/python -m app.ifood_mcp.diagnostico              # Windows: .venv\Scripts\python -m app.ifood_mcp.diagnostico
+.venv/bin/python -m app.ifood_mcp.diagnostico --carrinho   # também cria 2 carrinhos, sem enviar pedido
 ```
-Coloque em `LLM_MODEL=` um modelo que suporte *tool calling* e reinicie. Sem internet? Volte para `LLM_PROVIDER=mock`.
 
-## Ligar o iFood real
+## Testes
 
-`IFOOD_MODE=real` + `IFOOD_CLIENT_ID` + `IFOOD_CLIENT_SECRET` (Portal do Desenvolvedor iFood → Meus Apps).
-Teste sem alterar nada: `python -m app.ifood.testar_real` dentro de `backend/`. Hoje o modo real só **lê**
-(lojas e cardápio). Veja o que está verificado em [`docs/ifood-apis.md`](docs/ifood-apis.md).
+```bash
+./iniciar.sh --testes                     # ou iniciar.ps1 -Testes no Windows
+cd backend && .venv/bin/python -m pytest -q
+cd frontend && npm run typecheck
+```
+Hoje: **306 testes** no backend (pytest), todos passando (contagem de 18/10; o comando acima mostra o número exato). Os testes zeram as credenciais e isolam o arquivo de
+tokens; nenhum teste chama o iFood real.
 
 ## Estrutura
 
-| Caminho | O que é |
-|---|---|
-| `backend/app/main.py` | API FastAPI e servidor do frontend compilado |
-| `backend/app/agente/` | laço do agente e provedores de LLM (mock, Groq/Gemini/Ollama/OpenAI, Anthropic) |
-| `backend/app/mcp_server.py` | servidor MCP: ferramentas `vendedor_*` e `comprador_*` |
-| `backend/app/acoes.py` | propostas pendentes e confirmação humana |
-| `backend/app/ifood/` | cliente iFood: `mock.py` (demonstração) e `real.py` (Merchant API) |
-| `backend/mcp_stdio.py` | servidor MCP sozinho, para Claude Desktop / MCP Inspector ([guia](docs/mcp.md)) |
-| `frontend/` | React + TypeScript (Vite), mobile first |
-| `pitch/` | slides Reveal.js locais; `npm run pdf` gera `pitch/pitch.pdf` (versionado) |
-| `docs/` | APIs do iFood, MCP, decisões, plano de horas, checklist de entrega |
-
-## API
-
-| Método | Rota | Para quê |
-|---|---|---|
-| GET | `/api/saude` | provedor de IA, modo iFood, se é demonstração |
-| POST | `/api/chat` | `{mensagem, lado: "comprador"\|"vendedor", conversa_id?}` → texto, passos, ações |
-| GET | `/api/acoes?status=pendente` | ações propostas |
-| POST | `/api/acoes/{id}/confirmar` · `/recusar` | decisão humana |
-| POST | `/api/demo/resetar` | volta os dados de demonstração ao início |
-
-## Pitch
-
-```bash
-cd pitch && npm install
-# abrir index.html no navegador para apresentar
-npm run pdf   # usa Edge/Chrome já instalado; gera pitch/pitch.pdf → commitar
 ```
+backend/
+  app/
+    main.py              FastAPI: rotas, serve frontend/dist em :8000
+    config.py            lê o .env (IFOOD_MCP_*, LLM_*)
+    rotas_match.py       API da sala do Match (/api/salas/...)
+    rotas_oauth.py       /oauth/login, /oauth/callback, /api/ifood/status, /api/ifood/sair
+    match/               motor do Match
+      motor.py           listAddresses → interpretar → buscar → julgar → leilão → otimizar
+      interprete.py      frase → slots (consultas, restrições, orçamento, perfil, quantidades); IA + regras
+      leilao.py          1 agente vendedor por loja; validação das falas; fallback por template
+      politica_lojas.json  loja patrocinada do modo demo (só visibilidade)
+      busca.py           searchOffers / getMerchant / browseOffers → candidatos (único leitor da descoberta)
+      juiz.py            nota 0–1 + motivo por item; IA + regras
+      otimizador.py      combinações com justiça, custo, prazo, nº de lojas (até 3)
+      checkout.py        carrinhos, envio com consentimento, trackOrder (único leitor do carrinho/pedido)
+      acerto.py          partes por pessoa em centavos; prazo da vaquinha
+      pix.py             Pix copia e cola (BR Code estático, CRC16)
+      salas.py           estado da sala em SQLite (máquina de estados)
+      llm.py             chamada de IA com saída JSON e limite de tempo
+    ifood_mcp/
+      cliente.py         cliente MCP (demo em processo | real via Streamable HTTP) com rastro;
+                         adapta argumentos ao input_schema (userLocation); trava o submitOrder real
+      demo_server.py     servidor MCP de demonstração (17 tools com os nomes da doc)
+      oauth.py           Authorization Code + PKCE S256 + client secret; tokens fora do git
+      diagnostico.py     amostras sanitizadas do MCP real
+    agente/provedores.py provedores de IA (mock, OpenAI-compatível, Anthropic)
+  tests/                 pytest
+frontend/src/
+  App.tsx, api.ts, tipos.ts, estilo.css
+  telas/                 Inicio, Organizador, Convidado, Leilao, Deck, Resultado, Pagamento, Pedidos
+  componentes/           Selo, Rastro, StatusIfood, CartaoPessoa, ContadorPrazo, BarraInferior, Deslizar…
+    leilao/              visual das lojas, "É um Match!", confete, utilitários do deck
+pitch/                   slides (Reveal.js local); npm run pdf gera pitch/pitch.pdf
+docs/                    entregáveis, planos e decisões
+iniciar.bat · iniciar.ps1 · iniciar.sh · .env.example
+```
+
+## Entregáveis
+
+| # | Entregável | Onde |
+|---|---|---|
+| 1 | Proposta de negócio | [`docs/proposta-negocio.md`](docs/proposta-negocio.md) |
+| 2 | Desenho de solução | [`docs/tecnico.md`](docs/tecnico.md) (arquitetura e diagramas) |
+| 3 | Racional de UX | [`docs/racional-ux.md`](docs/racional-ux.md) |
+| 4 | Interface visual | o app (`./iniciar.sh`) e [`docs/design-ifood.md`](docs/design-ifood.md) |
+| 5 | Documentação técnica | [`docs/tecnico.md`](docs/tecnico.md) e este README |
+| 6 | Feedback sobre o MCP | [`docs/feedback-mcp.md`](docs/feedback-mcp.md) |
+| — | Pitch | [`pitch/pitch.pdf`](pitch/pitch.pdf) · roteiro: [`docs/roteiro-demo.md`](docs/roteiro-demo.md) |
+
+Decisões e o porquê de cada uma: [`docs/decisions.md`](docs/decisions.md). Resumo do MCP do consumidor:
+[`docs/mcp-ifood.md`](docs/mcp-ifood.md).
+
+## Regras do projeto
+
+- Preço, taxa, prazo e disponibilidade só vêm de resposta de tool do MCP; a IA nunca inventa número.
+- `submitOrder` só com `userConsent: true`, depois da confirmação humana na tela (e 100% pago no modo separado).
+- Segredos e tokens só no `.env` e em `backend/.tokens_ifood.json` (ambos fora do git).
+- Dado simulado sempre com o selo DEMONSTRAÇÃO.
+
+Equipe: Thales Miguel Hajes, Milan, Zenon e Antonio.

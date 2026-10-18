@@ -1,5 +1,29 @@
 # Feedback sobre o MCP do iFood (entregável 06)
 
+## Top 3 por gravidade
+
+1. **`userLocation` exigido e sem documentação.** `searchOffers` e `getRecommendations` recusam `latitude`/`longitude`
+   soltos (como nos exemplos da doc) e pedem `userLocation: {latitude, longitude}`. No 1º teste real nenhuma busca
+   funcionou. Contornamos lendo o `input_schema` do `list_tools` e montando o objeto (`backend/app/ifood_mcp/cliente.py`).
+2. **23 tools no servidor × 24 na documentação.** `listItemTaxonomy` está na doc e não existe no `list_tools` real.
+3. **`listAddresses` com formato diferente do exemplo da doc.** Nosso leitor não achou a lista e a sala dizia
+   "nenhum endereço salvo", sem erro. Contornamos com um leitor que aceita formatos variados (`match/busca.py`).
+
+## O que funcionou bem
+
+- **OAuth com PKCE S256 conforme os metadados** de `id.ifood.com.br`: seguindo os metadados (não a doc), o login da
+  conta de teste funcionou.
+- **Mensagem de erro do `userLocation` clara:** diz o campo, o tipo (objeto) e os subcampos numéricos; deu para
+  corrigir sem adivinhar.
+- **`list_tools` com `input_schema` útil:** foi o que permitiu adaptar os argumentos ao servidor real e descartar o
+  que a tool não declara.
+
+Amostras sanitizadas do MCP real (`list_tools` e respostas de leitura, geradas por `app.ifood_mcp.diagnostico` no PC
+da equipe): [`docs/mcp-real/`](mcp-real/) — enviadas pela equipe; se a pasta não estiver no repositório, ainda não
+foram publicadas.
+
+## Registro
+
 Anotar **na hora** cada dor real: data/hora, o que tentamos, o que aconteceu, impacto, sugestão.
 
 | Quando | Situação | O que aconteceu | Impacto | Sugestão |
@@ -10,3 +34,7 @@ Anotar **na hora** cada dor real: data/hora, o que tentamos, o que aconteceu, im
 | 17/10 manhã | Doc da Web Login | Diz `code_challenge_method: pkce` e scopes "comma-separated"; os metadados reais pedem `S256` e o padrão OAuth separa scopes por espaço | Implementação literal da doc falha | Corrigir para `S256` e espaço |
 | 17/10 manhã | Cadastro do agente | O vídeo dizia "uma Redirect URL por agente", mas o formulário já aceita várias (ok). Escopos continuam **imutáveis** depois de ativo | Errar o escopo obriga a recriar o agente e a passar de novo pela homologação | Permitir editar escopos com nova revisão; atualizar o vídeo |
 | 17/10 noite | Doc de contas de teste | O link "criação de conta" aponta para `mcp-developer.ifood-sandbox.com.br/pt-BR/sign-up`, domínio que não respondeu no nosso teste; o portal real é `mcp-developer.ifood.com.br` (botão "Faça login") | Equipe aprovada não achava onde entrar no portal | Corrigir o link e pôr um botão "Meus agentes" visível na doc |
+| 17/10 ~22h | `list_tools` no MCP real (conta de teste) | O servidor expõe **23 tools**; a doc lista 24 — `listItemTaxonomy` não existe | Quem planeja pela doc conta com uma tool que não há | Atualizar a lista da doc ou publicar a tool |
+| 17/10 ~22h | `searchOffers` e `getRecommendations` com `latitude`/`longitude` soltos (como os exemplos da doc) | Erro: "`userLocation` is required and must be a JSON object with numeric `latitude` and `longitude`" — 0 resultados | Nenhuma busca funcionou no 1º teste; o agente não encontra lojas | Citar `userLocation` (objeto) na doc e nos exemplos; a mensagem de erro é boa e deveria ser o padrão das outras tools |
+| 17/10 ~22h | `listAddresses` no MCP real | Formato diferente do exemplo da doc (nosso leitor não achou a lista e a sala dizia "nenhum endereço salvo") | Integração quebra em silêncio | Publicar o `outputSchema` das tools (o `list_tools` já tem o campo) e manter a doc igual ao real |
+

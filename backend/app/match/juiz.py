@@ -51,6 +51,12 @@ def _termos(intencao: Intencao) -> dict[str, str]:
     return termos
 
 
+def bebida_sem_pedir(intencao: Intencao, detalhe: dict) -> bool:
+    """O item é bebida e a pessoa pediu comida (bebida nunca vale como "opção mais próxima" de comida)."""
+    categoria = _palavras(normalizar(detalhe.get("categoria", "")))
+    return any(b in categoria for b in BEBIDAS) and not any(t in BEBIDAS for t in _termos(intencao))
+
+
 def _nao_confirmadas(restricoes: list[str], tags: list[str]) -> list[str]:
     return [r for r in restricoes if not (set(tags) & CONFIRMA.get(r, {r}))]
 

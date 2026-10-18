@@ -192,12 +192,6 @@ async def test_resetar_demo_apaga_carrinhos():
             await cli.chamar("getCart", cartId=a["cartId"])
 
 
-async def test_modo_real_fica_para_a_etapa_03(monkeypatch):
-    monkeypatch.setenv("IFOOD_MCP_MODO", "real")
-    with pytest.raises(NotImplementedError, match="etapa 03"):
-        async with abrir_cliente(carregar()):
-            pass
-
 
 def test_resumo_curto_e_sem_dados_sensiveis():
     r = resumir("searchOffers", {"query": "x" * 200, "latitude": -22.0, "longitude": -47.8,

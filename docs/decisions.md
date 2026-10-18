@@ -42,6 +42,25 @@ Formato: data · decisão · por quê · quem aprovou · como reverter.
    o modo real troca só o transporte (etapa 03). Por quê: desenvolver sem credencial e ter plano B sem internet.
    Aprovação: operacional (Claude). Agente `jurado` criado (aprovado pela equipe).
 
+## 17/10/2026 — Etapa 04
+
+9. **Leilão de agentes por loja (com LLM).** Cada restaurante tem um agente vendedor que só vê o próprio cardápio
+   (vindo do MCP) e decide o que oferecer a cada pessoa; o IBits (agente comprador) otimiza entre os lances. Números
+   só do MCP; fala com número fora do lance cai no texto determinístico. Por quê: o tema é "Vendendo com Agentes" e
+   tira o Match do genérico ("grupo + IA" já existe). Aprovação: equipe. Reverter: `rodar_leilao` é uma etapa do motor.
+10. **"Patrocinado" é a única política da loja e só dá visibilidade** (lance aparece primeiro, com rótulo); nunca muda
+   nota nem escolha. Modelo de negócio no pitch. Aprovação: equipe delegou ao Claude. Reverter: `politica_lojas.json`.
+
+11. **Rodada 3 — aderência ao regulamento oficial** (17/10 ~23h45). O regulamento pede "um agente que faz pedidos de
+   verdade" e "agentes conversacionais e ferramentas determinísticas trabalhando juntos". Decisões: (a) **pedido real
+   na conta de teste** — no modo real o checkout nunca escolhe Pix nem cartão online; só forma sem cobrança; envio só
+   com `IFOOD_MCP_PERMITIR_ENVIO=true` (C16); (b) **"Ajustar com o IBits"** — conversa depois do resultado que muda o
+   pedido de uma pessoa e roda o Match de novo (C14); (c) **"Só eu"** — o mesmo motor para 1 pessoa, sem QR (C15);
+   (d) pacote de entrega com os 6 itens em PDF. Aprovação: equipe ("faça tudo que pensar ser melhor"). Reverter:
+   cada item é um branch próprio (`match/04-ajustar-*`, `match/04-so-eu`, `match/03-pedido-real`).
+12. **Patrocinado sem vaga garantida** (achado do jurado 2): pagar só muda a ordem das falas e o rótulo; o corte de
+   lojas ignora o patrocínio. **Bebida nunca é oferta para quem pediu comida.** Aprovação: operacional (Claude).
+
 ## Pendentes (👥 decisão humana na abertura)
 
 - Provedor de IA da demo (Groq × Gemini × Ollama) depois de testar com a internet do evento.
