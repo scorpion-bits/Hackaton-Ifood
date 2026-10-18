@@ -6,6 +6,33 @@ const { chromium } = require('playwright');
 
 const URL = process.env.E2E_URL || 'http://localhost:8000/';
 const SAIDA = process.env.SAIDA || path.join(__dirname, '..', 'img', 'app');
+// Fotos e logos: o modo demonstração não traz imagem; aqui entram URLs reais do MCP do iFood (amostras de docs/mcp-real)
+// por cima das respostas da API, só para a captura. Dados (lojas, preços) continuam os da demonstração.
+const IMG = require('./imagens-mcp-real.json');
+const foto = (nome) => {
+  const n = (nome || '').toLowerCase();
+  if (/pizza|calabres|marguer/.test(n)) return IMG.pizza;
+  if (/burg|hamb|whopper|x-|lanche|sandu/.test(n)) return IMG.burger;
+  if (/sorvete|açaí|acai|sundae|gelato/.test(n)) return IMG.acai;
+  return null; // sem foto parecida: fica sem foto, nunca uma foto de outro prato
+};
+let nlogo = 0;
+const injetar = (o) => {
+  if (Array.isArray(o)) return o.forEach(injetar);
+  if (!o || typeof o !== 'object') return;
+  if ('imagem_url' in o && !o.imagem_url) {
+    if ('item_id' in o) o.imagem_url = foto(o.nome || o.item_nome || o.titulo); // logos de lojas: sem amostra da mesma loja, ficam como estão
+  }
+  Object.values(o).forEach(injetar);
+};
+const comImagens = (p) => p.route('**/api/salas/**', async (rota) => {
+  const r = await rota.fetch();
+  const ct = r.headers()['content-type'] || '';
+  if (!ct.includes('json')) return rota.fulfill({ response: r });
+  try { const j = await r.json(); injetar(j); await rota.fulfill({ response: r, json: j }); }
+  catch { await rota.fulfill({ response: r }); }
+});
+
 const CHROME = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
 fs.mkdirSync(SAIDA, { recursive: true });
 
@@ -19,9 +46,11 @@ const CONVIDADOS = [
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined, args: ['--no-sandbox'] });
   const novo = async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'pt-BR' });
-    return ctx.newPage();
+    const pg = await ctx.newPage();
+    await comImagens(pg);
+    return pg;
   };
-  const foto = (p, nome) => p.screenshot({ path: path.join(SAIDA, `${nome}.png`) });
+  const foto = async (p, nome) => { await p.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(400); return p.screenshot({ path: path.join(SAIDA, `${nome}.png`) }); };
 
   const org = await novo();
   await org.goto(URL);
