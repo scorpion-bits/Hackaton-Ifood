@@ -298,6 +298,8 @@ export default function Deck({
 
   return (
     <section className="tela ld-raiz ld-deckbody" aria-label="Opções de pedido">
+      {/* Com o overlay "É um Match!" aberto, o fundo fica inerte (sem foco e fora do leitor de tela). */}
+      <div className="ld-conteudo" inert={casada ? true : undefined}>
       <div className="ld-top">
         <span className="ld-step">
           Resultado · {idx + 1} de {n}
@@ -375,6 +377,7 @@ export default function Deck({
             : "Deslize para a direita ou toque em Dar match."
           : `O organizador está escolhendo a opção e o modo de pagamento.${n > 1 ? " Deslize para a esquerda para ver as outras opções." : ""}`}
       </p>
+      </div>
       {overlay}
     </section>
   );

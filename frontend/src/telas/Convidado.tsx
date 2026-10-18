@@ -12,11 +12,25 @@ const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export const chavePid = (salaId: string) => `match.pid.${salaId}`;
 export const lerPid = (salaId: string) => lerLocal<string>(chavePid(salaId));
 
-/** Convidados = todos, menos o organizador que ainda não respondeu. `pidOrg` desconhecido: o 1º da lista é o organizador. */
-export function contagemRespostas(sala: EstadoSala, pidOrg?: string | null): { resp: number; total: number } {
+/**
+ * `resp`/`total`: todos que contam para rodar (o organizador só entra se já respondeu). Serve ao convidado.
+ * `convResp`/`convTotal`: só os convidados (sem o organizador); `euResp`: o organizador já respondeu.
+ * `pidOrg` desconhecido: o 1º da lista é o organizador.
+ */
+export function contagemRespostas(
+  sala: EstadoSala,
+  pidOrg?: string | null,
+): { resp: number; total: number; convResp: number; convTotal: number; euResp: boolean } {
   const orgId = pidOrg ?? sala.participantes[0]?.id;
   const lista = sala.participantes.filter((p) => p.respondeu || p.id !== orgId);
-  return { resp: lista.filter((p) => p.respondeu).length, total: lista.length };
+  const convidados = sala.participantes.filter((p) => p.id !== orgId);
+  return {
+    resp: lista.filter((p) => p.respondeu).length,
+    total: lista.length,
+    convResp: convidados.filter((p) => p.respondeu).length,
+    convTotal: convidados.length,
+    euResp: sala.participantes.some((p) => p.id === orgId && p.respondeu),
+  };
 }
 
 /** Formulário curto (nome, desejo, orçamento, chips). Usado pelo convidado e pelo organizador. */

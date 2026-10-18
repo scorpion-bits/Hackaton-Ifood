@@ -33,6 +33,15 @@ async function chamar<T>(
   return (await r.json()) as T;
 }
 
+/** GET /api/saude. `envio_real_permitido` pode não existir (backend antigo): só `=== false` muda a tela. */
+export interface Saude {
+  ok?: boolean;
+  ip_local?: string | null;
+  demonstracao?: boolean;
+  ifood_modo?: string;
+  envio_real_permitido?: boolean;
+}
+
 const S = (id: string) => `/api/salas/${encodeURIComponent(id)}`;
 
 export const api = {
@@ -62,7 +71,7 @@ export const api = {
     chamar<unknown>(`${S(id)}/enviar`, { corpo: { confirmo: true }, token }),
   atualizarPedido: (id: string, orderId: string) =>
     chamar<unknown>(`${S(id)}/pedidos/${encodeURIComponent(orderId)}/atualizar`, { metodo: "POST", corpo: {} }),
-  saude: () => chamar<{ ok?: boolean; ip_local?: string | null }>("/api/saude"),
+  saude: () => chamar<Saude>("/api/saude"),
   ifoodStatus: () => chamar<StatusIfood>("/api/ifood/status"),
   ifoodSair: () => chamar<unknown>("/api/ifood/sair", { metodo: "POST", corpo: {} }),
   resetar: () => chamar<unknown>("/api/demo/resetar", { metodo: "POST", corpo: {} }),
@@ -102,6 +111,9 @@ export interface Eu {
 export const lerToken = (salaId: string) => lerLocal<string>(chaveOrg(salaId));
 
 export const chaveUltimaSala = "match.ultima_sala";
+/** Sala que já terminou (pedidos enviados): a home não oferece mais "Sua sala está aberta" para ela. */
+export const chaveEncerrada = (salaId: string) => `match.encerrada.${salaId}`;
+export const salaEncerrada = (salaId: string) => lerLocal<boolean>(chaveEncerrada(salaId)) === true;
 
 /** Apaga todas as chaves `match.*` deste aparelho. */
 export function limparMatchLocal(): void {
@@ -120,11 +132,14 @@ export function limparMatchLocal(): void {
 /** Sala do organizador mais recente salva neste aparelho (ou null). */
 export function ultimaSalaOrg(): string | null {
   const u = lerLocal<string>(chaveUltimaSala);
-  if (u && lerLocal<string>(chaveOrg(u))) return u;
+  if (u && lerLocal<string>(chaveOrg(u)) && !salaEncerrada(u)) return u;
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith("match.org.")) return k.slice("match.org.".length);
+      if (k && k.startsWith("match.org.")) {
+        const id = k.slice("match.org.".length);
+        if (!salaEncerrada(id)) return id;
+      }
     }
   } catch {
     /* ignora */

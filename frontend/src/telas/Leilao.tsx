@@ -14,6 +14,7 @@ const MAX_FALAS = 6; // orçamento de palco: o leilão todo cabe em ~8 s
 const MS_FALA = 820; // intervalo entre falas
 const MS_FECHAMENTO = 1400;
 const MS_DIGITANDO = 520;
+const MS_AUTO_CONVIDADO = 4000; // convidado segue sozinho; organizador toca em "Ver as opções" (narra o fechamento)
 
 /**
  * Se o roteiro for longo, mostra: abertura, até 4 lances/passes (vencedoras e patrocinadas primeiro),
@@ -54,15 +55,18 @@ function EtiquetaPatrocinado({ demo }: { demo: boolean }) {
 
 /**
  * Disputa entre as lojas (C13, leilão): só TOCA o roteiro de `leilao.falas`. Nada aqui calcula preço ou escolhe loja.
- * `onFim` é chamado ao terminar ou ao tocar em Pular.
+ * `onFim` é chamado ao tocar em Pular ou em "Ver as opções". No aparelho do organizador a tela NUNCA avança sozinha
+ * (ele narra o Patrocinado e o fechamento); no do convidado avança ~4 s depois do fechamento.
  */
 export default function Leilao({
   leilao,
   rastro,
+  organizador,
   onFim,
 }: {
   leilao: LeilaoDados;
   rastro: ChamadaRastro[];
+  organizador: boolean;
   onFim: () => void;
 }) {
   // O polling troca o objeto a cada 2 s: o roteiro usa só o que existia ao montar.
@@ -131,9 +135,9 @@ export default function Leilao({
       t += f.tipo === "fechamento" ? MS_FECHAMENTO : MS_FALA;
     });
     later(() => setTerminou(true), t);
-    later(() => fimRef.current(), t + 1200);
+    if (!organizador) later(() => fimRef.current(), t + MS_AUTO_CONVIDADO);
     return () => ts.forEach(clearTimeout);
-  }, [L, R, falas]);
+  }, [L, R, falas, organizador]);
 
   useEffect(() => {
     const el = feedRef.current;
@@ -142,7 +146,8 @@ export default function Leilao({
 
   const med = L.medicoes;
   const nMcp = R.length;
-  const nIa = typeof med?.chamadas_llm === "number" ? med.chamadas_llm : 0;
+  // Só fala em "agentes com IA" se o roteiro realmente veio de IA (L.llm); senão a IA falhou e o texto é conferido.
+  const nIa = L.llm === true && typeof med?.chamadas_llm === "number" ? med.chamadas_llm : 0;
   const rodapeMedicao =
     nMcp > 0 || (typeof med?.ms_total === "number" && med.ms_total >= 100)
       ? [

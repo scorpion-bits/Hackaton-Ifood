@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { api } from "../api";
+import { useEffect, useState } from "react";
+import { api, chaveEncerrada, gravarLocal } from "../api";
 import type { Carrinho, EstadoSala } from "../tipos";
 import { brl, rotuloItem } from "../componentes/CartaoPessoa";
 import Avatar from "../componentes/Avatar";
@@ -90,6 +90,11 @@ export default function Pedidos({ salaId, sala }: { salaId: string; sala: Estado
   });
   const separado = sala.modo_pagamento === "separado";
   const partes = sala.partes ?? [];
+
+  // Pedidos enviados = sala encerrada: a home deixa de mostrar "Sua sala está aberta" para ela.
+  useEffect(() => {
+    gravarLocal(chaveEncerrada(salaId), true);
+  }, [salaId]);
 
   async function atualizar(orderId: string) {
     setOcupado(orderId);

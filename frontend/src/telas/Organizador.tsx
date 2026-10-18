@@ -59,7 +59,10 @@ export default function Organizador({
 
   const pid = lerPid(salaId);
   const eu = sala?.participantes.find((p) => p.id === pid);
-  const { resp: respondeu, total } = sala ? contagemRespostas(sala, pid) : { resp: 0, total: 0 };
+  const cont = sala ? contagemRespostas(sala, pid) : null;
+  const respondeu = cont?.resp ?? 0; // inclui o organizador: basta 1 resposta para rodar
+  const convResp = cont?.convResp ?? 0;
+  const convTotal = cont?.convTotal ?? 0;
 
   async function copiar() {
     try {
@@ -157,7 +160,11 @@ export default function Organizador({
       <h2 className="sec2">
         Quem entrou
         <span>
-          {respondeu} de {total} {total === 1 ? "convidado respondeu" : "convidados responderam"}
+          {convTotal === 0
+            ? cont?.euResp
+              ? "só você respondeu"
+              : ""
+            : `${convResp} de ${convTotal} ${convTotal === 1 ? "convidado respondeu" : "convidados responderam"}${cont?.euResp ? " · você também" : ""}`}
         </span>
       </h2>
       {!sala ? (
@@ -180,7 +187,7 @@ export default function Organizador({
           ))}
         </ul>
       )}
-      {sala && total === 0 && (
+      {sala && convTotal === 0 && (
         <div className="vazio">
           <strong>Ninguém entrou ainda</strong>
           <p>Mostre o QR ou mande o link no grupo. Quem responder aparece aqui na hora.</p>

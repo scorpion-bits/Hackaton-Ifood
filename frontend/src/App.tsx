@@ -72,6 +72,10 @@ function useSala(id: string): { sala: EstadoSala | null; erro: string } {
 }
 
 function FaseSala({ salaId, sala, organizador }: { salaId: string; sala: EstadoSala; organizador: boolean }) {
+  // Mudou a fase da sala: começa do topo (a rolagem da fase anterior não vale na nova tela).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [sala.estado]);
   switch (sala.estado) {
     case "match_pronto":
       return <Resultado salaId={salaId} sala={sala} organizador={organizador} />;
