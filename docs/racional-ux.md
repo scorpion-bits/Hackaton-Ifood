@@ -5,11 +5,14 @@
 
 ## 1. O problema, em uma frase
 
-**Pedir comida em grupo hoje exige que alguém vire o "gerente do pedido"**: perguntar o que cada um quer, achar
-lojas que agradem todo mundo, caber no bolso de cada um, montar o carrinho e depois cobrar a vaquinha.
+**Todo pedido começa com alguém traduzindo a necessidade em produto, loja e carrinho, na mão.** Sozinho já dá
+trabalho ("dor de cabeça às 23h: qual remédio, qual farmácia está aberta?"). Em grupo é o caso mais difícil: alguém
+vira o "gerente do pedido", pergunta o que cada um quer, acha lojas que agradem todo mundo, cabe no bolso de cada um,
+monta o carrinho e depois cobra a vaquinha.
 
 | Quem | O que sente hoje | O que o Match entrega |
 |---|---|---|
+| **Quem pede sozinho** ("Só eu") | Busca nome por nome, loja por loja | Escreve a necessidade, marca "Comida" ou "Compras" e recebe o carrinho com o motivo |
 | **Organizador** (o único com conta no iFood) | Trabalho de logística e de cobrança, sozinho | Cria a sala, toca em "Rodar Match", confere e dá o ok |
 | **Convidados** (sem login) | Fila de mensagens, "tanto faz", ficam sem o que queriam | Escrevem uma frase (meta de ≤ 30 s, não medida) e recebem o prato com o motivo |
 
@@ -30,6 +33,9 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 7. **Honestidade.** O que é simulado tem selo. O que o cardápio não garante (alergia) é dito com todas as letras.
    O que é anúncio tem rótulo.
 8. **Sem taxa escondida.** Se o grupo ficar em 3 lojas, a tela diz: 3 pedidos, 3 taxas, 3 entregas.
+9. **Facilitar o pedido, não complicar.** Quando a IA teria de adivinhar algo que a pessoa sabe em 1 toque (comida
+   ou compras?), a tela pergunta. Quando a regra é óbvia (os itens de uma pessoa na mesma loja), o Match aplica
+   sozinho (ver §4).
 
 ## 3. Jornadas
 
@@ -42,7 +48,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Sala com QR e link | Chamar a turma | QR grande no projetor/tela, link para WhatsApp, lista "quem entrou" e "respondeu" | Padrão já conhecido de Uber Eats e DoorDash (ver `design-ifood.md` §4) |
 | "Rodar Match" | Sair da espera | Liberado com pelo menos 1 resposta; mensagem "A IA está lendo os desejos e consultando as lojas" | Espera com explicação parece trabalho, não travamento |
 | Leilão ao vivo | Ver como a escolha foi feita | Lojas disputam, falam e mostram preço e afinidade; botão **Pular** | Transparência (ver §4) |
-| "O pedido do grupo" | Ver e confirmar o pedido que o IBits montou | Um cartão só, com a melhor combinação; mudar = "Ajustar com o IBits"; "Confirmar pedido" fixo no rodapé | O IBits já escolhe: o grupo não precisa comparar opções (ver §4) |
+| "O pedido do grupo" | Ver e confirmar o pedido que o Match montou | Um cartão só, com a melhor combinação; mudar = "Ajustar com o Match"; "Confirmar pedido" fixo no rodapé | O Match já escolhe: o grupo não precisa comparar opções (ver §4) |
 | Junto ou separado | Definir quem paga | Duas opções com a consequência escrita ("na fatura aparecem N cobranças") | A pessoa escolhe sabendo o efeito |
 | Vaquinha | Receber de todos | Barra "x de N pagos", contador de prazo, botão "Recebi" para Pix e dinheiro | O organizador vê quem falta sem cobrar no grupo |
 | "Confira antes do ok" | Conferir tudo | Subtotal por loja, taxa do carrinho, total geral, aviso de N entregas | O último momento de corrigir |
@@ -54,16 +60,24 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Passo | Objetivo | Decisão de design | Por quê |
 |---|---|---|---|
 | Lê o QR | Entrar | Abre no navegador, sem app e sem login | Barreira zero |
-| "O que você quer?" | Dizer a vontade | Nome + frase livre + chips de 1 toque + orçamento opcional; "Lembrar de mim neste aparelho" | Meta de caber em 30 s (não medida); a preferência fica no celular dele |
+| "O que você quer?" | Dizer a vontade | Nome + frase livre + orçamento opcional + "É comida ou compras?" (Comida já vem marcado) + chips de 1 toque; "Lembrar de mim neste aparelho" | Meta de caber em 30 s (não medida); a preferência fica no celular dele; a escolha comida/compras vale só para este pedido |
 | Espera | Saber o que acontece | "Aguarde o organizador rodar o Match"; pode mudar o desejo | Sem ansiedade, sem refazer |
 | Leilão e pedido | Ver o seu prato e o motivo | Mesmo leilão do organizador; no pedido, só a própria parte, em leitura, e a faixa "O organizador ajustou o pedido" quando ele muda algo | Todos veem a mesma coisa; só um decide |
 | Sua parte | Pagar a sua parte | Valor por pessoa (itens + rateio da taxa só das lojas dele); Pix, cartão ou dinheiro | Cada um paga só o que consumiu |
 
-## 4. Por que o leilão e por que um pedido só
+### Só eu
+
+| Passo | Objetivo | Decisão de design | Por quê |
+|---|---|---|---|
+| "Quem vai comer?" → só eu | Pedir para si | Sem convite (QR/link) e sem vaquinha | O individual é o grupo de 1 |
+| A frase | Dizer a necessidade | Frase livre + exemplos de 1 toque ("uma pizza e uma coca", "dipirona e protetor solar", "ração de cachorro e um petisco"…); tocar num exemplo de farmácia, mercado ou pet já marca "Compras" | A pessoa sabe o que precisa, não o que buscar ("um remédio para dor de cabeça") |
+| "Seu pedido" | Conferir | O mesmo cartão do grupo, com 1 pessoa; "Confirmar pedido" vai direto ao carrinho | Menos passos quando não há ninguém para dividir |
+
+## 4. Por que o leilão, um pedido só e as regras do pedido
 
 ### Leilão ao vivo
 - **Torna visível o trabalho da IA.** Cada restaurante tem um agente vendedor que só enxerga o próprio cardápio (vindo
-  do MCP) e oferece itens a cada pessoa. O IBits, agente comprador do grupo, escolhe entre os lances. Sem o leilão,
+  do MCP) e oferece itens a cada pessoa. O Match, agente comprador do grupo, escolhe entre os lances. Sem o leilão,
   isso seria uma caixa-preta de alguns segundos.
 - **Confiança por transparência.** Cada lance mostra preço e afinidade. Loja que não atende diz "Passo". O fechamento
   explica quem venceu e avisa que as taxas aparecem no carrinho, antes do ok.
@@ -78,15 +92,45 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   por sala.
 
 ### Um pedido só (sem deck)
-- **O IBits já decide.** O otimizador calcula as melhores combinações, mas a tela mostra só a melhor. Uma versão
+- **O Match já decide.** O otimizador calcula as melhores combinações, mas a tela mostra só a melhor. Uma versão
   anterior tinha um deck para deslizar entre 3 opções e um "É um Match!"; saiu porque devolvia a escolha ao grupo e
   lembrava app de namoro, quando a promessa é justamente tirar esse trabalho.
 - **Um cartão com tudo.** Afinidade %, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo, mais
   os avisos honestos (item que ficou de fora, entregas em horários diferentes). Sem gesto: nada se perde por um toque.
-- **Mudar = conversar.** "Ajustar com o IBits" fica logo abaixo ("troca o sorvete do Milan por açaí"): o Match roda de
+- **Mudar = conversar.** "Ajustar com o Match" fica logo abaixo ("troca o sorvete do Milan por açaí"): o Match roda de
   novo só com a mudança, o cartão ganha "Atualizado" e o item novo, "Novo".
 - **Confirmar sempre à mão.** "Confirmar pedido" fica fixo no rodapé e leva a "junto ou separado" (com 1 pessoa, direto
   ao carrinho). Nada vai ao iFood nesse passo.
+
+### Comida ou compras: a pessoa diz, a IA não adivinha
+- **O problema.** "Arroz, feijão e bife" pode ser um prato feito ou uma lista de mercado. Num teste no MCP real, a
+  pessoa queria uma marmita e recebeu uma compra de supermercado (bug 40). Adivinhar errado faz a pessoa refazer o
+  pedido.
+- **A decisão.** Uma fileira de escolha única, "É comida ou compras?", com **Comida** já marcado e **Compras (mercado,
+  farmácia, pet)**. Sem "Compras", tudo vai para restaurante e refeição vira prato feito ou marmita. Com "Compras",
+  cada produto vai para a loja da categoria (farmácia, mercado, pet shop).
+- **Por quê.** Facilitar o pedido, não complicar: 1 toque que a pessoa sabe responder custa menos do que um erro que
+  ela só descobre no carrinho. A regra fica num arquivo (`regras_pedido.json`), fácil de ajustar.
+- **Sem o botão, nada some calado.** Se a pessoa pede algo que só existe em farmácia ou mercado e não marcou
+  "Compras", o item sai do pedido com o aviso: "Dipirona para Ana é de farmácia: ligue "Compras" para pedir em
+  mercado, farmácia ou pet shop."
+
+### Mesma loja para os itens de cada pessoa
+- **A decisão.** Quem pede "um hambúrguer e uma batata" recebe os dois do mesmo restaurante sempre que der. O
+  otimizador perde pontos por loja a mais nos itens de uma mesma pessoa, e o 2º item é procurado também dentro das
+  lojas do 1º (inclusive as mais baratas).
+- **Por quê.** Cada loja a mais é mais uma entrega e mais uma taxa para a mesma pessoa, e itens que chegam em
+  horários diferentes. Num teste no MCP real, o Big Mac vinha do McDonald's e a batata de outra loja; agora vêm juntos.
+
+### Loja que não aceita pedido
+- **O problema.** No MCP real, lojas que aparecem na busca, e até como abertas, recusam o carrinho. Antes, o Match
+  escolhia a mesma loja de novo e o "Confirmar pedido" falhava sempre, sem saída (bug 36).
+- **A decisão.** O Match tira a loja e monta a próxima combinação sozinho (até 2 trocas), com o aviso "X não está
+  aceitando pedidos pelo iFood agora; montei a próxima opção do Match." A loja fica de fora nos próximos "Rodar" e
+  "Ajustar" da sala ("Deixei de fora X: não está aceitando pedidos pelo iFood agora."). Se todas as opções usam essa
+  loja, a tela diz para ajustar o pedido ou rodar de novo.
+- **Por quê.** A pessoa não precisa entender o erro do iFood (que vinha em inglês, com o id da loja); ela precisa de
+  um pedido que feche.
 
 ## 5. Confiança e segurança
 
@@ -105,8 +149,10 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 - **Alinhada ao app do iFood**, para o Match parecer uma função do app e não um corpo estranho: vermelho `#EA1D2C`
   (o único hex confirmado em fonte do iFood), fundo claro, cartões brancos com cantos arredondados, home com
   "Entregar em", verticais e cards de loja. Tokens e fontes estão em `docs/design-ifood.md` §5.
-- **Sem logo, sem fonte proprietária, sem fotos do iFood.** Usamos Inter, emoji neutros por categoria e o nome
-  "Match". Por quê: não temos licença para os ativos da marca, e um protótipo não deve se passar pelo app oficial.
+- **Sem logo do iFood e sem fonte proprietária.** Usamos Inter, a logo do próprio Match e o nome "Match". Por quê:
+  não temos licença para os ativos da marca, e um protótipo não deve se passar pelo app oficial.
+- **Fotos e logos só do MCP.** A foto do item e a logo da loja aparecem quando vêm na resposta do MCP e só se o
+  endereço for do próprio iFood (`https://static.ifood-static.com.br/`); sem foto, fica o emoji neutro da categoria.
   Rodapé fixo: "Protótipo de hackathon · não afiliado ao iFood".
 - O resto da paleta (vermelho escuro, cinzas, verde) é escolha nossa e está marcado como não oficial no `design-ifood.md`.
 
@@ -125,7 +171,8 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   deslize.
 - **Movimento reduzido.** Com `prefers-reduced-motion`, o leilão mostra as falas sem animação e o cartão do pedido
   aparece sem transição (as telas do app seguem a mesma regra). **Pular** existe para todos.
-- **Leitores de tela.** Chips com `aria-pressed` e grupo rotulado (já no app), linha do tempo do pedido rotulada,
+- **Leitores de tela.** Chips com `aria-pressed` e grupo rotulado (já no app); "É comida ou compras?" é um grupo de
+  escolha única (`radiogroup`, `aria-checked`); linha do tempo do pedido rotulada,
   ícones decorativos com `aria-hidden`; no leilão, o feed de falas é região viva (`aria-live`), como no protótipo.
 - **Linguagem simples.** Frases curtas, voz ativa, sem jargão: "Nada é enviado ao iFood ainda: você revisa antes."
 
@@ -136,6 +183,8 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Não achei o que a pessoa pediu | Opção aproximada com o motivo ("É o mais perto do que você pediu agora") em vez de vazio |
 | Nenhuma combinação coube | "As restrições e orçamentos deste grupo não encontraram opções" + "Ajuste o orçamento ou o que cada um quer e rode de novo" |
 | Loja não atende ninguém | No leilão, a loja diz "Passo"; ela some da escolha sem erro |
+| Loja não aceita pedido pelo iFood | "X não está aceitando pedidos pelo iFood agora; montei a próxima opção do Match." Se não há outra opção sem ela: ajustar o pedido ou rodar de novo |
+| Item de farmácia/mercado sem "Compras" | O item sai com o aviso "… é de farmácia: ligue "Compras" para pedir em mercado, farmácia ou pet shop."; o resto do pedido segue |
 | IA lenta ou fora | Fallback determinístico em poucos segundos; o leilão toca com falas prontas |
 | Prazo da vaquinha acabou | "O prazo acabou e Fulano não pagou" → **Organizador cobre** (assume a parte) ou **Tirar os itens dessa pessoa** (recalcula) |
 | Total mudou no carrinho | O app para, mostra o novo total e as novas partes e pede novo ok |

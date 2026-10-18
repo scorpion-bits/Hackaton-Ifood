@@ -5,11 +5,36 @@
 > Protótipo do Hackathon SEMCOMP 29 × iFood ("Vendendo com Agentes"), São Carlos, out/2026.
 > **Não é afiliado ao iFood** e não é o app oficial. Dados simulados aparecem com o selo **DEMONSTRAÇÃO**.
 
+## Entregáveis (para a banca)
+
+Tudo o que foi entregue está na pasta **[`entregaveis/`](entregaveis/)** (índice em
+[`entregaveis/README.md`](entregaveis/README.md)):
+
+| Arquivo | O que é |
+|---|---|
+| [`entregaveis/Match-Entregaveis.pdf`](entregaveis/Match-Entregaveis.pdf) | **Os 6 entregáveis num documento só**, na ordem do regulamento, com capa, sumário, diagramas e 24 telas |
+| [`entregaveis/Match-Entregaveis.docx`](entregaveis/Match-Entregaveis.docx) | O mesmo documento em Word (editável, com as imagens) |
+| [`entregaveis/Match-Pitch.pdf`](entregaveis/Match-Pitch.pdf) | Slides do pitch (12 slides) |
+
+| # | Entregável | Texto-fonte no repositório |
+|---|---|---|
+| 01 | Proposta de Negócio | [`docs/proposta-negocio.md`](docs/proposta-negocio.md) |
+| 02 | Desenho de Solução | [`docs/tecnico.md`](docs/tecnico.md) §1–4 |
+| 03 | Racional da Experiência | [`docs/racional-ux.md`](docs/racional-ux.md) |
+| 04 | Interface Visual | [`docs/entrega/04-interface.md`](docs/entrega/04-interface.md) + telas em [`docs/entrega/telas/`](docs/entrega/telas/) + o próprio app |
+| 05 | Documento Técnico Resumido | [`docs/tecnico.md`](docs/tecnico.md) §5–12 e este README |
+| 06 | Feedback sobre os MCPs | [`docs/feedback-mcp.md`](docs/feedback-mcp.md) |
+
+O código está em [`backend/`](backend/) (FastAPI + MCP) e [`frontend/`](frontend/) (React); o pitch em
+[`pitch/`](pitch/). O mapa da pasta `docs/` (entregáveis × bastidores da equipe) está em [`docs/README.md`](docs/README.md).
+
 **O que é, em 3 linhas**
-1. Cada pessoa escreve o que quer em uma frase ("japonês e um sorvete, até 45"). A IA compõe **um pedido para 1 ou N
-   pessoas**, em **uma ou mais lojas** (até 3), respeitando orçamento e restrições de cada um.
-2. Cada restaurante tem um **agente vendedor** que só enxerga o próprio cardápio e disputa o pedido; o **IBits** é o
-   **agente comprador** do grupo, que escolhe a melhor combinação com uma conta justa e explicada.
+1. Cada pessoa escreve o que precisa em uma frase ("japonês e um sorvete, até 45"). A IA compõe **um pedido para 1 ou N
+   pessoas**, em **uma ou mais lojas** (até 3), respeitando orçamento e restrições de cada um. Com o botão
+   **"Compras"**, o mesmo vale para mercado, farmácia e pet shop ("remédio para dor de cabeça").
+2. Cada loja tem um **agente vendedor** que só enxerga o próprio cardápio e disputa o pedido; o **Match** é o
+   **agente comprador**, que escolhe a melhor combinação com uma conta justa e explicada (os itens de uma pessoa
+   ficam na mesma loja sempre que der).
 3. Tudo passa pelo **MCP do iFood (consumidor)**: busca, cardápio, carrinho, entrega, pagamento, pedido e
    acompanhamento. Preço e taxa só vêm das tools do MCP; nada sai sem o "ok" do organizador.
 
@@ -18,7 +43,7 @@ Detalhes e estado de cada parte: [`docs/tecnico.md`](docs/tecnico.md).
 ## Avaliar em 5 minutos
 
 **O que é:** um app web em que um grupo diz o que quer comer em frases livres; agentes das lojas disputam o pedido,
-o IBits escolhe a melhor combinação (até 3 lojas) e o organizador monta os carrinhos pelo MCP do iFood e dá o ok.
+o Match escolhe a melhor combinação (até 3 lojas) e o organizador monta os carrinhos pelo MCP do iFood e dá o ok.
 Sem chave de IA e sem internet, tudo roda no modo demonstração (selo DEMONSTRAÇÃO).
 
 **Rodar (3 comandos)** — precisa de Python 3.11+ e Node 20+:
@@ -36,11 +61,14 @@ git clone https://github.com/scorpion-bits/Hackaton-Ifood && cd Hackaton-Ifood
    - aba 3: `Algo barato e vegetariano, até 25`
 3. Opcional, na aba do organizador ("Também quero pedir"): `feijoada completa, até 60` — mostra o aviso
    "Não achei feijoada completa…" em vez de inventar um prato (com essa 4ª frase o resultado muda).
-4. "Rodar Match" → veja a disputa das lojas (o Patrocinado fala primeiro e não vence) → deck → "Separado" →
-   pagamentos → "Deslize para enviar" → abra o rastro das tools MCP.
+4. "Rodar Match" → "Como o Match avaliou cada loja" → "Ver o pedido" ("O pedido do grupo") → opcional:
+   "Ajustar com o Match" (`troca o sorvete por açaí`) → "Confirmar pedido" → "Cada um paga a sua parte (vaquinha)"
+   → pagamentos → "Deslize para enviar" → abra "Como a IA chegou aqui" (o rastro das tools MCP).
+5. **Só eu:** "Fazer um match" → "Só eu" → `hambúrguer e uma batata frita` (os dois na mesma loja). Ligue
+   **"Compras"** e peça `dipirona e protetor solar` (farmácia); sem "Compras", `arroz, feijão e bife` vira prato.
 
 Resultado esperado das 3 primeiras frases e falas da disputa: [`docs/roteiro-demo.md`](docs/roteiro-demo.md).
-Os 6 entregáveis estão na [tabela abaixo](#entregáveis); slides em [`pitch/pitch.pdf`](pitch/pitch.pdf).
+Os 6 entregáveis estão na [pasta `entregaveis/`](#entregáveis-para-a-banca).
 
 **Rede:** para usar celulares de verdade, eles precisam alcançar o PC (`http://<IP-do-PC>:8000`). Se o Wi-Fi
 isolar os aparelhos (comum em rede de evento), use o hotspot do celular ou as abas anônimas no próprio PC.
@@ -52,10 +80,11 @@ Organizador (PC, único logado no iFood)          Convidados (celular, sem login
   1. Cria a sala ─────── QR + link ──────────────▶ 2. Nome + frase + orçamento + chips
   3. "Rodar Match"
        listAddresses → searchOffers → getMerchant (MCP)
-       IA interpreta → IA dá nota a cada item → leilão: 1 agente vendedor por loja (falas validadas)
-       → otimizador (justiça, custo, prazo, nº de lojas)
-  4. Disputa ao vivo + deck com até 3 combinações ("É um Match!"); quadro: por pessoa, item · loja · preço · nota · motivo (+ 2 alternativas)
-  5. Escolhe "junto" (paga tudo) ou "separado" (vaquinha)
+       IA interpreta → regras do pedido (Compras, mesma loja) → IA dá nota a cada item
+       → leilão: 1 agente vendedor por loja (falas validadas) → otimizador (justiça, custo, prazo, nº de lojas)
+  4. Avaliação ao vivo ("Como o Match avaliou cada loja") → "O pedido do grupo" com a melhor combinação;
+     mudar = "Ajustar com o Match" em frase livre
+  5. "Confirmar pedido" → pagamento único ou vaquinha (se uma loja não aceitar pedido, o Match monta a próxima opção)
        1 carrinho por loja: createCart → addItemToCart → getCartDeliveryMethods → setCartDelivery
                             → listPaymentMethods → setCartPayment → getCart (taxa real)
   6. Separado: partes exatas ao centavo ───────────▶ 7. Pix (para a chave do organizador),
@@ -147,7 +176,8 @@ cd backend
 cd backend && .venv/bin/python -m pytest -q
 cd frontend && npm run typecheck
 ```
-Hoje: **306 testes** no backend (pytest), todos passando (contagem de 18/10; o comando acima mostra o número exato). Os testes zeram as credenciais e isolam o arquivo de
+Hoje: **565 testes** no backend (pytest), todos passando (18/10, 11h; o comando acima mostra o número exato).
+Interface: `bash docs/testes/e2e/rodar.sh` (7 casos no navegador). Bateria de frases: `python -m app.match.bateria`. Os testes zeram as credenciais e isolam o arquivo de
 tokens; nenhum teste chama o iFood real.
 
 ## Estrutura
@@ -160,7 +190,8 @@ backend/
     rotas_match.py       API da sala do Match (/api/salas/...)
     rotas_oauth.py       /oauth/login, /oauth/callback, /api/ifood/status, /api/ifood/sair
     match/               motor do Match
-      motor.py           listAddresses → interpretar → buscar → julgar → leilão → otimizar
+      motor.py           listAddresses → interpretar → regras → buscar → julgar → mesma loja → leilão → otimizar
+      regras.py          regras do pedido lidas de regras_pedido.json (botão Compras, peso da mesma loja)
       interprete.py      frase → slots (consultas, restrições, orçamento, perfil, quantidades); IA + regras
       leilao.py          1 agente vendedor por loja; validação das falas; fallback por template
       politica_lojas.json  loja patrocinada do modo demo (só visibilidade)
@@ -182,25 +213,14 @@ backend/
   tests/                 pytest
 frontend/src/
   App.tsx, api.ts, tipos.ts, estilo.css
-  telas/                 Inicio, Organizador, Convidado, Leilao, Deck, Resultado, Pagamento, Pedidos
+  telas/                 Inicio, SoEu, Organizador, Convidado, Leilao, Resultado, Pagamento, Pedidos
   componentes/           Selo, Rastro, StatusIfood, CartaoPessoa, ContadorPrazo, BarraInferior, Deslizar…
-    leilao/              visual das lojas, "É um Match!", confete, utilitários do deck
-pitch/                   slides (Reveal.js local); npm run pdf gera pitch/pitch.pdf
-docs/                    entregáveis, planos e decisões
+    leilao/              visual das lojas, Ajustar com o Match, utilitários
+pitch/                   slides (index.html); npm run pdf gera pitch/pitch.pdf
+entregaveis/             PDF e DOCX dos 6 entregáveis + PDF do pitch (o que a banca lê)
+docs/                    textos-fonte dos entregáveis, testes, planos e decisões (mapa em docs/README.md)
 iniciar.bat · iniciar.ps1 · iniciar.sh · .env.example
 ```
-
-## Entregáveis
-
-| # | Entregável | Onde |
-|---|---|---|
-| 1 | Proposta de negócio | [`docs/proposta-negocio.md`](docs/proposta-negocio.md) |
-| 2 | Desenho de solução | [`docs/tecnico.md`](docs/tecnico.md) (arquitetura e diagramas) |
-| 3 | Racional de UX | [`docs/racional-ux.md`](docs/racional-ux.md) |
-| 4 | Interface visual | o app (`./iniciar.sh`) e [`docs/design-ifood.md`](docs/design-ifood.md) |
-| 5 | Documentação técnica | [`docs/tecnico.md`](docs/tecnico.md) e este README |
-| 6 | Feedback sobre o MCP | [`docs/feedback-mcp.md`](docs/feedback-mcp.md) |
-| — | Pitch | [`pitch/pitch.pdf`](pitch/pitch.pdf) · roteiro: [`docs/roteiro-demo.md`](docs/roteiro-demo.md) |
 
 Decisões e o porquê de cada uma: [`docs/decisions.md`](docs/decisions.md). Resumo do MCP do consumidor:
 [`docs/mcp-ifood.md`](docs/mcp-ifood.md).
@@ -212,4 +232,4 @@ Decisões e o porquê de cada uma: [`docs/decisions.md`](docs/decisions.md). Res
 - Segredos e tokens só no `.env` e em `backend/.tokens_ifood.json` (ambos fora do git).
 - Dado simulado sempre com o selo DEMONSTRAÇÃO.
 
-Equipe: Thales Miguel Hajes, Milan, Zenon e Antonio.
+Equipe: Thales Miguel Hajes, Milan Bahrami, Zenon e Antonio.

@@ -1,4 +1,5 @@
-// Gera docs/entrega/Match-Entregaveis.pdf com os 6 entregáveis do hackathon.
+// Gera entregaveis/Match-Entregaveis.pdf com os 6 entregáveis do hackathon (e copia o pitch para entregaveis/).
+// O Word (.docx) sai depois, dos mesmos textos: `python gerar_docx.py`.
 //
 // Como rodar (Linux, macOS ou Windows; precisa de Node 20+):
 //   cd docs/entrega
@@ -7,7 +8,7 @@
 // Navegador: usa CHROME_PATH se definido; senão o Chromium do Playwright; senão o Edge/Chrome instalado.
 // Se nada funcionar: `npx playwright install chromium` (uma vez).
 //
-// Saídas: Match-Entregaveis.pdf, diagramas/diagrama-N.png (Mermaid renderizado) e _build/ (HTML intermediário).
+// Saídas: ../../entregaveis/Match-Entregaveis.pdf, ../../entregaveis/Match-Pitch.pdf (cópia de pitch/pitch.pdf), diagramas/diagrama-N.png (Mermaid renderizado) e _build/ (HTML intermediário).
 // Reexecutável: lê os Markdown de origem a cada execução; não edita nenhum doc de origem.
 
 import fs from 'node:fs';
@@ -21,18 +22,19 @@ const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '..', '..');
 const BUILD = path.join(AQUI, '_build');
 const DIAGRAMAS = path.join(AQUI, 'diagramas');
-const SAIDA = path.join(AQUI, 'Match-Entregaveis.pdf');
+const PASTA_ENTREGA = path.join(RAIZ, 'entregaveis');
+const SAIDA = path.join(PASTA_ENTREGA, 'Match-Entregaveis.pdf');
 const REPO_WEB = 'https://github.com/scorpion-bits/Hackaton-Ifood/blob/main/';
 const MERMAID_JS = path.join(AQUI, 'node_modules', 'mermaid', 'dist', 'mermaid.min.js');
 const CSS = fs.readFileSync(path.join(AQUI, 'estilo-impressao.css'), 'utf8');
 
 const TITULO = 'Match — pedido em grupo com agentes no MCP do iFood';
 const EVENTO = 'Hackathon SEMCOMP × iFood 2026 · "Vendendo com Agentes" · São Carlos';
-const EQUIPE = 'Thales Miguel Hajes · Milan · Zenon · Antonio';
+const EQUIPE = 'Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio';
 const DATA = '18 de outubro de 2026';
 const AVISO = 'Protótipo de hackathon · não afiliado ao iFood. Dados simulados aparecem com o selo DEMONSTRAÇÃO.';
 
-const TELAS_CAPA = ['docs/entrega/telas/01-inicio.png', 'docs/entrega/telas/07-ajustar-conversa.png', 'docs/entrega/telas/10-confira.png'];
+const TELAS_CAPA = ['docs/entrega/telas/06-pedido-do-grupo.png', 'docs/entrega/telas/real-pedido.png', 'docs/entrega/telas/10-confira.png'];
 
 const ler = (rel) => fs.readFileSync(path.join(RAIZ, rel), 'utf8').replace(/\r\n/g, '\n');
 const tirarH1 = (md) => md.replace(/^\s*# [^\n]*\n/, '');
@@ -61,10 +63,10 @@ const ENTREGAVEIS = [
     desc: 'Divisão IA × código × MCP, componentes, sequência completa de um Match em grupo e fluxo do motor.',
     md: tec02, base: 'docs' },
   { n: '03', titulo: 'Racional da Experiência', fonte: 'docs/racional-ux.md',
-    desc: 'Princípios, jornadas do organizador e do convidado, leilão e deck, confiança, acessibilidade e estados.',
+    desc: 'Princípios, jornadas, botão Compras, leilão e pedido único, confiança, acessibilidade e estados.',
     md: tirarH1(ler('docs/racional-ux.md')), base: 'docs' },
   { n: '04', titulo: 'Interface Visual', fonte: 'docs/entrega/04-interface.md · docs/entrega/telas/',
-    desc: 'Linguagem visual, tokens e galeria com as capturas reais das telas do protótipo.',
+    desc: 'Linguagem visual, tokens e 24 telas reais: grupo, só eu, compras e o app no MCP real do iFood.',
     md: tirarH1(ler('docs/entrega/04-interface.md')), base: 'docs/entrega' },
   { n: '05', titulo: 'Documento Técnico Resumido', fonte: 'docs/tecnico.md §5–12',
     desc: 'Leilão de agentes, otimizador, acerto em centavos, estados da sala, segurança, uso do MCP, limites e testes.',
@@ -131,7 +133,7 @@ function htmlCapaESumario(paginas) {
 </section>
 <section class="sumario"><h2>Sumário</h2><ol>${itens}</ol>
 <div class="extra">
-<p><b>Pitch:</b> pitch/pitch.pdf · <b>Avaliar em 5 minutos:</b> README.md · <b>Índice para a banca:</b> docs/ENTREGA.md</p>
+<p><b>Pitch:</b> entregaveis/Match-Pitch.pdf · <b>Word deste documento:</b> entregaveis/Match-Entregaveis.docx · <b>Avaliar em 5 minutos:</b> README.md · <b>Índice:</b> entregaveis/README.md</p>
 <p>Os textos deste PDF são gerados dos arquivos Markdown do repositório (docs/entrega/gerar_pdf.mjs). Em caso de
 diferença, vale o repositório.</p></div></section>`);
 }
@@ -262,7 +264,11 @@ async function main() {
       // rodapé do Chromium fica ~ 8 mm da borda; alinhar à direita da margem de 15 mm
       pg.drawText(txt, { x: pg.getWidth() - 42.5 - w, y: 25, size: 7.5, font: fonte, color: rgb(0.54, 0.54, 0.54) });
     });
+    fs.mkdirSync(PASTA_ENTREGA, { recursive: true });
     fs.writeFileSync(SAIDA, await final.save());
+    const pitch = path.join(RAIZ, 'pitch', 'pitch.pdf');
+    if (fs.existsSync(pitch)) fs.copyFileSync(pitch, path.join(PASTA_ENTREGA, 'Match-Pitch.pdf'));
+    else console.warn('AVISO: pitch/pitch.pdf não existe; rode `cd pitch && npm run pdf`.');
     console.log(`OK: ${path.relative(RAIZ, SAIDA)} · ${total} páginas · ${contDiagrama} diagramas em ${path.relative(RAIZ, DIAGRAMAS)}/`);
     partes.forEach((x, i) => console.log(`  ${x.e.n} ${x.e.titulo}: p. ${inicio[i]} (${x.paginas} pág.)`));
   } finally {

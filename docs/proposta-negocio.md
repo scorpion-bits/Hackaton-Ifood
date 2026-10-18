@@ -6,26 +6,31 @@
 
 ## 1. Resumo
 
-1. **Problema:** pedir comida em grupo exige que alguém vire o "gerente do pedido": pergunta o que cada um quer, acha
-   lojas que agradem todo mundo, cabe no bolso de cada um, monta o carrinho e depois cobra a vaquinha.
-2. **Solução:** no **Match**, cada pessoa escreve uma frase ("japonês até R$ 45", "sem carne"); um **agente vendedor
-   por restaurante**, que só enxerga o próprio cardápio, disputa o pedido; o **IBits**, agente comprador da turma,
-   escolhe a melhor combinação (1 ou mais lojas) com justiça entre as pessoas, tudo sobre o **MCP do iFood**. Nada sai
-   sem o ok do organizador.
+1. **Problema:** todo pedido no iFood começa com alguém traduzindo a necessidade em produto, loja e carrinho, na mão.
+   Sozinho já dá trabalho (23h, dor de cabeça: qual remédio, qual farmácia está aberta?). Em grupo é o caso mais
+   difícil: alguém vira o "gerente do pedido", pergunta o que cada um quer, acha lojas que agradem todo mundo, cabe no
+   bolso de cada um, monta o carrinho e depois cobra a vaquinha.
+2. **Solução:** no **Match**, a pessoa só diz o que precisa, numa frase ("um remédio para dor de cabeça", "japonês
+   até R$ 45", "sem carne"). Sozinho ("Só eu"), o Match acha o produto, inclusive em farmácia, mercado e pet shop
+   (botão "Compras"), e monta o carrinho. Em grupo, um **agente vendedor por loja**, que só enxerga o próprio cardápio,
+   disputa o pedido, e o **Match**, agente comprador da turma, escolhe a melhor combinação (1 ou mais lojas) com
+   justiça entre as pessoas. Tudo sobre o **MCP do iFood**. Nada sai sem o ok de quem pede.
 3. **Por que agora:** comércio feito por agentes já está em produção. O Google lançou o protocolo de pagamentos para
    agentes AP2, que funciona sobre o MCP ([Google, 16/09/2025](https://cloud.google.com/blog/products/ai-machine-learning/announcing-agents-to-payments-ap2-protocol));
    a Visa lançou o Intelligent Commerce ([Visa, 30/04/2025](https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.21361.html));
    a Swiggy, na Índia, recebe pedidos de comida por MCP desde janeiro ([Swiggy, 27/01/2026](https://www.swiggy.com/corporate/press-release/swiggy-now-lets-you-order-food-dineout-and-shop-on-instamart-directly-inside-chatgpt-and-claude/));
    e o próprio iFood fecha **um** pedido em cerca de 30 segundos no Ailo com o One-Click Buy ([Canaltech, 16/07/2026](https://canaltech.com.br/apps/nova-ia-do-i-food-deixa-voce-fazer-pedidos-no-whats-app-com-apenas-um-clique)).
-   Falta o pedido **da turma**.
+   Falta o pedido que começa por uma necessidade, e principalmente o pedido **da turma**.
 
 ## 2. Problema e público
 
-**Ocasiões:** turma da faculdade depois da aula, república na sexta à noite, almoço do time no trabalho, jantar de
-família no domingo, jogo do Brasil com os amigos.
+**Ocasiões:** sozinho, quando a pessoa sabe o que precisa mas não sabe o que buscar (remédio para dor de cabeça às
+23h, a lista do mercado). Em grupo, o caso mais difícil: turma da faculdade depois da aula, república na sexta à
+noite, almoço do time no trabalho, jantar de família no domingo, jogo do Brasil com os amigos.
 
 | Quem | Dor hoje |
 |---|---|
+| **Quem pede sozinho** | Busca nome por nome, loja por loja ("qual remédio? qual farmácia está aberta?") até fechar o carrinho |
 | **Organizador** (quem tem o app e o cartão) | Faz a logística sozinho no grupo de WhatsApp, adianta o dinheiro e depois cobra Pix de cada um |
 | **Convidados** | Fila de mensagens, "tanto faz", alguém cede o restaurante que queria ou fica com o que não queria; quem tem restrição (vegetariano, sem lactose) sobra |
 
@@ -53,9 +58,15 @@ Nos Emirados, 43% dizem gastar perto de 20 minutos decidindo o que pedir online 
 
 ## 3. Solução e diferenciais
 
-Como funciona em 5 passos: (1) o organizador cria a sala no iFood e mostra o QR; (2) cada convidado entra **sem
-login** e escreve uma frase em até 30 s; (3) os agentes das lojas fazem seus lances, com preço e prazo **vindos do
-MCP**; (4) o IBits monta até 3 combinações e o grupo dá "Match"; (5) pagamento **junto** ou **separado** (vaquinha:
+**Começa simples: "Só eu".** A pessoa escreve a necessidade e escolhe "É comida ou compras?". Com "Compras", o Match
+procura em farmácia, mercado e pet shop; sem o botão, tudo é restaurante ("arroz, feijão e bife" vira prato feito).
+No MCP real, "um remédio para dor de cabeça" encontrou 8 farmácias reais, com preço e prazo do iFood; o Match escolhe
+um item sem receita, explica o porquê e monta o carrinho. Ele não receita nada: a pessoa confirma.
+
+**O caso mais difícil, o grupo, em 5 passos:** (1) o organizador cria a sala no iFood e mostra o QR; (2) cada
+convidado entra **sem login** e escreve uma frase (meta de 30 s, não medida); (3) os agentes das lojas fazem seus
+lances, com preço e prazo **vindos do MCP**; (4) o Match mostra a melhor combinação, com o motivo de cada item, e o
+organizador confirma ou ajusta conversando ("Ajustar com o Match"); (5) pagamento **junto** ou **separado** (vaquinha:
 Pix direto para a chave do organizador; o pedido só sai com **100% pago**), conferência do carrinho real e "deslize
 para enviar".
 
@@ -73,7 +84,10 @@ IA** para N pessoas em N lojas.
 
 Diferenciais em uma linha cada:
 - **Composição por IA:** N pessoas × N lojas × orçamentos e restrições diferentes. O otimizador puxa para cima quem
-  ficou pior (ninguém fica mal atendido para os outros ganharem).
+  ficou pior (ninguém fica mal atendido para os outros ganharem) e mantém os itens de uma mesma pessoa na mesma loja
+  sempre que der (menos entregas e taxas).
+- **Da necessidade ao carrinho, sozinho também:** frase livre vira produto em restaurante ou, com "Compras", em
+  farmácia, mercado e pet shop.
 - **Lojas disputando:** cada restaurante tem um agente vendedor. Não encontramos iniciativa pública de agente de
   restaurante negociando com agente do comprador em delivery (não dizemos "ninguém faz").
 - **Vaquinha com trava:** o pedido só é enviado quando todos pagaram; prazo de 10 min + 2 min por pessoa acima de 2.
@@ -101,7 +115,7 @@ E o iFood quer **multiplicar por 5** a frente de Ads até 2030 ([Startups, 12/11
 
 O Patrocinado leva essa regra ao extremo, no momento em que um **agente** compra:
 - A loja patrocinada tem o lance **mostrado primeiro**, com o rótulo "Patrocinado".
-- O pagamento **nunca** muda nota, filtro ou escolha do IBits e não garante vaga entre as lojas consultadas. Na
+- O pagamento **nunca** muda nota, filtro ou escolha do Match e não garante vaga entre as lojas consultadas. Na
   demo, a patrocinada fala primeiro e **perde**.
 - **O iFood vende atenção, não a decisão.** O agente comprador trabalha para o grupo; se ele pudesse ser comprado,
   ninguém confiaria nele, e o canal inteiro perderia valor.
@@ -157,10 +171,13 @@ Não temos dado de quantos desses pedidos são de grupo; não estimamos.
 
 ## 6. Viabilidade
 
-**O que já funciona (protótipo):** o fluxo inteiro em modo demonstração (sala, frases livres, leilão, deck, vaquinha
-com Pix "copia e cola" real, conferência e envio com consentimento); cliente do MCP real com OAuth PKCE seguindo a
-sequência da documentação (`listAddresses` → busca → carrinho → `getCart`); [preencher: até onde o MCP real rodou no
-PC da equipe e latência medida no rastro]. Detalhes em `docs/tecnico.md`.
+**O que já funciona (protótipo):** o fluxo inteiro em modo demonstração (sala, frases livres, leilão, pedido do grupo,
+"Só eu" com comida ou compras, vaquinha com Pix "copia e cola" real, conferência e envio com consentimento); cliente
+do MCP real com OAuth PKCE seguindo a sequência da documentação (`listAddresses` → busca → carrinho → `getCart`). No
+MCP real, com conta de teste e endereço em São Paulo, Match + `createCart` + `getCart` rodaram sem simulação; o envio
+(`submitOrder`) fica travado de propósito na conta de teste. Com a IA Gemini, o Match real levou de 13 a 24 s, sem
+falha de IA, no teste da equipe. Se a loja escolhida não aceita pedido, o Match monta a próxima combinação. Detalhes
+em `docs/tecnico.md`.
 
 **O que falta para produção**
 
@@ -170,7 +187,7 @@ PC da equipe e latência medida no rastro]. Detalhes em `docs/tecnico.md`.
 | Vaquinha sem Pix manual | **iFood Pago** recebendo cada parte (nosso app não pode guardar dinheiro de terceiros; intermediar pagamento exige instituição autorizada). O iFood Pago já existe ([Prosus FY2026](https://www.prosus.com/~/media/Files/P/prosus-corp-v2/results-reports-and-events-archive/annual-report/2026/fy2026-media-release.pdf)) e o iFood testa dividir o pagamento ([Tecnoblog](https://tecnoblog.net/noticias/ifood-testa-opcao-de-dividir-pagamento-com-outra-pessoa/)) |
 | 1 entrega para lojas próximas | Logística interna, como Uber Eats e DoorDash já fazem (§3). Pelo MCP não dá: hoje N lojas = N entregas, e o app avisa |
 | Antifraude da vaquinha | Confirmação automática do pagamento (no lugar do "recebi" do organizador), limite por sala, detecção de salas falsas |
-| Grupos grandes | Hoje até 6 pessoas por sala (limite do otimizador); para 15+, poda por loja e votação no deck |
+| Grupos grandes | Hoje até 6 pessoas por sala (limite do otimizador); para 15+, poda por loja e votação entre as melhores combinações |
 
 **Riscos e mitigação**
 
@@ -178,8 +195,9 @@ PC da equipe e latência medida no rastro]. Detalhes em `docs/tecnico.md`.
 |---|---|
 | Alergia: o cardápio nem sempre informa | Restrição vira "segundo a descrição" + aviso "pode não estar informado, confirme com a loja" |
 | Patrocinado minar a confiança | Só ordem de exibição, nunca a escolha; rótulo em texto; teste no piloto (semana 3–4) |
-| Custo de LLM com vários agentes por Match | Um agente por loja, em paralelo, com tempo máximo; **fallback determinístico** sem LLM (a demo inteira roda sem chave); custo medido: [preencher, se medido no ensaio] |
-| Limite de chamadas (rate limit, erro 429) | Fallback cobre o erro; produção: cache de cardápio por loja e lote de chamadas |
+| Custo de LLM com vários agentes por Match | Um agente por loja, em paralelo, com tempo máximo; **fallback determinístico** sem LLM (a demo inteira roda sem chave); custo ainda não medido |
+| Limite de chamadas (rate limit, erro 429) | Modelo de reserva no 429 e fallback sem IA; o provedor sai do `.env` (no evento, o limite diário do Groq estourou e trocamos para Gemini sem mudar código); produção: cache de cardápio por loja e lote de chamadas |
+| Loja aparece na busca e não aceita pedido | O Match deixa a loja de fora, avisa e monta a próxima combinação (visto no MCP real: `MERCH-007`) |
 | IA inventar preço | A IA não escreve número que não veio de uma tool; fala com número fora do lance cai no texto pronto |
 | Pedido enviado sem querer | Só com confirmação humana; `getCart` de novo antes de enviar; se o total mudou, pede novo ok |
 
@@ -192,9 +210,10 @@ e sai uma cesta com pagamento local plugável. Validação: a mesma engine com c
 
 **Além de comida.** O iFood já vende mercado, farmácia, pet e bebidas ([iFood, 04/06/2026](https://institucional.ifood.com.br/clientes/ifood-e-mais-que-comida/)),
 e, em relato oral à equipe durante o evento (não documentado), os mentores disseram que o catálogo de mercado vem
-com preço no MCP (`docs/planos/etapa-01b-match-estrategia.md` §12).
-A mesma lógica serve para a compra do mês da república (cada um diz o que precisa, a IA divide em lojas e a vaquinha
-fecha) ou a farmácia da família.
+com preço no MCP (`docs/planos/etapa-01b-match-estrategia.md` §12). O primeiro passo já está no protótipo: com o botão
+"Compras" (no "Só eu" e no desejo de cada convidado), o Match busca em farmácia, mercado e pet shop. A mesma lógica
+serve para a compra do mês da república (cada um diz o que precisa, a IA divide em lojas e a vaquinha fecha) ou a
+farmácia da família.
 
 **A frase:** no canal de agentes, o iFood pode vender **atenção** para as lojas sem nunca vender **a decisão** do
 cliente. O Match mostra que dá para ter as duas coisas no mesmo pedido.
