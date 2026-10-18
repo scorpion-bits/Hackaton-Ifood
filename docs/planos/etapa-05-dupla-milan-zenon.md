@@ -29,7 +29,7 @@
 | A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ✅ 01h44 integrado (`8aa7eae`): reserva de modelo no 429, intérprete 1 chamada/grupo, tokens ~26k→13k por Match, bugs 12–14; 👥 confirmar no P5 |
 | A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
 | A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37; runs verdes no GitHub (run 18, 01h55) |
-| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador ✅ `65b4aeb`; 02h00: bug 21 (loja que falha não derruba o pedido, dev-mcp-ifood/Opus) 🔄, bugs 23+24 (mock quando `listAddresses` falha; aviso × combinação, dev-backend/Sonnet) 🔄 |
+| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador ✅ `65b4aeb`; 02h00: bugs 21, 23, 24 ✅ 02h10 (`79e50a5` + seguinte) |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
 > **Zenon trabalha de casa (remoto); Milan e Thales estão no evento.** Toda tarefa do Zenon tem que ser feita só com o
@@ -77,15 +77,15 @@
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
-- **01h58:** P5 ✅ (roteiro 9/9 com IA, 0 × 429); "doce" da IA agora busca também "sobremesa". Esperando o Thales: **P6** (carrinho real com Cartão de
-  Teste, sem enviar). Com o P6 ok → P7: `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**.
-  Zenon: B9 (Z1) até 05h → integrar e smoke (qa-testador, Sonnet). Depois: PR `ccr` → `main`.
+- **02h10:** bugs 21/23/24 do P6 ✅ (471 testes). Esperando o Thales: **P6b** (reteste do carrinho real). Com o P6b ok → P7: `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**.
+  Zenon: B9 (Z1) até 05h + aviso `lojas_fora` na tela de pagamento (recado 02h10) → integrar e smoke (qa-testador, Sonnet). Depois: PR `ccr` → `main`.
 - **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
   `leilao.py`, `ajuste.py`), comparar com a linha de base do registro de 00h41 → **Sonnet**; depois I3 (custo/tempo).
 - **Quando chegar o P4 (amostras de carrinho com sucesso):** ajuste fino do `checkout.py` → **Opus**.
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 02h10 — P6 parcial do Thales (bugs 21–24). Bug 21 (dev-mcp-ifood, Opus): loja que falha no carrinho sai, as outras seguem, campo novo `lojas_fora` no `escolher` + aviso em `sala.avisos`; INTERNAL/SERVICE_UNAVAILABLE com 1 nova tentativa (0,5 s); partes só de quem tem item. Bugs 23/24 (dev-backend, Sonnet): mock quando `listAddresses` falha; aviso "opção mais próxima" reescrito após o otimizador (`79e50a5`). 471 testes. Pendente: aviso na tela (front, Zenon); Whopper R$ 4,90 sem causa (falta JSON bruto). Opus/Sonnet adequados.
 - 18/10 01h58 — P5 do Thales integrado (`ia-real-3.txt`: roteiro 9 ok/0 fallback/0 × 429; frases livres na reserva). Achado no
   log: IA devolve só "doce" e a demo não acha nada → consulta genérica ganha "sobremesa" (`interprete.py`, 1 teste). 455 testes.
   CI do GitHub verde. Sem subagente nesta rodada (correção de 10 linhas).

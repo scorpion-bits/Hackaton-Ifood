@@ -474,16 +474,29 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
             raise ErroSala(409, motor.MSG_ENDERECO_SEM_ID if sala["resultado"].get("endereco") else
                            "O Match não achou um endereço de entrega; rode o Match de novo.")
 
+        falhas: list[dict] = []  # bug 21: loja com erro sai do pedido; as outras seguem
+
         async def operacao(cfg, cliente):
             geo = await _geo(sala, cfg, cliente)
-            return await checkout.montar_carrinhos(cliente, {**combinacao, "geo": geo}, endereco_id)
+            montados = await checkout.montar_carrinhos(cliente, {**combinacao, "geo": geo, "falhas": falhas},
+                                                       endereco_id)
+            for f in falhas:  # login/token vencido numa loja não é "loja fora": é reconectar o iFood
+                erro = _erro_do_ifood(f["excecao"])
+                if erro.status == 401:
+                    raise erro
+            return montados
 
         carrinhos = await _usar_cliente(sala_id, operacao)
+        nomes = {p["id"]: p["nome"] for p in sala["participantes"]}
+        lojas_fora = [_loja_fora(f, nomes) for f in falhas]
+        escolhida = _sem_lojas(combinacao, {f["loja_id"] for f in falhas}) if falhas else combinacao
 
         def gravar(s: dict) -> None:
             salas.exigir_estado(s, MATCH_PRONTO, acao="escolher a combinação")
             s["combinacao"] = idx
-            s["combinacao_escolhida"] = combinacao
+            s["combinacao_escolhida"] = escolhida
+            s["avisos"] = [*[a for a in s["avisos"] if not a.startswith(PREFIXO_LOJA_FORA)],
+                           *(f["aviso"] for f in lojas_fora)]
             s["modo_pagamento"] = corpo.modo_pagamento
             s["pagamentos"] = {}
             s["prazo_fim"] = None
@@ -493,7 +506,47 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
 
         salas.atualizar(sala_id, gravar)
         pub = salas.publica(salas.obter(sala_id))
-        return {k: pub[k] for k in ("estado", "carrinhos", "modo_pagamento", "partes", "pagamentos", "prazo_fim", "avisos")}
+        resposta = {k: pub[k] for k in ("estado", "carrinhos", "modo_pagamento", "partes", "pagamentos", "prazo_fim",
+                                        "avisos")}
+        return {**resposta, "lojas_fora": lojas_fora}
+
+
+PREFIXO_LOJA_FORA = "Não consegui montar o carrinho em "
+
+
+def _loja_fora(falha: dict, nomes: dict[str, str]) -> dict:
+    """Loja que saiu do pedido no escolher (bug 21), com o aviso legível de quem ficou sem o quê."""
+    from .ifood_mcp import oauth
+
+    pessoas = [nomes.get(pid, pid) for pid in falha["participantes"]]
+    quem = pessoas[0] if len(pessoas) == 1 else ", ".join(pessoas[:-1]) + " e " + pessoas[-1]
+    itens = ", ".join(dict.fromkeys(i["nome"] for i in falha["itens"]))
+    motivo = (f"o iFood respondeu {falha['codigo_ifood']}" if falha.get("codigo_ifood")
+              else "o iFood respondeu com erro")
+    aviso = (f"{PREFIXO_LOJA_FORA}{falha['loja_nome']} ({motivo}); "
+             f"os itens de {quem} ({itens}) ficaram de fora — "
+             "use 'Ajustar com o IBits' ou escolha outra combinação.")
+    return {
+        "loja_id": falha["loja_id"], "loja_nome": falha["loja_nome"], "codigo_ifood": falha.get("codigo_ifood"),
+        "erro": oauth.sem_segredos(falha["erro"]),
+        "participantes": [{"id": pid, "nome": nomes.get(pid, pid)} for pid in falha["participantes"]],
+        "itens": [{"participante_id": i["participante_id"], "nome": i["nome"]} for i in falha["itens"]],
+        "aviso": aviso,
+    }
+
+
+def _sem_lojas(combinacao: dict, lojas: set[str]) -> dict:
+    """A combinação sem as lojas que falharam (remover itens / remontar depois não tentam a loja que saiu)."""
+    escolhas = {}
+    for slot, valor in (combinacao.get("escolhas") or {}).items():
+        if isinstance(valor, list):
+            restantes = [c for c in valor if c.get("loja_id") not in lojas]
+            if restantes:
+                escolhas[slot] = restantes
+        elif valor.get("loja_id") not in lojas:
+            escolhas[slot] = valor
+    return {**combinacao, "escolhas": escolhas,
+            "lojas": [l for l in combinacao.get("lojas") or [] if l not in lojas]}
 
 
 # ---------- pagamentos ----------
