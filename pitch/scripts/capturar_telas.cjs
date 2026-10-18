@@ -50,7 +50,8 @@ const CONVIDADOS = [
   const novo = async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'pt-BR' });
     const pg = await ctx.newPage();
-    if (!REAL) await comImagens(pg);
+    // Fotos de amostra coladas por cima da demonstração (FOTOS_AMOSTRA=1) saíam em prato errado: desligadas por padrão.
+    if (!REAL && process.env.FOTOS_AMOSTRA === '1') await comImagens(pg);
     return pg;
   };
   const foto = async (p, nome) => { await p.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(400); return p.screenshot({ path: path.join(SAIDA, `${nome}.png`) }); };

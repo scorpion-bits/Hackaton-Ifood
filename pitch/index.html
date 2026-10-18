@@ -143,6 +143,10 @@ em { font-style: normal; color: var(--marca); }
 @keyframes pisca { 0%, 70%, 100% { filter: none; } 10% { filter: brightness(1.25) saturate(1.4); transform: translateY(-3px); } }
 .prova { display: flex; align-items: center; gap: 26px; margin-top: 34px; padding: 22px 28px; border-radius: 22px; background: var(--card);
   border: 2px dashed var(--marca); font-size: 23px; }
+.prova-cels { display: flex; gap: 14px; flex: none; }
+.cel.mini { width: 150px; height: 325px; border-radius: 26px; padding: 6px; }
+.cel.mini::before { top: 10px; width: 44px; height: 11px; margin-left: -22px; }
+.cel.mini .tela { inset: 6px; border-radius: 20px; }
 .prova .conta { font: 700 24px/1.3 Consolas, "Cascadia Mono", monospace; color: var(--marca); white-space: nowrap; }
 
 /* ---------- impacto ---------- */
@@ -343,8 +347,12 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
           <span style="--i:3">createCart</span><span style="--i:4">addItemToCart</span><span style="--i:5">setCartDelivery</span><span style="--i:6">getCart</span>
         </div></div>
     </div>
-    <div class="prova f"><span style="font-size:40px">✅</span>
-      <div><b>Testado no MCP real.</b> Carrinho no Burger King de São Carlos, conta de teste:<br>
+    <div class="prova f">
+      <div class="prova-cels">
+        <div class="cel mini"><div class="tela"><img src="img/app/real-avaliacao.png" alt="Avaliação das lojas no MCP real, com as logos das lojas"></div></div>
+        <div class="cel mini"><div class="tela"><img src="img/app/real-prontos.png" alt="Carrinhos prontos no iFood, no MCP real"></div></div>
+      </div>
+      <div><b>✅ Testado no MCP real.</b> Lojas, logos, preços e carrinhos de verdade (conta de teste do iFood):<br>
         <span class="conta">39,99 + entrega 9,99 + serviço 1,00 = R$ 50,98</span> <span class="suave">— igual ao iFood, ao centavo.</span></div></div>
     <aside class="nota">"Por baixo: a IA faz o que precisa de IA, entender as frases e avaliar as lojas. A conta é código, sem chute. E tudo que é loja, preço, taxa e carrinho vem do MCP do iFood: nenhum número é inventado pela IA." (clique) "Testamos no MCP real: um carrinho no Burger King daqui de São Carlos bateu com o iFood ao centavo, inclusive a taxa de serviço."</aside>
   </section>
