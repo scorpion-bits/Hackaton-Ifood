@@ -85,6 +85,10 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 01h50 — Bugs 17–20 (dev-mcp-ifood, Opus): opção obrigatória preenchida com a mais barata via `getItem` no checkout
+  (`options` = `[{optionId, quantity}]` do schema real), adicional < R$ 2,50/seção de extras não vira prato, carrinho com
+  taxa/total mesmo sem forma aceitável (escolher 200, enviar 409), Cartão de Teste (nome com "teste", nunca Pix) libera a
+  trava. 454 testes, build ok, roteiro demo igual. 5 suposições a confirmar → P6 do Thales. Opus foi adequado.
 - 18/10 01h44 — A3 integrada (dev-backend, Sonnet, worktree): reserva de modelo no 429, 11→9 chamadas, ~26k→13k tokens
   contados por Match (ainda >8k/min num só modelo: a reserva é obrigatória), bugs 12/13/14; 14b (aviso duplo) feito por
   mim no `motor.py`. 427 testes; roteiro no fallback igual. P5 para o Thales. Sonnet foi adequado. Obs.: o worktree saiu

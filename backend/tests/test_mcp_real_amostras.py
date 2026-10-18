@@ -281,6 +281,120 @@ async def test_submitorder_real_continua_travado_sem_permissao():
     assert sessao.args_de("submitOrder") == []
 
 
+# ---------- bug 17: item com grupo de opção obrigatório (getItem real) ----------
+PIZZA = "269eae27-aee2-4224-a89b-7c6bce57f53e"  # "Pizzas Doces Grandes": grupo "Sabores" minSelections 1
+
+
+class CarrinhoComGetItem(CarrinhoSuposto):
+    """getItem devolve a amostra real (pizza com sabor obrigatório); itens simples vêm sem optionGroups."""
+
+    def __call__(self, tool: str, args: dict) -> Any:
+        if tool == "getItem":
+            if args["itemId"] == PIZZA:
+                return _resposta("getItem")
+            return {"itemId": args["itemId"], "itemName": "Carne", "optionGroups": [], "unitPrice": 6.0}
+        if tool in ("createCart", "addItemToCart"):
+            itens = args.get("items") or [args]
+            for i in itens:  # o servidor real recusa com ITEM-001 se faltar o obrigatório
+                if i["itemId"] == PIZZA and not i.get("options"):
+                    return {"error": {"code": "ITEM-001",
+                                      "message": "É preciso escolher todos os complementos obrigatórios"}}
+        return super().__call__(tool, args)
+
+
+def _comb_pizza() -> Combinacao:
+    return Combinacao(escolhas={"ana": _cand("ana", LOJA, PIZZA, 75.99), "bia": _cand("bia", LOJA, ITEM_A, 6.0)},
+                      lojas=[LOJA], score=1.0, componentes={}, taxa_conhecida=False)
+
+
+async def test_checkout_real_preenche_opcao_obrigatoria_mais_barata():
+    cli, sessao = _cliente(CarrinhoComGetItem())
+    [carrinho] = await montar_carrinhos(cli, _comb_pizza(), "addr-1", geo=LOCAL)
+
+    assert [a["itemId"] for a in sessao.args_de("getItem")] == [PIZZA, ITEM_A]  # 1 por item escolhido
+    assert all(a["userLocation"] == LOCAL and a["merchantId"] == LOJA for a in sessao.args_de("getItem"))
+    [criar] = sessao.args_de("createCart")
+    # 1 sabor (o mais barato; empate → o 1º da lista), o grupo opcional "Adicional de Frutas" fica de fora
+    assert criar["items"] == [{"itemId": PIZZA, "quantity": 1,
+                               "options": [{"optionId": "e45c1772-a63d-475c-bddf-9280cb2e6b4d", "quantity": 1}]}]
+    assert sessao.args_de("addItemToCart")[0]["options"] == []  # item simples continua com options=[]
+    assert any("Pizza Doce de Confete" in a and "75.99" in a for a in carrinho["avisos"])
+    assert [i["participante_id"] for i in carrinho["itens"]] == ["ana", "bia"]
+    _sem_erros_de_schema(sessao)
+
+
+async def test_checkout_real_opcao_obrigatoria_tambem_no_additemtocart():
+    cli, sessao = _cliente(CarrinhoComGetItem())
+    comb = Combinacao(escolhas={"bia": _cand("bia", LOJA, ITEM_A, 6.0), "ana": _cand("ana", LOJA, PIZZA, 75.99)},
+                      lojas=[LOJA], score=1.0, componentes={}, taxa_conhecida=False)
+    await montar_carrinhos(cli, comb, "addr-1", geo=LOCAL)
+    assert "options" not in sessao.args_de("createCart")[0]["items"][0]
+    [add] = sessao.args_de("addItemToCart")
+    assert add["itemId"] == PIZZA and add["options"] == [{"optionId": "e45c1772-a63d-475c-bddf-9280cb2e6b4d",
+                                                          "quantity": 1}]
+    _sem_erros_de_schema(sessao)
+
+
+async def test_checkout_real_coordenadas_podem_vir_dentro_da_combinacao():
+    cli, sessao = _cliente(CarrinhoComGetItem())
+    comb = {"escolhas": {"ana": _cand("ana", LOJA, PIZZA, 75.99)}, "geo": LOCAL}
+    await montar_carrinhos(cli, comb, "addr-1")
+    assert sessao.args_de("getItem") and sessao.args_de("createCart")[0]["items"][0]["options"]
+
+
+async def test_checkout_real_sem_coordenadas_nao_chama_getitem_e_explica_item_001():
+    cli, sessao = _cliente(CarrinhoComGetItem())
+    with pytest.raises(ErroCheckout) as erro:
+        await montar_carrinhos(cli, _comb_pizza(), "addr-1")
+    assert sessao.args_de("getItem") == []
+    assert erro.value.codigo == "complemento_obrigatorio" and "complementos" in erro.value.mensagem
+
+
+def test_opcoes_obrigatorias_da_amostra_real():
+    obrig = busca.opcoes_obrigatorias(_resposta("getItem"))
+    assert obrig == {"opcoes": [{"optionId": "e45c1772-a63d-475c-bddf-9280cb2e6b4d", "quantity": 1}],
+                     "extra": 75.99, "nomes": ["Pizza Doce de Confete"], "completo": True}
+    assert busca.opcoes_obrigatorias({"itemId": "x"}) is None  # sem optionGroups: não dá para saber
+
+
+def test_busca_descarta_item_com_opcao_obrigatoria_que_custa():
+    item = _resposta("getItem")
+    loja = {"id": LOJA, "nome": "Ponto da Esfiha", "aberta": True}
+    assert busca._ler_item(item, loja) is None
+    gratis = {**item, "optionGroups": [{"minSelections": 1, "options": [
+        {"optionId": "o1", "name": "Sem gelo", "additionalPrice": 0}, {"optionId": "o2", "additionalPrice": 2}]}]}
+    assert busca._ler_item(gratis, loja) is not None  # obrigatória grátis: o checkout preenche
+    opcional = {**item, "optionGroups": [g for g in item["optionGroups"] if g["minSelections"] == 0]}
+    assert busca._ler_item(opcional, loja) is not None
+
+
+# ---------- bug 19: adicional barato não vira prato ----------
+@pytest.mark.parametrize("nome, secao, preco, fica", [
+    ("Rodeio", "", 0.90, False),                       # o caso real (BK, browseOffers)
+    ("Carne", "Esfihas Salgadas Abertas", 6.0, True),  # esfiha barata de verdade
+    ("Bacon extra", "Adicionais", 4.0, False),
+    ("Adicional de cheddar", "", 5.0, False),
+    ("Molho de tomate tradicional 340 g", "Molhos", 4.49, True),  # mercado do demo
+])
+def test_adicional_barato_nao_vira_prato(nome, secao, preco, fica):
+    r = {"itemId": "i1", "itemName": nome, "menuSection": secao, "unitPrice": preco}
+    assert (busca._ler_item(r, {"id": "l1", "nome": "Loja"}) is not None) is fica
+
+
+async def test_browseoffers_real_nao_oferece_rodeio_como_opcao_mais_proxima():
+    rodeio = {"itemId": "r1", "itemName": "Rodeio", "unitPrice": 0.9, "promotionalUnitPrice": 0.9,
+              "merchant": {"merchantId": "bk", "merchantName": "Burger King", "isOpen": True}}
+    whopper = {**rodeio, "itemId": "w1", "itemName": "Whopper", "unitPrice": 29.9, "promotionalUnitPrice": 29.9}
+
+    def responder(tool: str, args: dict) -> Any:
+        return {"results": [rodeio, whopper]} if tool == "browseOffers" else {"results": []}
+
+    cli, _ = _cliente(responder)
+    intencao = Intencao(participante_id="ana", consultas=["japonês"])
+    candidatos, _ = await buscar_detalhado(cli, intencao, {"latitude": -22.02, "longitude": -47.89})
+    assert [c.item_nome for c in candidatos] == ["Whopper"]
+
+
 # ---------- busca: parser das amostras reais + args no schema ----------
 def _busca_real(tool: str, args: dict) -> Any:
     if tool == "searchOffers":
