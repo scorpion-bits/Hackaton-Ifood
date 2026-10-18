@@ -118,7 +118,7 @@ Limites: ≤ 8 lojas no leilão (as de melhor nota), ≤ 2 passes, ≤ 5 lances,
 | T11 | (só leitura) | QA do leilão, visual e números | qa-testador | opus | high | — | T10 | nada bloqueia a demo | 🔄 |
 | T12 | `match/05-proposta-negocio` | Proposta de negócio (entregável 1) | pitch-demo | opus | medium | `docs/proposta-negocio.md` (novo) | T5 | problema, público, valor para o iFood, Patrocinado, métricas, riscos, com fonte | ✅ |
 | T13 | `match/04-ajuste-ia` | Ajuste de prompts com IA real (intérprete, juiz, agentes) e tempo do leilão | dev-backend | sonnet | medium | `match/interprete.py`, `juiz.py`, `leilao.py` (só prompts) | 👥 chave, T10 | roteiro e frases livres coerentes com IA real; leilão ≤ 8 s | ⬜ |
-| T14 | `match/05-pitch-v2` | Pitch v2 + roteiro 2 min + roteiro do vídeo + banca + PDF | pitch-demo | opus | medium | `pitch/*`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | T8, T10, T12 | narrativa vendedores × comprador; fatos com fonte; PDF gerado | 🔄 |
+| T14 | `match/05-pitch-v2` | Pitch v2 + roteiro 2 min + roteiro do vídeo + banca + PDF | pitch-demo | opus | medium | `pitch/*`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | T8, T10, T12 | narrativa vendedores × comprador; fatos com fonte; PDF gerado | 🔄 (v1 ✅; final após T8/T13) |
 | T15 | (integração) | Integrar rodadas 2–3; `CLAUDE.md`, `decisions.md`, checklist (congelar 10h30) | engenheiro-chefe | — | — | — | R2 | suíte, build, navegador | ⬜ |
 | T16 | (só leitura) | Avaliação 2 do jurado (produto, pitch, 6 entregáveis) | jurado | opus | high | — | T15 | lista final de correções | ⬜ |
 | T17 | `match/fix-*` | Correções do QA/jurado | conforme o arquivo | sonnet | high | conforme | T16 | — | ⬜ |
