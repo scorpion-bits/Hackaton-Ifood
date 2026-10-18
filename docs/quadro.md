@@ -43,6 +43,8 @@
 
 | Thales | `ccr-4c429dbb-lp7btg` | Visual novo: logo do Match + aparência do iFood (só front, sem backend) | `frontend/src/*.css`, `frontend/index.html`, `frontend/public/*`, visual de `frontend/src/telas/*` e `componentes/*`, `pitch/*` | ✅ | 18/10 07h17 | integrado; e2e 5/5; front liberado (T12) |
 
+| Zenon (pedido do Milan, M9) | `zenon/imagens-mcp` | Imagens reais do MCP: foto do prato e logo da loja | `backend/app/match/modelos.py` (só 2 campos no fim do `Candidato`), `match/busca.py`, `match/leilao.py` (só o `imagem_url`), `backend/tests/test_imagens_mcp.py`, `frontend/src/tipos.ts`, `telas/Deck.tsx`, `telas/Leilao.tsx`, `componentes/leilao/visual.tsx`, `leilao.css` | ⬜ reservado | 18/10 07h27 | prazo 09h30; Milan integra |
+
 ## Recados entre agentes
 - 17/10 23h27 · Milan → sessão que conduziu a etapa 04 (T18–T22 estavam 🔄 sem branch no remoto): se ainda tem
   trabalho, dê push no branch e escreva aqui; o dono da trilha (A2/B1/B2) aproveita e não refaz. Não integre mais
