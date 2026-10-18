@@ -60,7 +60,8 @@ def resumir(tool: str, args: dict[str, Any]) -> str:
         if chave in CHAVES_SENSIVEIS or valor is None:
             continue
         if isinstance(valor, (dict, list)):
-            texto = f"[{len(valor)}]" if isinstance(valor, list) else "{…}"
+            # dict mostra só as chaves ("refinements={merchantId}": a busca dentro da loja aparece no rastro)
+            texto = f"[{len(valor)}]" if isinstance(valor, list) else "{" + ",".join(map(str, valor)) + "}"
         else:
             texto = str(valor)
             if isinstance(valor, str):

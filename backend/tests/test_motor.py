@@ -485,3 +485,35 @@ async def test_pizza_e_refrigerante_saem_da_mesma_pizzaria(texto):
     assert melhor["lojas"] == ["loja-demo-pizza"]
     assert "refrigerante" in melhor["escolhas"]["ana#2"]["item_nome"].lower()
     assert not any("Não achei" in a or "ficou de fora" in a for a in r["avisos"])
+
+
+async def test_busca_na_loja_usa_refinements_merchant_id_e_so_traz_o_que_bate():
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        endereco = ler_endereco(await cli.chamar("listAddresses"))
+        intencao = Intencao("ana#2", consultas=["coca", "refrigerante"], vontades=["refrigerante"])
+        cands, detalhes = await busca_mod.buscar_na_loja(cli, intencao, endereco, "loja-demo-pizza", "RESTAURANT")
+        rastro = cli.rastro_como_dicts()
+    assert [(c.loja_id, c.item_id) for c in cands] == [("loja-demo-pizza", "pz-refri")]
+    assert ("loja-demo-pizza", "pz-refri") in detalhes
+    chamadas = [c for c in rastro if c["tool"] == "searchOffers"]
+    assert len(chamadas) == 2  # "coca" não existe na pizzaria; "refrigerante" sim (para na 1ª que acha)
+
+
+async def test_segundo_item_e_procurado_na_loja_do_primeiro(monkeypatch):
+    """A′F1: mesmo que a busca na cidade traga o refri só de outra loja, o Match procura o refri dentro da pizzaria
+    da pizza (searchOffers + refinements.merchantId) e o pedido sai de 1 loja só."""
+    original = busca_mod.buscar_detalhado
+
+    async def sem_refri_da_pizzaria(cliente, intencao, endereco):
+        cands, det = await original(cliente, intencao, endereco)
+        if intencao.participante_id.endswith("#2"):  # simula a busca da cidade sem o refri da pizzaria
+            cands = [c for c in cands if c.loja_id != "loja-demo-pizza"]
+        return cands, det
+
+    monkeypatch.setattr(motor_mod, "buscar_detalhado", sem_refri_da_pizzaria)
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == ["loja-demo-pizza"]
+    assert melhor["escolhas"]["ana#2"]["item_id"] == "pz-refri"
+    assert any(c["tool"] == "searchOffers" and "merchantId" in json.dumps(c, ensure_ascii=False) for c in r["rastro"])

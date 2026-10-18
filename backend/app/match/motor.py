@@ -14,13 +14,14 @@ import re
 
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
-from .busca import CONFIRMA, buscar_detalhado, ler_endereco
+from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
 from .interprete import CONSULTA_RESTRICAO, aplicar_quantidades, interpretar
 from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
+MAX_LOJAS_DO_PRINCIPAL = 2  # lojas do 1º item da pessoa onde os outros itens dela também são procurados (A′F1)
 MAX_LOJAS = 3  # cada loja a mais = +1 pedido, +1 taxa, +1 entrega (o δ do otimizador penaliza; os avisos deixam o custo explícito)
 TOP = 3
 NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só fica se não houver nada melhor
@@ -124,6 +125,35 @@ def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
     return " · ".join(partes)
 
 
+async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Desejo, Intencao]],
+                                   buscas: list[tuple[list[Candidato], dict]], endereco: dict) -> None:
+    """Pedido completo (A′F1, etapa 05): o 2º item em diante de cada pessoa também é procurado DENTRO das lojas do
+    1º item dela (`searchOffers` + `refinements.merchantId`). Sem isso, "pizza e um refri" buscava refri na cidade
+    toda e o refri vinha de outra loja (+1 taxa, +1 entrega) ou ficava de fora. Altera `buscas` no lugar."""
+    por_pessoa: dict[str, list[int]] = {}
+    for k, (desejo, _) in enumerate(slots):
+        por_pessoa.setdefault(desejo.participante_id, []).append(k)
+    for indices in por_pessoa.values():
+        if len(indices) < 2:
+            continue
+        lojas: dict[str, str] = {}  # loja → vertical, na ordem de relevância da busca do 1º item
+        for c in buscas[indices[0]][0]:
+            if not c.viola and c.loja_id not in lojas:
+                lojas[c.loja_id] = c.vertical
+            if len(lojas) >= MAX_LOJAS_DO_PRINCIPAL:
+                break
+        for k in indices[1:]:
+            candidatos, detalhes = buscas[k]
+            intencao = slots[k][1]
+            for loja_id, vertical in lojas.items():
+                if any(c.loja_id == loja_id and not c.viola for c in candidatos):
+                    continue  # a busca normal já achou o item nessa loja
+                novos, det_novos = await buscar_na_loja(cliente, intencao, endereco, loja_id, vertical)
+                vistos = {(c.loja_id, c.item_id) for c in candidatos}
+                candidatos.extend(c for c in novos if (c.loja_id, c.item_id) not in vistos)
+                detalhes.update(det_novos)
+
+
 def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], validos: dict[str, list[Candidato]],
                       pessoa_de: dict[str, str], nomes: dict[str, str],
                       ja_avisados: set[str] | None = None) -> tuple[list[str], list[str]]:
@@ -212,6 +242,7 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     buscas = []
     for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
         buscas.append(await buscar_detalhado(cliente, intencao, endereco))
+    await _completar_na_mesma_loja(cliente, slots, buscas, endereco)
     if sem_coordenadas and not any(cands for cands, _ in buscas):
         # sem coordenadas e nada achado: o problema é o endereço, não o pedido ("Não achei X" enganaria)
         avisos[:] = [a for a in avisos if a == MSG_ENDERECO_SEM_ID] + [MSG_ENDERECO_SEM_COORDENADAS]
