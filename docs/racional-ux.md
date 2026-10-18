@@ -212,5 +212,5 @@ Ainda **não temos dados de uso**. Não citamos números de pesquisa. Estas são
 3. Observar em silêncio e perguntar no fim: "Em que momento você ficou em dúvida?" e "Você confiou no total?".
 4. Variantes A/B: leilão ligado × direto ao pedido; um pedido só × as 3 melhores combinações para escolher.
 
-No evento, a equipe aplica um formulário curto com participantes; o resultado, se coletado, fica em
-`docs/pesquisa-usuarios.md`, com o número de respostas.
+O formulário curto planejado para o evento (`docs/pesquisa-usuarios.md`) não foi aplicado a tempo; ele entra no
+piloto, junto com os testes acima.

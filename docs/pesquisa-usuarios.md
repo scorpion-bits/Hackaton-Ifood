@@ -72,8 +72,7 @@ representativa": é amostra de conveniência (participantes de um evento de comp
 
 Variante para n pequeno: "**X de Y** pessoas que pediram em grupo disseram que alguém precisou adiantar o dinheiro e cobrar Pix depois."
 
-## Resultado (preencher)
-- Coleta: 17/10/2026, das __h às __h · n = __ · n_grupo = __
-- Mais de 15 min para decidir: __% · Cada um pediu separado: __% · Atrito: __% · Lojas diferentes: __%
-- Alguém adiantou / ficou faltando: __% · Intenção de uso: média __ / top-2 __%
-- Objeções principais: __
+## Resultado
+
+**Não aplicada.** A coleta não aconteceu durante o evento (18/10). Nenhum número desta pesquisa aparece nos
+entregáveis nem no pitch; ela fica como primeiro passo do piloto.

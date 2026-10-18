@@ -99,7 +99,7 @@ def converter(md: str, base: str) -> str:
                              flags=re.S):
             leg = f.group(2)
             t = re.search(r"<b>(.*?)</b>", leg)
-            titulo = sem_tags(t.group(1)) if t else ""
+            titulo = sem_tags(t.group(1)).rstrip(".") if t else ""
             texto = sem_tags(leg[t.end():] if t else leg)
             itens.append(((RAIZ / base / f.group(1)).resolve(), titulo, texto))
         galerias.append(itens)
