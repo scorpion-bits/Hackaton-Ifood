@@ -288,7 +288,9 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         return None
     descricao = r.get("description") or r.get("itemDescription") or ""
     categoria = r.get("category") or r.get("menuSection") or r.get("categoria") or ""
-    if _parece_adicional(str(nome), str(categoria), preco):
+    vertical = r.get("merchantType") or loja.get("vertical") or ""
+    # adicional barato só existe em restaurante; no mercado/farmácia, item de R$ 2 é produto (detergente)
+    if vertical in ("", TIPO_PADRAO_REAL) and _parece_adicional(str(nome), str(categoria), preco):
         return None
     obrigatorias = opcoes_obrigatorias(r)
     # Bug 17: com os grupos à vista (a busca real não traz; getItem traz), item cuja opção obrigatória custa a mais
@@ -310,7 +312,7 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         "categoria": str(categoria),
         "preco": preco,
         "eta_min": _eta(r.get("deliveryTime")) if r.get("deliveryTime") is not None else loja.get("eta"),
-        "vertical": r.get("merchantType") or loja.get("vertical") or "",
+        "vertical": vertical,
         "perecivel": bool(perecivel),
         "tags": _tags(r.get("tags")),
         "avaliacao": _numero(r.get("rating")) if r.get("rating") is not None else loja.get("avaliacao"),
@@ -355,8 +357,10 @@ def violacoes(restricoes: list[str], tags: list[str], texto_norm: str) -> list[s
     return viola
 
 
-def _aceita(item: dict, intencao: Intencao) -> bool:
-    if intencao.verticais and item["vertical"] and item["vertical"] not in intencao.verticais:
+def _aceita(item: dict, intencao: Intencao, qualquer_vertical: bool = False) -> bool:
+    """`qualquer_vertical`: busca dentro de uma loja já escolhida (A′F1) — a loja vale mesmo sendo de outra
+    categoria ("areia" depois de "ração" sai do pet shop)."""
+    if not qualquer_vertical and intencao.verticais and item["vertical"] and item["vertical"] not in intencao.verticais:
         return False
     if intencao.orcamento_max is not None and item["preco"] > intencao.orcamento_max + 1e-9:
         return False
@@ -408,9 +412,12 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
     for consulta in intencao.consultas:
         if bons() >= 2 * MAX_POR_SLOT:
             break
+        extra: dict[str, Any] = {}
+        if len(intencao.verticais) == 1 and intencao.verticais[0] != TIPO_PADRAO_REAL:
+            extra["merchantType"] = intencao.verticais[0]  # varejo (A′F5): "ração" só no pet shop
         try:
-            dados = await cliente.chamar("searchOffers", query=consulta, resultKind="ITEM", pageSize=LIMITE_BUSCA,
-                                         **geo)
+            dados = await cliente.chamar("searchOffers", query=consulta, **extra, resultKind="ITEM",
+                                         pageSize=LIMITE_BUSCA, **geo)  # merchantType logo após a query: o rastro mostra
         except ErroMCP:
             continue
         for r in dados.get("results") or dados.get("items") or []:
@@ -442,7 +449,10 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
 
     # Pedido genérico ("qualquer coisa") OU as consultas do slot não trouxeram nenhum candidato válido (C16):
     # explora perto do endereço, na vertical pedida. O juiz dá nota baixa e o motor avisa "a opção mais próxima é X".
-    if bons() == 0:
+    # No varejo (A′F5) não explora: um produto qualquer do mercado não é "opção aproximada" de "areia".
+    varejo = bool(intencao.verticais) and TIPO_PADRAO_REAL not in intencao.verticais and not any(
+        normalizar(c).strip() == "mercado" for c in intencao.consultas)
+    if bons() == 0 and not varejo:
         args: dict[str, Any] = {"resultKind": "ITEM", "pageSize": LIMITE_BUSCA, **geo}
         if intencao.verticais:
             args["merchantType"] = intencao.verticais[0]
@@ -482,7 +492,8 @@ async def buscar_na_loja(cliente: ClienteIFood, intencao: Intencao, endereco: di
         for r in dados.get("results") or dados.get("items") or []:
             item = _ler_item(r) if isinstance(r, dict) else None
             # a busca semântica real pode trazer qualquer item da loja: só fica o que bate com o pedido
-            if item and item["loja_id"] == str(loja_id) and _aceita(item, intencao) and _bate_consulta(item, intencao):
+            if (item and item["loja_id"] == str(loja_id) and _aceita(item, intencao, qualquer_vertical=True)
+                    and _bate_consulta(item, intencao)):
                 achados.append((_candidato(item, intencao), item))
         achados.sort(key=lambda par: bool(par[0].viola))  # quem não viola restrição primeiro
         if achados:

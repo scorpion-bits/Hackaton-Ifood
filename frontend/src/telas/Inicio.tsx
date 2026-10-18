@@ -120,7 +120,7 @@ function QuemVaiComer({ onFechar, onSoEu, onGrupo }: { onFechar: () => void; onS
           </span>
           <span className="quem-txt">
             <strong>Só eu</strong>
-            <small>A IA acha o melhor pedido pra você em segundos</small>
+            <small>Comida ou compras de mercado, farmácia e pet: a IA monta o pedido em segundos</small>
           </span>
           <Icone nome="direita" tamanho={20} />
         </button>

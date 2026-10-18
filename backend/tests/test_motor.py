@@ -528,3 +528,26 @@ async def test_taxa_da_busca_entra_no_custo_e_avisa_que_e_estimada():
     assert "com taxa" in melhor["explicacao"]
     assert any("taxa de entrega veio da busca do iFood (estimada)" in a for a in r["avisos"])
     assert not any("só aparece no carrinho" in a for a in r["avisos"])
+
+
+# ---------- Só eu além de restaurante (A′F5) ----------
+@pytest.mark.parametrize("texto, loja, itens", [
+    ("dipirona e protetor solar", "loja-demo-farmacia", {"fm-dipirona", "fm-protetor"}),
+    ("ração de cachorro e um petisco", "loja-demo-pet", {"pt-racao-cao", "pt-petisco"}),
+    ("preciso fazer compras: arroz, feijão e detergente", "loja-demo-mercado", {"mc-arroz", "mc-feijao", "mc-detergente"}),
+    ("preciso de shampoo, pasta de dente e pilha", "loja-demo-farmacia", {"fm-shampoo", "fm-pasta", "fm-pilha"}),
+])
+async def test_lista_de_compras_sai_de_uma_loja_da_categoria_certa(texto, loja, itens):
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert melhor["lojas"] == [loja]
+    assert {e["item_id"] for e in melhor["escolhas"].values()} == itens
+    buscas = [c for c in r["rastro"] if c["tool"] == "searchOffers"]
+    assert any("merchantType=" in c["resumo"] for c in buscas)  # a busca do varejo vai direto na categoria
+
+
+async def test_produto_que_nao_existe_no_varejo_nao_vira_opcao_aproximada():
+    r = await _rodar([Desejo("ana", "Ana", "dipirona e areia de praia")])
+    assert "Não achei areia de praia para Ana." in r["avisos"]
+    assert not any("opção mais próxima" in a for a in r["avisos"])
+    assert "browseOffers" not in [c["tool"] for c in r["rastro"]]

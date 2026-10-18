@@ -124,6 +124,14 @@ def nota_fallback(intencao: Intencao, candidato: Candidato, detalhe: dict,
         nota = 0.6
         partes.append("Atende ao pedido aberto")
 
+    if achados and intencao.verticais and "RESTAURANT" not in intencao.verticais and intencao.consultas:
+        # varejo (A′F5): o produto ("ração" em "ração de cachorro") vale mais que um detalhe ("cachorro")
+        nucleo = next((p for p in _palavras(normalizar(intencao.consultas[0])) if len(p) >= 3), "")
+        texto_item = normalizar(" ".join([candidato.item_nome, detalhe.get("descricao", ""),
+                                          detalhe.get("categoria", "")]))
+        if nucleo and _bate(nucleo, texto_item, _palavras(texto_item)):
+            nota += 0.1
+
     confirmadas = [r for r in intencao.restricoes if set(tags) & CONFIRMA.get(r, {r})]
     nota += 0.05 * len(confirmadas) - 0.05 * (len(intencao.restricoes) - len(confirmadas))
     if confirmadas:
