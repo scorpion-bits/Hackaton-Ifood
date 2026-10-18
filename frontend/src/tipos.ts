@@ -180,6 +180,8 @@ export interface EstadoSala {
   estado: EstadoSalaNome;
   demonstracao: boolean;
   conta_teste?: boolean;
+  /** O organizador cadastrou chave Pix ao criar a sala (o GET nunca devolve a chave inteira). */
+  tem_chave_pix?: boolean;
   participantes: Participante[];
   resultado?: ResultadoMatch;
   carrinhos?: Carrinho[];
