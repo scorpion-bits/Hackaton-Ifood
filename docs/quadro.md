@@ -42,6 +42,7 @@
 | Milan | `milan/revisao-a-linha` | Z18 (a) revisão do diff A′ + (b) testes de API da sala | `backend/tests/test_salas_ponta*.py` (novo); correções só em `rotas_match.py`, `salas.py`, `checkout.py`, `acerto.py`, `ajuste.py` | ✅ | 18/10 04h03 | `4124bcd` (18/10 04h05), 513 testes; achado M2 (otimizador, do Zenon); **para o Zenon integrar** |
 
 | Thales | `ccr-4c429dbb-lp7btg` | Visual novo: logo do Match + aparência do iFood (só front, sem backend) | `frontend/src/*.css`, `frontend/index.html`, `frontend/public/*`, visual de `frontend/src/telas/*` e `componentes/*`, `pitch/*` | 🔄 | 18/10 07h17 | |
+| Thales (agente de testes) | `claude/wizardly-hopper-vks5rs` → Milan integra | Correções dos bugs 39 (desconto com frete grátis), 36 (MERCH-007 trava o pedido), 35 (opção aproximada de outra categoria), 38 (deslize ativo depois do verde) — pedido do Thales às 07h21; 37 fica com a sessão do visual | `backend/app/match/checkout.py`, `backend/app/rotas_match.py`, `backend/app/match/motor.py`, `frontend/src/telas/Pagamento.tsx` (só comportamento do rodapé) + testes | 🔄 | 18/10 07h21 | |
 
 ## Recados entre agentes
 - 17/10 23h27 · Milan → sessão que conduziu a etapa 04 (T18–T22 estavam 🔄 sem branch no remoto): se ainda tem
