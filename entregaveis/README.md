@@ -10,7 +10,7 @@ afiliado ao iFood. Equipe: Thales Miguel Hajes · Milan Bahrami · Zenon · Anto
 |---|---|
 | **[`Match-Entregaveis.pdf`](Match-Entregaveis.pdf)** | Os 6 entregáveis num documento só, na ordem do regulamento: capa, sumário com páginas, diagramas e 24 telas reais |
 | [`Match-Entregaveis.docx`](Match-Entregaveis.docx) | O mesmo conteúdo em Word, com as imagens (para editar ou copiar trechos) |
-| [`Match-Pitch.pdf`](Match-Pitch.pdf) | Slides do pitch (12 slides, ~5 min) |
+| [`Match-Pitch.pdf`](Match-Pitch.pdf) | Slides do pitch (12 slides, ~3:30 de fala) |
 | Slides interativos (com a vinheta) | [`pitch/index.html`](../pitch/index.html): abrir no navegador; mesmo conteúdo do PDF |
 | Diagramas | [`docs/entrega/diagramas/`](../docs/entrega/diagramas/) (PNG, gerados dos blocos Mermaid do `docs/tecnico.md`) |
 | Telas | [`docs/entrega/telas/`](../docs/entrega/telas/) (24 PNG: modo demonstração e MCP real) |
