@@ -38,3 +38,24 @@
 "Sexta à noite, quatro amigos, quatro vontades, um grupo de WhatsApp. Hoje os restaurantes vão disputar o pedido da
 nossa turma — e o agente que compra trabalha para nós, não para quem paga anúncio."
 Momento: lance "Patrocinado" fala primeiro → perde → vencedoras acendem → "É um Match!" (Thales narra).
+
+## Rodada 2 — 17/10 ~23h (rodada 1 + correções do QA integradas)
+
+| Pilar | Aval. 1 | Agora | Para 9+ |
+|---|---|---|---|
+| Visão & Originalidade | 6 | 7 | IA real ligada (hoje toda fala é "texto conferido"); Patrocinado que pareça verdadeiro; responder à Prosus/ToqanClaw ("o lado da loja já tem agentes; o Match é onde eles encontram o agente do cliente") |
+| Arquitetura & Engenharia | 7 | 7,5 | Match com lojas reais (amostras em `docs/mcp-real/`); IA real; docs sem "em implementação"; frases do pitch iguais ao código |
+| Design & Experiência | 6,5 | 8 | Sem jargão ("nota ≥ 0,7"); legenda da afinidade por loja; confete sobre o "82%"; teste com usuário |
+| Impacto | 4 | 6 | Pesquisa n ≥ 20 aplicada; medição própria |
+| Comunicação & Pitch | 5 | 6,5 | Pitch em ~5 min (12 slides é muito); sem `[preencher]`; 3 ensaios; vídeo gravado |
+| **Total** | 28,5 | **35/50** | Projetado com as correções: 41–42; sem MCP real e IA real, teto ~38 |
+
+Entregáveis: proposta 7 · desenho de solução 5 (desatualizado) · racional de UX 7,5 · interface 8 · doc técnico 5,5 · feedback do MCP 7,5.
+
+Correções em andamento (T17d–g): Patrocinado sem vaga garantida no corte de lojas; bebida nunca oferecida a quem
+pediu comida (o Poke patrocinado passa, honesto); jargão fora; docs sem "em implementação" + "Avaliar em 5 minutos";
+feedback com top 3; pitch em ~5 min com frases iguais ao código ("juntar itens é regra nossa").
+👥 Maiores alavancas: chave de IA + 1 Match com IA; diagnóstico `--carrinho` + push de `docs/mcp-real/`; pesquisa;
+testar a rede do evento (isolamento de aparelhos → hotspot) e gravar o vídeo; 3 ensaios.
+Plano B (MCP real não fecha até 07h): demo no modo demonstração + slide "Real × demonstração" com o que foi
+verificado no real; nunca dizer "chamada real" sobre o rastro do demo.
