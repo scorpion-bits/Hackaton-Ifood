@@ -1,7 +1,8 @@
 # Pitch do Match (máximo 5 min)
 
 Um arquivo só (`index.html`), sem internet e sem instalar nada: **dois cliques no `index.html`** (Edge/Chrome).
-PDF de reserva: `pitch.pdf` (claro). Telas do app: `img/app/` (modo demonstração, persona Ana).
+PDF de reserva: `pitch.pdf` (claro). Telas do app: `img/app/` (visual atual com a logo Match; modo demonstração, persona Ana).
+Fotos dos pratos: URLs reais do iFood (amostras do MCP em `docs/mcp-real/`) postas por cima da demonstração só na captura; preços e lojas são simulados (selo "demonstração" visível). Prato sem foto parecida fica sem foto.
 
 ## Teclas
 | Tecla | Ação |
