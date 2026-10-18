@@ -660,3 +660,55 @@ textarea { resize: none; min-height: 84px; }
 .solo-txt { display: flex; flex-direction: column; gap: 2px; }
 .solo-txt small { color: var(--texto-suave); font-size: 0.86rem; }
 .solo-card .link-btn { grid-column: 1 / -1; justify-self: start; padding-left: 0; }
+
+/* ============================================================
+   Visual v2 (18/10, Thales): logo oficial do Match + aparência mais próxima do app do iFood.
+   Só sobreposição de estilo: nenhum texto, rótulo ou fluxo mudou. Para voltar ao visual anterior, apague este bloco.
+   ============================================================ */
+:root:not([data-theme="dark"]) {
+  --fundo: #ffffff;           /* telas brancas, como no app */
+  --borda: #e6e6e6;
+  --linha: #f0f0f0;
+  --palco: #f2f2f2;
+  --degrade: #ea1d2c;         /* botão principal sólido, sem degradê */
+  --sombra-leve: none;
+}
+/* topo: branco, título preto, seta vermelha sem círculo, logo no centro */
+.topo-sala { background: var(--superficie); border-bottom: 1px solid var(--borda); }
+.topo-sala strong { font-size: 16px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--texto); }
+.topo-sala strong::before { display: none; }
+.topo-sala .topo-logo { display: flex; justify-content: center; }
+.voltar { border: 0; background: transparent; color: var(--marca); }
+.voltar:active { background: var(--marca-suave); }
+.marca { display: block; user-select: none; }
+/* selo de demonstração mais fino (continua visível) */
+.selo-demo, .selo-real { font-size: 0.68rem; padding: 4px 8px; letter-spacing: 0.04em; }
+/* botões: retângulo arredondado, vermelho sólido */
+.primario { border-radius: 10px; box-shadow: none; font-weight: 700; min-height: 52px; }
+.primario:active:not(:disabled) { background: #c8101e; }
+.secundario { border-radius: 10px; color: var(--marca); border-color: var(--borda); font-weight: 700; }
+.app-sala > .cartao.centro > p.erro + a { border-radius: 10px; }
+/* cartões: borda fina, sem sombra, cantos 12px */
+.cartao, .pcard, .qrcard { border-radius: 12px; box-shadow: none; }
+input, textarea { border-radius: 10px; background: #f7f7f7; border-color: #f0f0f0; }
+input:focus, textarea:focus { background: #fff; border-color: var(--marca); outline: none; }
+.rs { background: #f7f7f7; border-color: #f0f0f0; border-radius: 10px; }
+.chip.on { background: var(--marca); border-color: var(--marca); color: #fff; }
+/* pé da ação principal: faixa branca com linha, como a sacola do app */
+.rodape-acao { background: var(--superficie); border-top: 1px solid var(--borda); }
+/* home */
+.home-corpo { gap: 18px; }
+.busca { background: #f2f2f2; border-color: #f2f2f2; border-radius: 10px; }
+.cat i, .cat-ico { background: #f2f2f2; border: 0; }
+.cat-match i { background: var(--marca); box-shadow: none; }
+.hero { background: linear-gradient(120deg, #ea1d2c 0%, #f0303d 55%, #ff5a4f 100%); border-radius: 14px; box-shadow: none; min-height: 168px; }
+.hero-marca { margin: -4px 0 2px -2px; }
+.hero-cta { border-radius: 10px; color: #ea1d2c; }
+.sec { font-size: 18px; }
+.rcard { border: 0; border-bottom: 1px solid var(--linha); border-radius: 0; padding: 10px 0; }
+.rtile { border-radius: 50%; border: 1px solid var(--borda); }
+.passos li { border-radius: 12px; background: #f7f7f7; border-color: #f7f7f7; }
+/* barra inferior */
+.aba-barra.atual, .aba-barra.central { color: var(--marca); }
+.aba-barra.central .ico { background: var(--marca); box-shadow: 0 6px 16px rgba(234, 29, 44, 0.35); }
+.barra-inferior { border-top-color: var(--borda); }

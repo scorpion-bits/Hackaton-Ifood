@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { gravarLocal, chaveOrg } from "../../api";
 import Selo from "../Selo";
+import Marca from "../Marca";
 import Resultado from "../../telas/Resultado";
 import { assinatura, leilaoVistoChave, leilaoVisto } from "./util";
 import { instalarApiFalsa, salaAjustada, salaExemplo } from "./exemplo";
@@ -28,7 +29,7 @@ export default function PaginaExemplo({ organizador }: { organizador: boolean })
     <div className="app-sala">
       <header className="topo-sala">
         <a href="#/" className="voltar" aria-label="Voltar ao início">‹</a>
-        <strong>Match</strong>
+        <strong className="topo-logo"><Marca altura={34} /></strong>
         <span />
       </header>
       <Selo ativo />
