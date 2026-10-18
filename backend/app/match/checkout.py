@@ -420,7 +420,8 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
 
     anotar_dono(primeira, _ler_cart_item_id(carrinho, primeira.item_id, set()))
     for linha in resto:
-        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1)
+        # MCP real: sem `options` o addItemToCart quebra no servidor ("parameter options ... is null"); vazio funciona.
+        resp = await cliente.chamar("addItemToCart", cartId=cart_id, itemId=linha.item_id, quantity=1, options=[])
         anotar_dono(linha, _ler_cart_item_id(resp, linha.item_id, set(dono_por_linha)))
 
     entregas = await cliente.chamar("getCartDeliveryMethods", cartId=cart_id)

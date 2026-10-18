@@ -450,3 +450,24 @@ async def test_endereco_sem_id_avisa_ja_ao_rodar():
                                                   "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
     assert "problema" not in r and r["combinacoes"]
     assert motor_mod.MSG_ENDERECO_SEM_ID in r["avisos"]
+
+
+async def test_sem_endereco_com_mock_busca_no_local_do_env(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "-22.0025,-47.8986")
+    r = await _rodar_com_endereco({"addresses": []})
+    assert "problema" not in r and r["combinacoes"]
+    assert r["endereco"]["id"] == motor_mod.ID_ENDERECO_MOCK
+    assert motor_mod.MSG_ENDERECO_MOCK in r["avisos"]
+
+
+async def test_mock_nao_substitui_endereco_salvo(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "-22.0025,-47.8986")
+    r = await _rodar_com_endereco({"addresses": [{"addressId": "a1", "formattedAddress": "Rua X, 1",
+                                                  "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
+    assert r["endereco"]["id"] == "a1" and motor_mod.MSG_ENDERECO_MOCK not in r["avisos"]
+
+
+async def test_mock_invalido_continua_pedindo_endereco(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "São Carlos")
+    r = await _rodar_com_endereco({"addresses": []})
+    assert r["problema"] == "endereco" and r["avisos"] == [motor_mod.MSG_SEM_ENDERECO]

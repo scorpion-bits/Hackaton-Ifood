@@ -34,6 +34,25 @@ MSG_ENDERECO_SEM_ID = ("O endereço do iFood veio sem identificador (addressId):
 MSG_ENDERECO_SEM_COORDENADAS = ("O endereço do iFood veio sem coordenadas (latitude/longitude), e sem elas a busca "
                                 "não acha as lojas que entregam aí. Abra o endereço no app do iFood, confirme o local "
                                 "no mapa e rode o Match de novo.")
+MSG_ENDERECO_MOCK = ("Endereço de teste: a conta do iFood não tem endereço salvo, então a busca e o carrinho usam um "
+                     "local fixo de exemplo. O pedido real só sai com um endereço salvo na conta.")
+# addressId fixo do mock: o createCart real aceita (testado em 18/10) e devolve taxa e total reais.
+ID_ENDERECO_MOCK = "00000000-0000-4000-8000-000000000000"
+
+
+def endereco_mock(cfg: Config) -> dict | None:
+    """Endereço mockado do `.env` (`IFOOD_MCP_ENDERECO_MOCK=lat,lng`), ou None se desligado/inválido.
+
+    Por que existe: o `createAddress` do MCP real falha sempre com ADR-2001 nas contas de teste (bug 6 de
+    `docs/testes/bugs.md`; erro sem documentação no portal), e sem endereço salvo o Match nem busca. Com o mock,
+    a busca usa estas coordenadas e o carrinho real é montado com `ID_ENDERECO_MOCK`. Tirar quando o iFood
+    liberar o endereço nas contas de teste."""
+    try:
+        lat, lng = (float(x) for x in cfg.ifood_mcp_endereco_mock.split(","))
+    except ValueError:
+        return None
+    return {"id": ID_ENDERECO_MOCK, "apelido": "Teste", "texto": "Endereço de teste (mock)",
+            "latitude": lat, "longitude": lng}
 
 
 def _reais(valor: float) -> str:
@@ -157,6 +176,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             raise
         avisos.append(f"Não consegui ler os endereços no iFood: {e}")
         endereco = None
+    if endereco is None and not avisos and (endereco := endereco_mock(cfg)):
+        avisos.append(MSG_ENDERECO_MOCK)  # conta sem endereço salvo (ADR-2001 no createAddress): usa o mock do .env
     if endereco is None:
         if not avisos:
             avisos.append(MSG_SEM_ENDERECO)

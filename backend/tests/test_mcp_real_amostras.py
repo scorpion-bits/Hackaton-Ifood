@@ -243,6 +243,7 @@ async def test_checkout_real_cria_carrinho_com_items_e_paga_por_merchant():
     [criar] = sessao.args_de("createCart")
     assert criar == {"merchantId": LOJA, "addressId": "addr-1", "items": [{"itemId": ITEM_A, "quantity": 1}]}
     assert [a["itemId"] for a in sessao.args_de("addItemToCart")] == [ITEM_B]  # só o resto
+    assert all(a["options"] == [] for a in sessao.args_de("addItemToCart"))  # sem options o servidor real quebra
     assert sessao.args_de("listPaymentMethods") == [{"merchantId": LOJA}]
     assert sessao.args_de("setCartDelivery") == [{"cartId": "cart-r1", "deliveryMethodId": "DEFAULT"}]
     assert sessao.args_de("setCartPayment") == [{"cartId": "cart-r1", "paymentMethodId": "CASH"}]  # nunca Pix
