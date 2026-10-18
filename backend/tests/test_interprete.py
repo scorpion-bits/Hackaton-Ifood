@@ -77,3 +77,26 @@ def test_categoria_conhecida_nao_muda():
     assert _fallback("pizza com borda recheada")[0].consultas == ["pizza"]
     assert _fallback("hambúrguer sem cebola")[0].consultas == ["hambúrguer"]
     assert _fallback("algo barato e vegetariano")[0].consultas == ["vegetariano"]
+
+
+# ---------- pedido completo (Trilha A′, etapa 05): bebida pela marca ----------
+@pytest.mark.parametrize("texto, marca", [
+    ("uma pizza e uma coca", "coca"),
+    ("pizza e um guaraná, até 50", "guaraná"),
+    ("hambúrguer e uma Pepsi", "pepsi"),
+    ("pizza e refri", "refri"),
+])
+def test_bebida_pela_marca_vira_slot_de_bebida_que_busca_refrigerante(texto, marca):
+    intencoes = _fallback(texto)
+    assert len(intencoes) == 2
+    bebida = intencoes[1]
+    assert bebida.participante_id == "p#2"
+    assert bebida.consultas[0].lower() == marca
+    assert "refrigerante" in bebida.consultas
+
+
+def test_consulta_da_ia_com_marca_ganha_refrigerante():
+    from app.match.interprete import validar_resposta_llm
+    dados = {"itens": [{"consultas": ["pizza"]}, {"consultas": ["Coca-Cola"], "vontades": ["coca-cola"]}]}
+    intencoes = validar_resposta_llm(dados, Desejo("p", "P", "pizza e uma coca-cola"))
+    assert intencoes[1].consultas == ["Coca-Cola", "refrigerante"]

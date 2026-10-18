@@ -21,6 +21,9 @@ LIMITE_BUSCA = 20  # `pageSize` (o MCP real aceita no máximo 25)
 TIPO_PADRAO_REAL = "RESTAURANT"  # browseOffers real exige merchantType; o Match é de comida
 MIN_RESULTADOS = 3  # abaixo disso tenta lojas (MERCHANT) + getMerchant
 MAX_LOJAS_EXTRA = 3
+LIMITE_NA_LOJA = 10  # pageSize da busca dentro de uma loja (A′F1)
+MAX_CONSULTAS_NA_LOJA = 2  # "coca" e, se a loja não tiver, "refrigerante"
+MAX_POR_LOJA_NA_LOJA = 2  # itens que a busca na loja acrescenta ao slot (o juiz avalia cada um)
 
 # tag como vem da tool (normalizada) → restrição canônica
 TAGS_CANONICAS = {
@@ -196,6 +199,20 @@ def _eta_loja(r: dict) -> int | None:
     return _eta(metodo.get("estimatedMinutes"))
 
 
+def _taxa_loja(r: dict) -> float | None:
+    """Taxa de entrega da loja na busca (A′F4): `deliveryMethod.promotionalFee`/`fee` (MCP real, conferido em
+    docs/mcp-real/searchOffers.json) ou `deliveryFee` (demo). Estimativa: o valor final é o do `getCart`."""
+    metodo = r.get("deliveryMethod")
+    if not isinstance(metodo, dict):
+        metodos = [m for m in (r.get("deliveryMethods") or []) if isinstance(m, dict)]
+        metodo = metodos[0] if metodos else {}
+    for valor in (metodo.get("promotionalFee"), metodo.get("fee"), r.get("deliveryFee")):
+        numero = _numero(valor)
+        if numero is not None and numero >= 0:
+            return numero
+    return None
+
+
 def _ler_loja(r: dict) -> dict:
     """Loja de um resultado MERCHANT, do getMerchant ou (MCP real) do `merchant{}` aninhado num resultado ITEM."""
     if isinstance(r.get("merchant"), dict):
@@ -208,6 +225,9 @@ def _ler_loja(r: dict) -> dict:
         "categorias": [str(c) for c in (r.get("categories") or []) if c],
         "avaliacao": _numero(r.get("rating") if r.get("rating") is not None else r.get("reviewRating")),
         "aberta": r.get("isOpen"),
+        "taxa": _taxa_loja(r),
+        "pedido_minimo": _numero(r.get("minimumOrderAmount") if r.get("minimumOrderAmount") is not None
+                                 else r.get("minimumOrder")),
     }
 
 
@@ -294,6 +314,8 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         "perecivel": bool(perecivel),
         "tags": _tags(r.get("tags")),
         "avaliacao": _numero(r.get("rating")) if r.get("rating") is not None else loja.get("avaliacao"),
+        "taxa_entrega": loja.get("taxa"),
+        "pedido_minimo": loja.get("pedido_minimo"),
     }
 
 
@@ -438,6 +460,43 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao,
     candidatos = [c for c, _ in selecionados]
     detalhes = {(c.loja_id, c.item_id): item for c, item in selecionados}
     return candidatos, detalhes
+
+
+async def buscar_na_loja(cliente: ClienteIFood, intencao: Intencao, endereco: dict, loja_id: str,
+                         vertical: str = "") -> tuple[list[Candidato], dict[tuple[str, str], dict]]:
+    """Candidatos do slot DENTRO de uma loja: `searchOffers` com `refinements.merchantId` (o caminho que o
+    `getMerchant` real indica em `catalogSummary.navigationHint`). Pedido completo (A′F1, etapa 05): o refri vem da
+    mesma pizzaria da pizza, não de outra loja. Tenta as consultas em ordem e para na primeira que acha item."""
+    geo = {k: endereco.get(k) for k in ("latitude", "longitude") if endereco.get(k) is not None}
+    for consulta in intencao.consultas[:MAX_CONSULTAS_NA_LOJA]:
+        # refinements logo depois da query: o rastro (≤ 80 caracteres) mostra que a busca foi dentro da loja
+        args: dict[str, Any] = {"query": consulta, "refinements": {"merchantId": loja_id}, "resultKind": "ITEM",
+                                "pageSize": LIMITE_NA_LOJA, **geo}
+        if vertical:
+            args["merchantType"] = vertical
+        try:
+            dados = await cliente.chamar("searchOffers", **args)
+        except ErroMCP:
+            return [], {}
+        achados: list[tuple[Candidato, dict]] = []
+        for r in dados.get("results") or dados.get("items") or []:
+            item = _ler_item(r) if isinstance(r, dict) else None
+            # a busca semântica real pode trazer qualquer item da loja: só fica o que bate com o pedido
+            if item and item["loja_id"] == str(loja_id) and _aceita(item, intencao) and _bate_consulta(item, intencao):
+                achados.append((_candidato(item, intencao), item))
+        achados.sort(key=lambda par: bool(par[0].viola))  # quem não viola restrição primeiro
+        if achados:
+            achados = achados[:MAX_POR_LOJA_NA_LOJA]
+            return [c for c, _ in achados], {(c.loja_id, c.item_id): item for c, item in achados}
+    return [], {}
+
+
+def _bate_consulta(item: dict, intencao: Intencao) -> bool:
+    """Alguma palavra (≥ 3 letras) das consultas/vontades aparece no nome, descrição ou seção do item."""
+    texto = normalizar(" ".join([item["item_nome"], item["descricao"], item["categoria"]]))
+    palavras = {p for t in [*intencao.consultas, *intencao.vontades] for p in re.findall(r"[a-z0-9]+", normalizar(t))
+                if len(p) >= 3}
+    return any(re.search(rf"\b{re.escape(p)}", texto) for p in palavras)
 
 
 async def buscar(cliente: ClienteIFood, intencao: Intencao, endereco: dict) -> list[Candidato]:

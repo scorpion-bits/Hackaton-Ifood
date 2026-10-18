@@ -13,7 +13,7 @@ import re
 
 from ..config import Config
 from .busca import CONFIRMA
-from .interprete import CONSULTA_RESTRICAO, normalizar
+from .interprete import CONSULTA_RESTRICAO, PALAVRAS_BEBIDA, normalizar
 from .llm import completar_json
 from .modelos import Candidato, Desejo, Intencao
 
@@ -54,7 +54,8 @@ def _termos(intencao: Intencao) -> dict[str, str]:
 def bebida_sem_pedir(intencao: Intencao, detalhe: dict) -> bool:
     """O item é bebida e a pessoa pediu comida (bebida nunca vale como "opção mais próxima" de comida)."""
     categoria = _palavras(normalizar(detalhe.get("categoria", "")))
-    return any(b in categoria for b in BEBIDAS) and not any(t in BEBIDAS for t in _termos(intencao))
+    pediu_bebida = any(p in PALAVRAS_BEBIDA for t in _termos(intencao) for p in _palavras(t))  # "coca", "guaraná"
+    return any(b in categoria for b in BEBIDAS) and not pediu_bebida
 
 
 def _nao_confirmadas(restricoes: list[str], tags: list[str]) -> list[str]:

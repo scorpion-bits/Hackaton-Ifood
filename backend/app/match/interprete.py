@@ -52,6 +52,21 @@ def contem(texto_norm: str, termo: str) -> bool:
 
 
 # ---------- dicionário pt-BR (fallback) ----------
+# Marca ou apelido de refrigerante: "uma coca" é bebida e também busca "refrigerante" (o cardápio do demo diz
+# "Refrigerante de cola"; o real pode trazer "Coca-Cola 350 ml"). Sem isso, "coca" virava açaí de outra loja.
+REFRIGERANTES = ["refri", "refrigerante", "coca", "coca cola", "guaraná", "pepsi", "fanta", "sprite", "soda",
+                 "tubaína", "h2oh"]
+_PALAVRAS_REFRI = {p for r in REFRIGERANTES for p in re.findall(r"[a-z0-9]+", unicodedata.normalize(
+    "NFKD", r).encode("ascii", "ignore").decode("ascii").lower())}
+# palavras que dizem "a pessoa pediu bebida" (o juiz deixa bebida entrar só nesse caso)
+PALAVRAS_BEBIDA = _PALAVRAS_REFRI | {"bebida", "bebidas", "suco", "agua", "cha", "limonada", "energetico", "cerveja",
+                                     "chopp", "cafe"}
+
+
+def pede_refrigerante(termos: list[str]) -> bool:
+    """Algum termo cita refrigerante pela marca/apelido ("coca", "Coca-Cola", "guaraná", "refri")."""
+    return any(p in _PALAVRAS_REFRI for t in termos for p in re.findall(r"[a-z0-9]+", normalizar(t)))
+
 # Ordem = prioridade quando um trecho cita mais de uma categoria. "consultas" vão para o searchOffers
 # (só termos descritivos); "vontades" ajudam o juiz a dar nota.
 CATEGORIAS: list[dict] = [
@@ -76,7 +91,8 @@ CATEGORIAS: list[dict] = [
      "consultas": ["sobremesa"], "vontades": ["sobremesa", "doce", "chocolate"], "vertical": "RESTAURANT"},
     {"nome": "batata", "gatilhos": ["batata", "fritas", "batata frita"],
      "consultas": ["batata frita"], "vontades": ["batata", "fritas"], "vertical": "RESTAURANT"},
-    {"nome": "bebida", "gatilhos": ["refri", "refrigerante", "suco", "bebida"],
+    {"nome": "bebida", "gatilhos": [*REFRIGERANTES, "suco", "bebida", "água", "chá gelado", "limonada", "energético",
+                                     "cerveja", "chopp"],
      "consultas": ["bebida"], "vontades": ["refrigerante", "suco", "bebida"], "vertical": "RESTAURANT"},
     {"nome": "massa", "gatilhos": ["massa", "macarrão", "lasanha", "espaguete", "nhoque", "italiana"],
      "consultas": ["massa"], "vontades": ["massa", "macarrão", "lasanha", "espaguete"], "vertical": "RESTAURANT"},
@@ -389,6 +405,8 @@ def _interpretar_palavras(desejo: Desejo) -> list[Intencao]:
         verticais: list[str] = []
         for cat, gatilhos in slot["cats"]:
             base = cat["consultas"]
+            if cat["nome"] == "bebida" and pede_refrigerante(gatilhos):
+                base = ["refrigerante", *base]
             # gatilho mais específico que a categoria (ex.: "temaki") vira a 1ª consulta
             consultas += [g for g in gatilhos if normalizar(g) not in {normalizar(b) for b in base}][:1] + base
             vontades += cat["vontades"]
@@ -504,10 +522,13 @@ _CONSULTA_DO_GENERICO = {"doce": "sobremesa", "docinho": "sobremesa", "doces": "
 
 
 def _completar_consultas(consultas: list[str]) -> list[str]:
-    """Consulta genérica da IA ganha a da categoria ("doce" → + "sobremesa"), até 3 termos."""
+    """Consulta genérica da IA ganha a da categoria ("doce" → + "sobremesa"; "Coca-Cola" → + "refrigerante"),
+    até 3 termos."""
     extras = [_CONSULTA_DO_GENERICO[normalizar(c).strip()] for c in consultas
               if normalizar(c).strip() in _CONSULTA_DO_GENERICO]
-    return _dedup(consultas + extras)[:3]
+    if pede_refrigerante(consultas):
+        extras.append("refrigerante")
+    return _dedup(consultas[:2] + extras + consultas[2:])[:3]
 
 
 def _entrada_pessoa(d: Desejo) -> dict:

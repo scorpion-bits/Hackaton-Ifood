@@ -1,12 +1,16 @@
 """MCP de demonstração do iFood (consumidor) + cliente com rastro, testados pelo protocolo MCP."""
 
 import dataclasses
+import json
+from pathlib import Path
 
 import pytest
 from mcp import Client
 
 from app.config import carregar
 from app.ifood_mcp import ErroMCP, abrir_cliente, criar_servidor_demo, resetar_demo, resumir
+
+RAIZ_MCP_REAL = Path(__file__).resolve().parents[2] / "docs" / "mcp-real"
 
 TOOLS_DA_DOC = {
     "getUser", "listAddresses", "searchOffers", "browseOffers", "getRecommendations", "getMerchant", "getItem",
@@ -163,15 +167,26 @@ async def test_busca_acha_itens_do_roteiro():
     assert [l["merchantId"] for l in mercado["results"]] == ["loja-demo-mercado"]
 
 
-async def test_taxa_de_entrega_nao_aparece_na_busca():
+async def test_taxa_de_entrega_e_pedido_minimo_aparecem_na_busca_como_no_real():
+    """O searchOffers real traz `merchant.deliveryMethod.fee` e `minimumOrderAmount` (docs/mcp-real/searchOffers.json);
+    o demo imita (A′F4: a taxa entra no custo antes do carrinho)."""
     async with abrir_cliente(carregar()) as cli:
         for kind in ("MERCHANT", "ITEM"):
             r = await cli.chamar("searchOffers", query="pizza", resultKind=kind)
             assert r["results"]
             for resultado in r["results"]:
-                assert not {"deliveryFee", "cost", "taxa_entrega", "fee"} & resultado.keys()
+                assert resultado["deliveryFee"] == 8.99 and resultado["minimumOrderAmount"] == 30.0
         loja = await cli.chamar("getMerchant", merchantId="loja-demo-pizza")
-        assert "deliveryFee" not in loja and "taxa_entrega" not in loja
+        assert loja["deliveryFee"] == 8.99
+
+
+def test_taxa_da_busca_real_le_promotional_fee_do_merchant():
+    from app.match.busca import _ler_item
+    amostra = json.loads((RAIZ_MCP_REAL / "searchOffers.json").read_text(encoding="utf-8"))
+    r = amostra["chamadas"][0]["resposta"]["results"][0]
+    item = _ler_item(r)
+    assert item["taxa_entrega"] == r["merchant"]["deliveryMethod"]["promotionalFee"]
+    assert item["pedido_minimo"] == r["merchant"]["minimumOrderAmount"]
 
 
 async def test_createcart_nao_e_idempotente_e_payload_tem_selo():
