@@ -11,6 +11,7 @@ import time
 from .. import config
 from ..ifood_mcp.cliente import abrir_cliente
 from . import ajuste, interprete, juiz, leilao
+from . import llm
 from .llm import completar_json
 from .modelos import Desejo
 from .motor import rodar_match
@@ -26,6 +27,9 @@ FRASES_LIVRES = [
     "pizza pra dividir, mas eu não como carne",
     "uma comida caseira tipo marmita, até 30",
     "doce qualquer, chega rápido",
+    "nada com glúten até R$ 30",
+    "🍕🍕",
+    "coxinha",
 ]
 
 contagem = {"ok": 0, "falhou": 0, "segundos": 0.0}
@@ -41,6 +45,7 @@ async def _completar_contando(*args, **kwargs):
 
 async def _caso(cfg, titulo: str, desejos: list[Desejo]) -> None:
     contagem.update(ok=0, falhou=0, segundos=0.0)
+    llm.estatisticas.update({"429": 0, "chamadas": 0, "atendidas": llm.Counter()})
     async with abrir_cliente(cfg) as cliente:
         r = await rodar_match(cfg, cliente, desejos)
     print(f"\n=== {titulo} ===")
@@ -53,12 +58,16 @@ async def _caso(cfg, titulo: str, desejos: list[Desejo]) -> None:
         for slot, e in top["escolhas"].items():
             print(f"  → {slot}: {e['item_nome']} · {e['loja_nome']} · R$ {e['preco']:.2f}")
         print(f"  explicação: {top.get('explicacao', '')}")
+    atendeu = ", ".join(f"{m} ×{n}" for m, n in llm.estatisticas["atendidas"].items()) or "nenhum"
     print(f"  LLM: {contagem['ok']} ok, {contagem['falhou']} caíram no fallback, {contagem['segundos']:.1f} s")
+    print(f"  modelo que atendeu: {atendeu} · respostas 429: {llm.estatisticas['429']} · "
+          f"requisições HTTP: {llm.estatisticas['chamadas']}")
 
 
 async def main() -> None:
     cfg = config.carregar()
     print(f"Provedor: {cfg.llm_provedor} · modelo: {cfg.llm_modelo or '(vazio)'} · "
+          f"reserva: {', '.join(cfg.llm_modelos_reserva) or '(nenhuma)'} · "
           f"chave: {'sim' if cfg.llm_chave else 'não'} · MCP: {getattr(cfg, 'ifood_mcp_modo', 'demo')}")
     if cfg.llm_provedor == "mock" or not cfg.llm_modelo:
         print("Sem IA real: defina LLM_PROVIDER=groq, LLM_MODEL e GROQ_API_KEY no .env "

@@ -619,7 +619,7 @@ async def interpretar_ajuste(cfg: Config, texto: str, participantes: list[dict])
         "frase": texto,
         "participantes": [{"id": p.id, "nome": p.nome, "organizador": p.organizador, "desejo": p.texto,
                            "orcamento_max": p.orcamento_max} for p in pessoas],
-    }, ensure_ascii=False)
-    dados = await completar_json(cfg, SISTEMA, usuario)
+    }, ensure_ascii=False, separators=(",", ":"))
+    dados = await completar_json(cfg, SISTEMA, usuario, max_tokens=500)
     validas = validar_resposta_llm(dados, texto, participantes)
     return validas if validas else interpretar_fallback(texto, participantes)
