@@ -314,3 +314,92 @@ def test_extrair_json():
     assert llm.extrair_json('[1, 2] e depois {"b": {"c": 2}}') == {"b": {"c": 2}}
     assert llm.extrair_json("{quebrado") is None
     assert llm.extrair_json(None) is None
+
+
+# ---------- correções do QA (T17b): intérprete e endereço ----------
+@pytest.mark.parametrize("texto", ["qualquer coisa barata", "o mais barato", "algo baratinho", "o de menor preço"])
+def test_frases_de_barato_ativam_o_perfil_barato(texto):
+    assert all(i.perfil == "barato" for i in interpretar_fallback(Desejo("a", "Ana", texto)))
+
+
+def test_perfil_barato_do_texto_vale_mesmo_se_o_llm_disser_outro():
+    dados = {"itens": [{"consultas": ["lanche"], "verticais": ["RESTAURANT"], "vontades": []}],
+             "restricoes": [], "orcamento_max": None, "perfil": "equilibrado"}
+    intencoes = interprete.validar_resposta_llm(dados, Desejo("a", "Ana", "o mais barato"))
+    assert intencoes[0].perfil == "barato"
+
+
+def test_quantidade_vira_slots_repetidos_ate_3():
+    intencoes = interpretar_fallback(Desejo("a", "Ana", "2 sorvetes"))
+    assert [(i.participante_id, i.consultas) for i in intencoes] == [("a", ["sorvete"]), ("a#2", ["sorvete"])]
+    duas = interpretar_fallback(Desejo("a", "Ana", "dois hambúrgueres e um açaí"))
+    assert [i.consultas[0] for i in duas] == ["hambúrguer", "hambúrguer", "açaí"]
+    assert [i.participante_id for i in duas] == ["a", "a#2", "a#3"]
+
+
+def test_quantidade_acima_do_limite_ou_sem_item_gera_aviso():
+    desejo = Desejo("a", "Ana", "5 pizzas e um sorvete")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    assert [i.consultas[0] for i in intencoes] == ["pizza", "pizza", "pizza", "sorvete"]
+    assert avisos == ["Ana pediu '5 pizzas': o Match põe 3 no pedido (até 3 iguais por pessoa); o resto foi ignorado."]
+    desejo = Desejo("a", "Ana", "2 sorvetes e 3 coxinhas até 99")
+    intencoes, avisos = interprete.aplicar_quantidades(desejo, interpretar_fallback(desejo))
+    assert len(intencoes) == 2 and all(i.orcamento_max == 99 for i in intencoes)
+    assert avisos == ["A quantidade em '3 coxinhas' (Ana) foi ignorada: o Match escolhe 1 item para esse pedido."]
+
+
+def test_quantidade_e_idempotente_e_ignora_numero_do_nome_do_prato():
+    desejo = Desejo("a", "Ana", "2 sorvetes")
+    uma_vez = interpretar_fallback(desejo)
+    assert interprete.aplicar_quantidades(desejo, uma_vez) == (uma_vez, [])
+    pizza = Desejo("a", "Ana", "pizza 4 queijos até 60 reais")
+    assert interprete.aplicar_quantidades(pizza, interpretar_fallback(pizza)) == (interpretar_fallback(pizza), [])
+
+
+async def test_motor_avisa_quantidade_ignorada_e_monta_os_dois_itens():
+    r = await _rodar([Desejo("a", "Ana", "2 sorvetes"), Desejo("b", "Bia", "duas coxinhas")])
+    assert next(p for p in r["pessoas"] if p["participante_id"] == "a")["slots"] == ["a", "a#2"]
+    assert any("'duas coxinhas' (Bia) foi ignorada" in a for a in r["avisos"])
+    assert len(r["avisos"]) == len(set(r["avisos"]))  # slots repetidos não repetem aviso
+
+
+class _ClienteEndereco:
+    """Cliente de demonstração com o `listAddresses` trocado; sem coordenadas, a busca não acha nada."""
+
+    def __init__(self, cliente, enderecos):
+        self._cli, self._enderecos, self.modo = cliente, enderecos, "demo"
+
+    async def chamar(self, tool, **args):
+        if tool == "listAddresses":
+            return self._enderecos
+        if tool in ("searchOffers", "browseOffers") and "latitude" not in args:
+            return {"items": [], "merchants": []}
+        return await self._cli.chamar(tool, **args)
+
+    def rastro_como_dicts(self):
+        return self._cli.rastro_como_dicts()
+
+
+async def _rodar_com_endereco(enderecos, desejos=None):
+    cfg = carregar()
+    async with abrir_cliente(cfg) as cli:
+        return await rodar_match(cfg, _ClienteEndereco(cli, enderecos), desejos or ROTEIRO)
+
+
+async def test_sem_endereco_marca_problema_de_endereco():
+    r = await _rodar_com_endereco({"addresses": []})
+    assert r["problema"] == "endereco" and r["avisos"] == [motor_mod.MSG_SEM_ENDERECO]
+
+
+async def test_endereco_sem_coordenadas_avisa_em_vez_de_nao_achei():
+    r = await _rodar_com_endereco({"addresses": [{"addressId": "a1", "formattedAddress": "Rua X, 1"}]})
+    assert r["problema"] == "endereco" and r["combinacoes"] == []
+    assert r["avisos"] == [motor_mod.MSG_ENDERECO_SEM_COORDENADAS]
+    assert not any(a.startswith("Não achei") for a in r["avisos"])
+
+
+async def test_endereco_sem_id_avisa_ja_ao_rodar():
+    r = await _rodar_com_endereco({"addresses": [{"formattedAddress": "Rua X, 1",
+                                                  "coordinates": {"latitude": -22.0, "longitude": -47.9}}]})
+    assert "problema" not in r and r["combinacoes"]
+    assert motor_mod.MSG_ENDERECO_SEM_ID in r["avisos"]

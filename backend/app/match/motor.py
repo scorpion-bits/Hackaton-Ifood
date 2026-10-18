@@ -15,7 +15,7 @@ import re
 from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, ler_endereco
-from .interprete import CONSULTA_RESTRICAO, interpretar
+from .interprete import CONSULTA_RESTRICAO, aplicar_quantidades, interpretar
 from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
@@ -27,6 +27,13 @@ NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só
 NOTA_RELEVANTE = 0.5  # se o melhor item do slot fica abaixo disso, o pedido não está no cardápio: vira "opção aproximada"
 PREFIXO_APROXIMADA = "Opção aproximada: "
 MAX_MOTIVO = 90
+MSG_SEM_ENDERECO = ("Nenhum endereço salvo na conta do iFood. Cadastre um endereço de entrega no app do iFood e "
+                    "rode o Match de novo.")
+MSG_ENDERECO_SEM_ID = ("O endereço do iFood veio sem identificador (addressId): dá para ver as opções, mas não para "
+                       "montar o carrinho. Confira o endereço no app do iFood e rode o Match de novo.")
+MSG_ENDERECO_SEM_COORDENADAS = ("O endereço do iFood veio sem coordenadas (latitude/longitude), e sem elas a busca "
+                                "não acha as lojas que entregam aí. Abra o endereço no app do iFood, confirme o local "
+                                "no mapa e rode o Match de novo.")
 
 
 def _reais(valor: float) -> str:
@@ -139,14 +146,20 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     try:
         endereco = ler_endereco(await cliente.chamar("listAddresses"))
     except ErroMCP as e:
+        if "(401)" in str(e):  # login recusado no meio da sessão: a rota devolve 401 com a mensagem certa
+            raise
         avisos.append(f"Não consegui ler os endereços no iFood: {e}")
         endereco = None
     if endereco is None:
         if not avisos:
-            avisos.append("Nenhum endereço salvo na conta do iFood. Cadastre um endereço no app e rode de novo.")
+            avisos.append(MSG_SEM_ENDERECO)
+        resultado["problema"] = "endereco"  # a rota não diz "nenhum pedido serve para todos": o problema é outro
         resultado["rastro"] = cliente.rastro_como_dicts()
         return resultado
     resultado["endereco"] = {"id": endereco["id"], "apelido": endereco["apelido"], "texto": endereco["texto"]}
+    if not endereco.get("id"):
+        avisos.append(MSG_ENDERECO_SEM_ID)  # avisa já ao rodar (escolher sem id devolve 409)
+    sem_coordenadas = endereco.get("latitude") is None or endereco.get("longitude") is None
     if not desejos:
         avisos.append("Ninguém respondeu ainda.")
         resultado["rastro"] = cliente.rastro_como_dicts()
@@ -154,12 +167,21 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
 
     nomes = {d.participante_id: d.nome for d in desejos}
     interpretacoes = await asyncio.gather(*(interpretar(cfg, d) for d in desejos))
+    ajustadas = [aplicar_quantidades(d, lista) for d, lista in zip(desejos, interpretacoes)]
+    interpretacoes = [lista for lista, _ in ajustadas]
+    avisos.extend(a for _, avs in ajustadas for a in avs)  # quantidade ignorada nunca some calada
     slots: list[tuple[Desejo, Intencao]] = [(d, i) for d, lista in zip(desejos, interpretacoes) for i in lista]
     pessoa_de = {i.participante_id: d.participante_id for d, i in slots}
 
     buscas = []
     for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
         buscas.append(await buscar_detalhado(cliente, intencao, endereco))
+    if sem_coordenadas and not any(cands for cands, _ in buscas):
+        # sem coordenadas e nada achado: o problema é o endereço, não o pedido ("Não achei X" enganaria)
+        avisos[:] = [a for a in avisos if a == MSG_ENDERECO_SEM_ID] + [MSG_ENDERECO_SEM_COORDENADAS]
+        resultado["problema"] = "endereco"
+        resultado["rastro"] = cliente.rastro_como_dicts()
+        return resultado
     julgados = await asyncio.gather(*(
         avaliar(cfg, d, i, cands, det) for (d, i), (cands, det) in zip(slots, buscas)
     ))
@@ -174,6 +196,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         if not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
             avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
+    if sem_coordenadas and any(not cands for cands, _ in buscas):
+        avisos.append("O endereço do iFood veio sem coordenadas (latitude/longitude): a busca pode ter deixado "
+                      "lojas de fora. Confirme o local no app do iFood.")
     descartados: list[tuple[Desejo, Intencao]] = []
     for (desejo, intencao), (_, detalhes) in zip(slots, buscas):
         if (desejo, intencao) not in fracos:
@@ -276,6 +301,6 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
          "perfil": lista[0].perfil}
         for d, lista in zip(desejos, interpretacoes)
     ]
+    avisos[:] = list(dict.fromkeys(avisos))  # slots repetidos ("2 sorvetes") não repetem o mesmo aviso
     resultado["rastro"] = cliente.rastro_como_dicts()
     return resultado
-

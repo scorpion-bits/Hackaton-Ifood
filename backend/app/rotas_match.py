@@ -16,7 +16,7 @@ from fastapi import APIRouter, Body, Header
 from pydantic import BaseModel
 
 from . import config
-from .ifood_mcp.cliente import ErroMCP, abrir_cliente
+from .ifood_mcp.cliente import MSG_ENVIO_DESLIGADO, ErroMCP, abrir_cliente
 from .match import checkout, motor, salas
 from .match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from .match.modelos import Candidato, Desejo, para_dict
@@ -29,6 +29,9 @@ CIDADE_PIX = "SAO CARLOS"
 FORMAS = ("pix", "cartao_simulado", "dinheiro")
 MODOS = ("junto", "separado")
 STATUS_INICIAL_PEDIDO = {"code": "SUBMITTED", "description": "Pedido enviado ao iFood."}
+STATUS_INICIAL_DEMO = {"code": "SUBMITTED", "description": "Pedido enviado ao iFood (demonstração)."}
+MSG_ENVIO_DESLIGADO_SALA = ("Conta de teste: o envio real está desligado (IFOOD_MCP_PERMITIR_ENVIO). "
+                            "Os carrinhos ficaram prontos no iFood.")
 
 _travas: dict[str, asyncio.Lock] = {}
 
@@ -329,6 +332,8 @@ async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
         resultado = await _usar_cliente(sala_id, operacao)
         resultado.pop("rastro", None)  # o rastro vai acumulado na sala
 
+        if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
+            raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
         if not resultado.get("combinacoes"):
             avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
             raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
@@ -358,7 +363,8 @@ async def escolher(sala_id: str, corpo: CorpoEscolha, x_organizador: str | None 
         combinacao = combinacoes[idx]
         endereco_id = (sala["resultado"].get("endereco") or {}).get("id")
         if not endereco_id:
-            raise ErroSala(409, "O Match não achou um endereço de entrega; rode o Match de novo.")
+            raise ErroSala(409, motor.MSG_ENDERECO_SEM_ID if sala["resultado"].get("endereco") else
+                           "O Match não achou um endereço de entrega; rode o Match de novo.")
 
         async def operacao(cfg, cliente):
             return await checkout.montar_carrinhos(cliente, combinacao, endereco_id)
@@ -497,13 +503,15 @@ async def resolver(sala_id: str, pid: str, corpo: CorpoResolver, x_organizador: 
 
 
 # ---------- envio ----------
-def _pedido_de(envio: dict, carrinho: dict) -> dict:
+def _pedido_de(envio: dict, carrinho: dict, demonstracao: bool = False) -> dict:
+    demonstracao = demonstracao or bool(envio.get("demonstracao"))
+    status = STATUS_INICIAL_DEMO if demonstracao else STATUS_INICIAL_PEDIDO
     return {
         "order_id": envio["order_id"], "cart_id": envio["cart_id"], "loja_id": envio["loja_id"],
         "loja_nome": envio.get("loja_nome") or carrinho["loja_nome"], "total": envio["total"],
-        "itens": carrinho["itens"], "status": dict(STATUS_INICIAL_PEDIDO),
-        "status_code": STATUS_INICIAL_PEDIDO["code"], "encerrado": False,
-        "demonstracao": bool(envio.get("demonstracao")),
+        "itens": carrinho["itens"], "status": dict(status),
+        "status_code": status["code"], "encerrado": False,
+        "demonstracao": demonstracao,
     }
 
 
@@ -535,13 +543,20 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
 
         por_cart = {c["cart_id"]: c for c in carrinhos}
         problema = next((r for r in resultados if r["status"] in ("falhou", "total_mudou")), None)
+        # conta de teste com `submitOrder` desligado: não é falha para "tentar de novo"; os carrinhos ficam prontos
+        desligado = bool(problema and problema["status"] == "falhou" and problema.get("erro") == MSG_ENVIO_DESLIGADO)
 
         def gravar(s: dict) -> None:
             for r in resultados:
                 if r["status"] == "enviado":
-                    s["pedidos"] = [*s["pedidos"], _pedido_de(r, por_cart[r["cart_id"]])]
+                    s["pedidos"] = [*s["pedidos"], _pedido_de(r, por_cart[r["cart_id"]], bool(s.get("demonstracao")))]
                     s["ja_enviados"] = [*s["ja_enviados"], r["cart_id"]]
-            if problema:
+            if desligado:  # a sala continua pronta para enviar (se o envio for ligado); nada foi enviado
+                s["ultimo_erro_envio"] = {
+                    "status": "envio_desligado", "erro": MSG_ENVIO_DESLIGADO_SALA,
+                    "nao_enviados": [c["cart_id"] for c in s["carrinhos"] if c["cart_id"] not in s["ja_enviados"]],
+                }
+            elif problema:
                 s["ultimo_erro_envio"] = {k: v for k, v in problema.items()}
             else:
                 s["ultimo_erro_envio"] = None
@@ -555,6 +570,8 @@ async def enviar(sala_id: str, corpo: dict | None = Body(default=None), x_organi
         if problema is None:
             return {"estado": ENVIADO, "pedidos": salas.obter(sala_id)["pedidos"]}
 
+        if desligado:
+            raise ErroSala(409, MSG_ENVIO_DESLIGADO_SALA)
         loja = problema.get("loja_nome") or problema.get("loja_id")
         ficou = f"{feitos} de {total} pedidos já foram enviados e foram mantidos."
         if problema["status"] == "falhou":

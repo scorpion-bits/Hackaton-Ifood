@@ -460,3 +460,73 @@ def test_persistencia_em_sqlite_sobrevive_ao_cache_do_processo(c):
     assert salas.obter(s.id)["participantes"][1]["desejo"]["texto"].startswith("japonês")
     salas.limpar()
     assert c.get(s.url()).status_code == 404
+
+
+# ---------- correções do QA (T17b) ----------
+def test_status_inicial_do_pedido_no_demo_tem_selo_de_demonstracao(c):
+    s = Sala(c)
+    s.pronta_para_escolher()
+    assert s.escolher("junto").status_code == 200
+    assert s.enviar().status_code == 200
+    pedidos = s.estado()["pedidos"]
+    assert pedidos and all(p["status"]["description"] == "Pedido enviado ao iFood (demonstração)." for p in pedidos)
+    assert all(p["demonstracao"] is True for p in pedidos)
+
+
+def test_problema_de_endereco_nao_diz_que_nenhum_pedido_serve(c, monkeypatch):
+    from app.match import motor
+
+    async def sem_coordenadas(cfg, cliente, desejos):
+        return {"combinacoes": [], "avisos": [motor.MSG_ENDERECO_SEM_COORDENADAS], "problema": "endereco",
+                "rastro": []}
+
+    s = Sala(c)
+    s.convidar()
+    monkeypatch.setattr(rotas_match.motor, "rodar_match", sem_coordenadas)
+    r = s.rodar()
+    assert r.status_code == 409
+    assert r.json()["detail"] == motor.MSG_ENDERECO_SEM_COORDENADAS
+    assert "não encontrou um pedido" not in r.json()["detail"]
+    assert s.estado()["estado"] == "coletando"
+
+
+def test_sem_combinacao_por_regra_continua_com_o_prefixo(c, monkeypatch):
+    async def nada(cfg, cliente, desejos):
+        return {"combinacoes": [], "avisos": ["Não achei pizza até R$ 1 para Ana."], "rastro": []}
+
+    s = Sala(c)
+    s.convidar()
+    monkeypatch.setattr(rotas_match.motor, "rodar_match", nada)
+    r = s.rodar()
+    assert r.status_code == 409 and r.json()["detail"].startswith("O Match não encontrou um pedido que sirva")
+
+
+def test_envio_real_desligado_devolve_409_legivel_e_mantem_a_sala(c, monkeypatch):
+    from contextlib import asynccontextmanager
+
+    original = rotas_match.abrir_cliente
+
+    @asynccontextmanager
+    async def conta_de_teste(cfg):
+        async with original(cfg) as cli:
+            cli._permitir_envio = False  # como no modo real sem IFOOD_MCP_PERMITIR_ENVIO=true
+            yield cli
+
+    s = Sala(c)
+    s.pronta_para_escolher()
+    assert s.escolher("junto").status_code == 200
+    carrinhos = [k["cart_id"] for k in s.estado()["carrinhos"]]
+    monkeypatch.setattr(rotas_match, "abrir_cliente", conta_de_teste)
+    r = s.enviar()
+    assert r.status_code == 409
+    assert r.json()["detail"] == ("Conta de teste: o envio real está desligado (IFOOD_MCP_PERMITIR_ENVIO). "
+                                  "Os carrinhos ficaram prontos no iFood.")
+    estado = s.estado()
+    assert estado["estado"] == "pronto_para_enviar" and estado["pedidos"] == []
+    assert estado["ultimo_erro_envio"]["status"] == "envio_desligado"
+    assert estado["ultimo_erro_envio"]["nao_enviados"] == carrinhos
+    assert any(p["tool"] == "submitOrder" and not p["ok"] for p in estado["rastro"])
+
+    monkeypatch.setattr(rotas_match, "abrir_cliente", original)  # envio ligado: a mesma sala segue
+    assert s.enviar().status_code == 200
+    assert s.estado()["estado"] == "enviado"
