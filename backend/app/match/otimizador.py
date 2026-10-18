@@ -31,6 +31,7 @@ DELTA_ETA_PERECIVEL_MIN = 15
 VERTICAL_RESTAURANTE = "RESTAURANT"
 PENAL_SLOT_PRINCIPAL_FORA = 1.0
 PENAL_SLOT_EXTRA_FORA = 0.35
+BEM_ATENDIDO = 0.5  # média de notas a partir da qual a pessoa conta como bem atendida (o mesmo FELIZ do leilão)
 
 # Pesos de cada perfil; com vários perfis no grupo, faz-se a média campo a campo.
 _PESOS_PERFIL: dict[str, Pesos] = {
@@ -119,15 +120,18 @@ def _reais(valor: float) -> str:
     return f"R$ {texto}"
 
 
-def _decimal(valor: float) -> str:
-    return f"{valor:.1f}".replace(".", ",")
+def _quem_ficou_bem(nota_min: float, alguem_fora: bool) -> str:
+    """Linguagem simples, sem número de nota: "todos bem atendidos", "quem entrou está bem atendido" (alguém ou
+    algum item ficou de fora) ou "alguém ficou longe do que pediu"."""
+    if nota_min < BEM_ATENDIDO - 1e-9:
+        return "alguém ficou longe do que pediu"
+    return "quem entrou está bem atendido" if alguem_fora else "todos bem atendidos"
 
 
 def _explicar(n_lojas: int, nota_min: float, custo: float, taxa_conhecida: bool, atraso: int | None,
               perecivel: float, sem_opcao: list[str], slots_fora: int = 0) -> str:
     partes = [f"{n_lojas} loja" + ("s" if n_lojas != 1 else "")]
-    piso = math.floor(nota_min * 10 + 1e-9) / 10
-    partes.append(f"todos com nota ≥ {_decimal(piso)}")
+    partes.append(_quem_ficou_bem(nota_min, bool(sem_opcao or slots_fora)))
     partes.append(f"{_reais(custo)} " + ("com taxa" if taxa_conhecida else "sem taxa"))
     if atraso:
         partes.append(f"chega em até {atraso} min")
