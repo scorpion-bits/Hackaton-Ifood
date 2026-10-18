@@ -263,3 +263,335 @@ def test_salvar_tokens_preso_vira_erro_legivel(monkeypatch):
         oauth.salvar_tokens(_tokens())
     assert "Feche o arquivo .tokens_ifood.json" in str(info.value) and "SECRETO" not in str(info.value)
     assert not list(oauth.ARQUIVO_TOKENS.parent.glob("*.tmp"))
+
+
+# ---------- payloads adversariais do QA (recriados): aninhados, caixa trocada, camelCase/snake_case ----------
+ADVERSARIOS = {
+    "pedidos_aninhados": {"Orders": [
+        {"CUSTOMER_INFO": {"Full_Name": "Thales Hajes", "E-Mail": "thales@test.ifood.com.br"}},
+        {"delivery": {"Driver": {"Name": "Joao Souza", "PHONE_NUMBER": "16999991234"}}},
+        {"buyerData": [{"Document_Number": "123.456.789-09"}, {"TAX_PAYER_IDENTIFICATION_NUMBER": "12345678909"}]},
+        {"customerDocument": "12.345.678/0001-90", "person": {"cpf": "123 456 789 09"}},
+    ]},
+    "segredos_em_chaves": {
+        "Authorization": "Bearer rt-SEGREDO-abcdef12345", "X-Session-Id": "rt-SEGREDO-2", "setCookie": "sid=rt-SEGREDO",
+        "client_secret": "rt-SEGREDO", "idToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.abc", "REFRESH_TOKEN": "rt-SEGREDO",
+        "meta": {"sessionCookie": "rt-SEGREDO", "nested": [{"apiToken": "rt-SEGREDO"}]},
+    },
+    "texto_livre": {"message": (
+        "Olá! Entrega em Rua Episcopal, 1234, Apto 42, CEP 13560-000. CNPJ 12.345.678/0001-90. "
+        "Cartões: Mastercard 4321, VISA •••• 5555, 4111 1111 1111 1111, final 4321. cpf 12345678909, "
+        "tel (16) 99999-1234, e-mail thales@test.ifood.com.br, posição -22.017891"),
+        "agentHints": {"tip": "Pague com o Visa terminado em 4321 e entregue na Av. São Carlos 2000 apto 42"},
+        "debug": "token=rt-SEGREDO-123456 secret: rt-SEGREDO-999"},
+    "pagamentos_snake": {"payment_methods": [{
+        "id": "pm1", "card_brand": "VISA", "masked_number": "**** 4321", "display": "Visa terminado em 4321",
+        "holder_name": "Thales Hajes", "Description": "Mastercard final 4321", "billing": {"zip": "13560-000"}}],
+        "selected_card": {"last_four": "4321", "brand": "ELO"}},
+    "endereco_fora_de_objeto": {
+        "shippingInfo": {"street": "Rua Episcopal", "houseNumber": "1234", "complemento": "Apto 42",
+                         "Zip_Code": "13560-000", "neighborhood": "Centro"},
+        "position": [-22.017891, -47.891234], "geo_point": {"Lat": "-22.017891", "Lng": "-47.891234"},
+        "deliveryAddressLine": "Rua Episcopal, 1234", "referencePoint": "Perto da padaria"},
+}
+
+
+@pytest.mark.parametrize("nome", list(ADVERSARIOS))
+def test_payload_adversarial_nao_vaza(nome):
+    texto = json.dumps(sanitizar(ADVERSARIOS[nome]), ensure_ascii=False)
+    vazou = [s for s in SEGREDOS + ["rt-SEGREDO", "12.345.678/0001-90", "2000", "-22.0178"] if s in texto]
+    assert not vazou, f"{nome} vazou {vazou}: {texto}"
+
+
+def test_texto_livre_mantem_o_que_nao_e_pessoal():
+    limpo = sanitizar(ADVERSARIOS["texto_livre"])
+    assert limpo["message"].startswith("Olá! Entrega em ***") and "posição -22.02" in limpo["message"]
+    assert "Mastercard ***" in limpo["message"]
+    assert sanitizar({"name": "Forno da Praça Pizzaria", "description": "Pizza 2 sabores, serve 2"}) == {
+        "name": "Forno da Praça Pizzaria", "description": "Pizza 2 sabores, serve 2"}
+    assert sanitizar(ADVERSARIOS["endereco_fora_de_objeto"])["shippingInfo"]["neighborhood"] == "Centro"
+
+
+async def test_nome_do_getuser_some_de_todas_as_amostras(tmp_path):
+    """Texto pessoal visto no getUser/listAddresses é apagado também onde nenhuma regra pegaria."""
+
+    class Cliente:
+        async def listar_tools(self):
+            return []
+
+        async def chamar(self, tool, **args):
+            return {
+                "getUser": {"name": "Thales Hajes", "email": "thales@test.ifood.com.br"},
+                "listAddresses": {"addresses": [{"id": "a1", "streetName": "Rua Episcopal",
+                                                 "coordinates": {"latitude": -22.017891, "longitude": -47.891234}}]},
+            }.get(tool, {"results": [{"merchantId": "m1", "itemId": "i1", "name": "Pizza"}],
+                         "agentHints": {"greeting": "Pedido do thales para a casa em Rua Episcopal"},
+                         "texto": "Olá Hajes"})
+
+    await executar(Cliente(), tmp_path)
+    for arquivo in tmp_path.glob("*.json"):
+        conteudo = arquivo.read_text(encoding="utf-8")
+        assert "Thales" not in conteudo and "thales" not in conteudo and "Hajes" not in conteudo, arquivo.name
+        assert "Episcopal" not in conteudo and "-22.0178" not in conteudo, arquivo.name
+    busca = json.loads((tmp_path / "searchOffers.json").read_text(encoding="utf-8"))
+    assert busca["chamadas"][0]["resposta"]["results"][0]["name"] == "Pizza"
+
+
+# ---------- MCP falso que EXIGE userLocation (formato do MCP real visto pela equipe em 18/10) ----------
+MSG_USER_LOCATION = ("Error: `userLocation` is required and must be a JSON object with numeric `latitude` and "
+                     "`longitude`. Ask the user for their location and try again.")
+
+
+def _servidor_exigente(chamadas: list, enderecos: dict, obrigatorio: bool = False):
+    """Imita o MCP real: searchOffers/getRecommendations/getMerchant/getItem/createCart exigem `userLocation`
+    (objeto) e recusam latitude/longitude soltos; createCart não tem addressId no schema.
+    `obrigatorio`: userLocation também aparece em `required` no schema de searchOffers/getRecommendations."""
+    from mcp.server.mcpserver import MCPServer
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    mcp = MCPServer("ifood-real-falso")
+
+    def conferir(nome: str, userLocation: dict | None, latitude=None, longitude=None, **outros) -> None:
+        chamadas.append((nome, {"userLocation": userLocation, "latitude": latitude, "longitude": longitude}
+                         | outros))
+        if latitude is not None or longitude is not None:
+            raise ToolError("latitude/longitude soltos não são aceitos; use userLocation.")
+        ok = isinstance(userLocation, dict) and all(
+            isinstance(userLocation.get(c), (int, float)) for c in ("latitude", "longitude"))
+        if not ok:
+            raise ToolError(MSG_USER_LOCATION)
+
+    @mcp.tool(name="getUser")
+    def get_user() -> dict:
+        chamadas.append(("getUser", {}))
+        return {"user": {"name": "Thales Hajes", "email": "thales@test.ifood.com.br"}}
+
+    @mcp.tool(name="listAddresses")
+    def list_addresses() -> dict:
+        chamadas.append(("listAddresses", {}))
+        return enderecos
+
+    def buscar(query, userLocation, resultKind, latitude, longitude) -> dict:
+        conferir("searchOffers", userLocation, latitude, longitude, query=query, resultKind=resultKind)
+        return {"results": [{"merchantId": "m1", "itemId": "i1", "name": "Pizza", "price": 39.9},
+                            {"merchantId": "m2", "itemId": "i2", "name": "Sorvete", "price": 12.0}]}
+
+    if obrigatorio:
+        @mcp.tool(name="searchOffers")
+        def search_offers(query: str, userLocation: dict, resultKind: str = "MERCHANT", limit: int = 10) -> dict:
+            return buscar(query, userLocation, resultKind, None, None)
+
+        @mcp.tool(name="getRecommendations")
+        def get_recommendations(userLocation: dict) -> dict:
+            conferir("getRecommendations", userLocation)
+            return {"results": []}
+    else:
+        @mcp.tool(name="searchOffers")
+        def search_offers_opcional(query: str, userLocation: dict | None = None, resultKind: str = "MERCHANT",
+                                   limit: int = 10, latitude: float | None = None,
+                                   longitude: float | None = None) -> dict:
+            return buscar(query, userLocation, resultKind, latitude, longitude)
+
+        @mcp.tool(name="getRecommendations")
+        def get_recommendations_opcional(userLocation: dict | None = None) -> dict:
+            conferir("getRecommendations", userLocation)
+            return {"results": []}
+
+    @mcp.tool(name="getMerchant")
+    def get_merchant(merchantId: str, userLocation: dict | None = None) -> dict:
+        conferir("getMerchant", userLocation, merchantId=merchantId)
+        return {"merchantId": merchantId, "name": "Loja"}
+
+    @mcp.tool(name="getItem")
+    def get_item(merchantId: str, itemId: str, userLocation: dict | None = None) -> dict:
+        conferir("getItem", userLocation, merchantId=merchantId, itemId=itemId)
+        return {"itemId": itemId, "price": 39.9}
+
+    @mcp.tool(name="createCart")
+    def create_cart(merchantId: str, userLocation: dict | None = None) -> dict:
+        conferir("createCart", userLocation, merchantId=merchantId)
+        return {"cartId": f"c-{merchantId}"}
+
+    @mcp.tool(name="addItemToCart")
+    def add_item(cartId: str, itemId: str, quantity: int = 1) -> dict:
+        chamadas.append(("addItemToCart", {"cartId": cartId}))
+        return {"cartId": cartId, "total": 39.9}
+
+    @mcp.tool(name="getCartDeliveryMethods")
+    def delivery(cartId: str) -> dict:
+        chamadas.append(("getCartDeliveryMethods", {}))
+        return {"methods": [{"id": "DEFAULT", "fee": 5.0}]}
+
+    @mcp.tool(name="listPaymentMethods")
+    def payments(cartId: str) -> dict:
+        chamadas.append(("listPaymentMethods", {}))
+        return {"methods": [{"id": "pm1", "type": "PIX"}]}
+
+    @mcp.tool(name="getCart")
+    def get_cart(cartId: str) -> dict:
+        chamadas.append(("getCart", {}))
+        return {"cartId": cartId, "total": 44.9}
+
+    @mcp.tool(name="submitOrder")
+    def submit(cartId: str) -> dict:
+        chamadas.append(("submitOrder", {}))
+        raise ToolError("o diagnóstico nunca deveria chamar submitOrder")
+
+    return mcp
+
+
+ENDERECO_REAL_ANINHADO = {"data": {"addresses": [{
+    "id": "addr-1", "street": "Rua Episcopal", "streetNumber": "1234",
+    "geo": {"coordinates": {"lat": "-22.017891", "lng": "-47.891234"}}}]}}
+
+
+async def _rodar_exigente(tmp_path, enderecos=ENDERECO_REAL_ANINHADO, obrigatorio=False, **kwargs):
+    from mcp import Client
+
+    from app.ifood_mcp.cliente import ClienteIFood
+
+    chamadas: list = []
+    async with Client(_servidor_exigente(chamadas, enderecos, obrigatorio)) as sessao:
+        resumo = await executar(ClienteIFood(sessao, "real"), tmp_path, carrinho=True, **kwargs)
+    return resumo, chamadas
+
+
+async def test_user_location_vai_como_objeto_pelo_schema(tmp_path, capsys):
+    resumo, chamadas = await _rodar_exigente(tmp_path)
+    buscas = [a for t, a in chamadas if t == "searchOffers"]
+    assert len(buscas) == 6
+    for args in buscas:  # valor real em memória (sem arredondar) e sem latitude/longitude soltos
+        assert args["userLocation"] == {"latitude": -22.017891, "longitude": -47.891234}
+        assert args["latitude"] is None and args["longitude"] is None
+    for tool in ("getMerchant", "getItem", "getRecommendations", "createCart"):
+        assert any(t == tool and a["userLocation"] for t, a in chamadas), tool
+    assert "addressId" not in json.dumps([a for t, a in chamadas if t == "createCart"])  # fora do schema
+    assert resumo["erros"] == {} and resumo["carrinho"]["dois_carrinhos_abertos"] is True
+    assert "submitOrder" not in [t for t, _ in chamadas]
+    # Resumo mostra os obrigatórios; as amostras gravam a coordenada arredondada.
+    assert {"query"} <= set(resumo["schemas"]["searchOffers"]["obrigatorios"])
+    assert "userLocation" in resumo["schemas"]["searchOffers"]["opcionais"] + resumo["schemas"]["searchOffers"]["obrigatorios"]
+    assert "Argumentos (input_schema)" not in capsys.readouterr().out  # o resumo impresso é do principal
+    gravado = (tmp_path / "searchOffers.json").read_text(encoding="utf-8")
+    assert '"latitude": -22.02' in gravado and "-22.0178" not in gravado
+
+
+async def test_obrigatorio_no_schema_tambem_vai_como_objeto(tmp_path):
+    resumo, chamadas = await _rodar_exigente(tmp_path, obrigatorio=True)
+    assert resumo["schemas"]["searchOffers"]["obrigatorios"] == ["query", "userLocation"]
+    assert resumo["erros"] == {} and len([t for t, _ in chamadas if t == "searchOffers"]) == 6
+
+
+async def test_sem_coordenadas_avisa_e_pula_o_que_exige_local(tmp_path):
+    resumo, chamadas = await _rodar_exigente(tmp_path, enderecos={"addresses": [{"id": "a1", "street": "X"}]},
+                                             obrigatorio=True)
+    assert not [t for t, _ in chamadas if t in ("searchOffers", "getRecommendations")]
+    assert any("Não achei latitude/longitude" in a and "--lat" in a for a in resumo["avisos"])
+    assert any("pulada" in a for a in resumo["avisos"]) and resumo["localizacao_encontrada"] is False
+
+
+async def test_lat_lng_da_linha_de_comando_tem_prioridade(tmp_path):
+    _, chamadas = await _rodar_exigente(tmp_path, local=(-22.5, -47.5))
+    assert {json.dumps(a["userLocation"]) for t, a in chamadas if t == "searchOffers"} == {
+        json.dumps({"latitude": -22.5, "longitude": -47.5})}
+
+
+async def test_erro_de_user_location_aparece_legivel_e_avisa(tmp_path):
+    """Sem coordenada e com userLocation opcional no schema: o erro do servidor fica registrado e o aviso
+    de busca com erro sugere --args-busca/--lat/--lng."""
+    resumo, _ = await _rodar_exigente(tmp_path, enderecos={"addresses": []})
+    assert "userLocation" in resumo["erros"]["searchOffers"][0]
+    assert any("Não achei latitude/longitude" in a for a in resumo["avisos"])
+    assert any("--args-busca" in a and "--lat" in a for a in resumo["avisos"])
+
+
+def test_achar_coordenadas_em_formatos_variados():
+    from app.ifood_mcp.diagnostico import achar_coordenadas, escolher_endereco
+
+    assert achar_coordenadas({"coordinates": {"latitude": -22.1, "longitude": -47.2}}) == (-22.1, -47.2)
+    assert achar_coordenadas({"location": {"Lat": "-22,1", "LNG": "-47.2"}}) == (-22.1, -47.2)
+    assert achar_coordenadas({"geo": {"location": "-22.1, -47.2"}}) == (-22.1, -47.2)
+    assert achar_coordenadas({"geometry": {"coordinates": [-47.2, -22.1]}}) == (-22.1, -47.2)  # GeoJSON
+    assert achar_coordenadas({"lat": 0, "lng": 0}) is None and achar_coordenadas({"lat": "x"}) is None
+    escolhido = escolher_endereco({"result": {"addresses": [
+        {"id": "sem"}, {"id": "a", "lat": 1, "lng": 1},
+        {"id": "b", "lat": 2, "lng": 2, "usagePattern": {"isLastUsedAddress": True}}]}})
+    assert escolhido["id"] == "b"
+
+
+async def test_principal_imprime_schemas_e_valida_lat_lng(tmp_path, capsys):
+    resetar_demo()
+    assert await principal(["--demo", "--lat", "-22.02", "--lng", "-47.89", "--saida", str(tmp_path)]) == 0
+    saida = capsys.readouterr().out
+    assert "Argumentos (input_schema):" in saida and "searchOffers: obrigatórios: query" in saida
+    with pytest.raises(SystemExit):
+        await principal(["--demo", "--lat", "-22.02"])
+    with pytest.raises(SystemExit):
+        await principal(["--demo", "--lat", "-122", "--lng", "-47"])
+    assert "--lat e --lng juntos" in capsys.readouterr().err
+
+
+# ---------- API: login/token → 401 legível; sem token na mensagem ----------
+def test_renovacao_recusada_e_401_do_meio_da_sessao_viram_401():
+    from app.match import checkout
+
+    sessao = ErroMCP("Falha ao chamar getCart: o iFood recusou o login (401). Conecte o iFood de novo.")
+    assert _erro_do_ifood(sessao).status == 401
+    assert _erro_do_ifood(sessao).mensagem == oauth.MSG_SESSAO_EXPIRADA
+    recusado = _embrulhado(oauth.ErroOAuthToken("invalid_client", "", 401))
+    assert _erro_do_ifood(recusado).status == 401
+    try:
+        raise checkout.ErroCheckout("m1", f"Não deu para montar o carrinho: {sessao}") from sessao
+    except checkout.ErroCheckout as e:
+        assert _erro_do_ifood(e).status == 401
+
+
+def test_sem_conexao_com_o_login_e_502_sem_prefixo_e_sem_token():
+    falha = _embrulhado(oauth.SemConexao("Não consegui falar com o login do iFood (ConnectError)."))
+    traduzido = _erro_do_ifood(falha)
+    assert traduzido.status == 502 and traduzido.mensagem.startswith("Não consegui falar")
+    vazado = _erro_do_ifood(ErroMCP("falhou com Bearer abcdef.ghijkl.123456 e access_token=XYZ-123456789"))
+    assert "abcdef" not in vazado.mensagem and "XYZ-123" not in vazado.mensagem and vazado.status == 502
+    generico = _erro_do_ifood(RuntimeError("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.abc"))
+    assert "eyJ" not in generico.mensagem and "RuntimeError" in generico.mensagem
+
+
+def test_args_busca_aceita_json_pares_e_arquivo(tmp_path):
+    import argparse
+
+    from app.ifood_mcp.diagnostico import _json_objeto
+
+    assert _json_objeto('{"sortBy": "relevance", "limit": 10}') == {"sortBy": "relevance", "limit": 10}
+    assert _json_objeto("{sortBy: relevance, limit: 10}") == {"sortBy": "relevance", "limit": 10}  # PowerShell 5
+    assert _json_objeto("sortBy=relevance,limit=10") == {"sortBy": "relevance", "limit": 10}
+    arquivo = tmp_path / "args.json"
+    arquivo.write_text('{"refinements": {"maxPrice": 50}}', encoding="utf-8")
+    assert _json_objeto(f"@{arquivo}") == {"refinements": {"maxPrice": 50}}
+    with pytest.raises(argparse.ArgumentTypeError):
+        _json_objeto("[1, 2]")
+
+
+async def test_schema_sem_user_location_mas_servidor_pede_repete_uma_vez(tmp_path):
+    class Cliente:
+        def __init__(self):
+            self.chamadas = []
+
+        async def listar_tools(self):
+            schema = {"properties": {"query": {}, "latitude": {}, "longitude": {}}, "required": ["query"]}
+            return [{"name": "searchOffers", "input_schema": schema}]
+
+        async def chamar(self, tool, **args):
+            self.chamadas.append((tool, args))
+            if tool == "listAddresses":
+                return {"addresses": [{"id": "a1", "lat": -22.017891, "lng": -47.891234}]}
+            if tool == "searchOffers" and "userLocation" not in args:
+                raise ErroMCP(MSG_USER_LOCATION)
+            return {"results": []}
+
+    cli = Cliente()
+    resumo = await executar(cli, tmp_path)
+    buscas = [a for t, a in cli.chamadas if t == "searchOffers"]
+    assert len(buscas) == 12  # 6 buscas × (1ª com latitude/longitude soltos + 1 repetição)
+    assert buscas[0]["latitude"] == -22.017891 and "userLocation" not in buscas[0]
+    assert buscas[1] == {"query": "pizza", "userLocation": {"latitude": -22.017891, "longitude": -47.891234}}
+    assert AVISO_BUSCA in resumo["avisos"]  # repetições deram ok, mas vazias

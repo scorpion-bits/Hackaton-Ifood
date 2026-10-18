@@ -440,3 +440,101 @@ def test_authorize_com_invalid_target_desliga_resource():
     r = TestClient(app).get("/oauth/callback?error=invalid_target", follow_redirects=False)
     assert "resource" in unquote(r.headers["location"])
     assert "resource" not in _params(oauth.url_login(carregar()))
+
+
+# ---------- 03.1b: erros de login → 401 legível, sem traceback, gravação atômica ----------
+def _sala_com_desejo(c: TestClient) -> tuple[str, dict]:
+    r = c.post("/api/salas", json={"organizador_nome": "Thales"})
+    sala, org = r.json()["sala_id"], {"X-Organizador": r.json()["token_organizador"]}
+    pid = r.json()["participante_id"]
+    assert c.put(f"/api/salas/{sala}/participantes/{pid}/desejo", json={"texto": "pizza"}).status_code == 200
+    return sala, org
+
+
+def test_api_sem_login_no_modo_real_responde_401_legivel(monkeypatch):
+    monkeypatch.setenv("IFOOD_MCP_MODO", "real")
+    with TestClient(app) as c:
+        sala, org = _sala_com_desejo(c)
+        r = c.post(f"/api/salas/{sala}/rodar", headers=org)
+    assert r.status_code == 401 and r.json()["detail"] == oauth.MSG_SEM_TOKEN
+    assert "Traceback" not in r.text
+
+
+def test_api_refresh_morto_responde_401_sessao_expirada(monkeypatch, falso):
+    monkeypatch.setenv("IFOOD_MCP_MODO", "real")
+    falso.respostas = [(400, {"error": "invalid_grant"})]
+    _salvar(segundos=10)
+    with TestClient(app) as c:
+        sala, org = _sala_com_desejo(c)
+        r = c.post(f"/api/salas/{sala}/rodar", headers=org)
+    assert r.status_code == 401 and r.json()["detail"] == oauth.MSG_SESSAO_EXPIRADA
+    assert ACCESS not in r.text and REFRESH not in r.text and SECRET not in r.text
+
+
+async def test_renovacao_recusada_por_outro_motivo_vira_sem_token_sem_segredo(falso):
+    falso.respostas = [(401, {"error": "invalid_client"}), (401, {"error": "invalid_client"})]
+    _salvar(segundos=10)
+    with pytest.raises(oauth.SemToken) as info:
+        await oauth.token_valido(carregar())
+    assert "expirou" in str(info.value) and SECRET not in str(info.value) and REFRESH not in str(info.value)
+
+
+async def test_sem_internet_no_login_vira_sem_conexao(monkeypatch):
+    def cai(_pedido):
+        raise httpx.ConnectError("sem rede")
+
+    monkeypatch.setattr(oauth, "_transporte", httpx.MockTransport(cai))
+    _salvar(segundos=10)
+    with pytest.raises(oauth.SemConexao, match="Confira a internet"):
+        await oauth.token_valido(carregar())
+
+
+def test_salvar_tokens_e_atomico_e_falha_na_escrita_preserva_o_login(monkeypatch):
+    _salvar(access="ANTIGO-123456")
+    trocas = []
+    original = oauth.os.replace
+    monkeypatch.setattr(oauth.os, "replace", lambda o, d: (trocas.append((str(o), str(d))), original(o, d)))
+    _salvar(access="NOVO-123456")
+    assert trocas == [(str(oauth.ARQUIVO_TOKENS) + ".tmp", str(oauth.ARQUIVO_TOKENS))]
+    assert oauth.carregar_tokens().access_token == "NOVO-123456"
+
+    def disco_cheio(_fd):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(oauth.os, "fsync", disco_cheio)
+    with pytest.raises(oauth.ErroOAuth, match="Não consegui gravar o login") as info:
+        _salvar(access="QUEBRADO-123456")
+    assert "QUEBRADO" not in str(info.value)
+    assert oauth.carregar_tokens().access_token == "NOVO-123456"  # o login anterior continua inteiro
+    assert not list(oauth.ARQUIVO_TOKENS.parent.glob("*.tmp"))
+
+
+def test_callback_com_erro_inesperado_volta_legivel_sem_traceback(monkeypatch):
+    async def explode(*_a, **_k):
+        raise RuntimeError(f"falhou com access_token={ACCESS}")
+
+    monkeypatch.setattr(oauth, "trocar_codigo", explode)
+    r = TestClient(app).get("/oauth/callback?code=abc&state=xyz", follow_redirects=False)
+    assert r.status_code == 302
+    destino = unquote(r.headers["location"])
+    assert "RuntimeError" in destino and "Conectar iFood de novo" in destino
+    assert ACCESS not in destino and "Traceback" not in destino
+
+
+def test_sair_com_arquivo_preso_responde_409_legivel(monkeypatch):
+    _salvar()
+
+    def preso(self, *a, **k):
+        raise PermissionError("em uso")
+
+    monkeypatch.setattr(type(oauth.ARQUIVO_TOKENS), "unlink", preso)
+    r = TestClient(app).post("/api/ifood/sair")
+    assert r.status_code == 409 and "Feche o arquivo" in r.json()["detail"]
+    assert ACCESS not in r.text and REFRESH not in r.text
+
+
+def test_sem_segredos_tira_bearer_jwt_e_token_igual():
+    texto = oauth.sem_segredos(f"Bearer {ACCESS} | eyJhbGciOi.eyJzdWIiOi.assinatura | refresh_token={REFRESH} "
+                               f"| client_secret: {SECRET} | invalid_grant (código de erro)")
+    assert ACCESS not in texto and REFRESH not in texto and SECRET not in texto and "eyJ" not in texto
+    assert "invalid_grant" in texto

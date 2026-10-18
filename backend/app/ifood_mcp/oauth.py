@@ -19,6 +19,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import secrets
 import time
 from dataclasses import asdict, dataclass, field
@@ -66,8 +67,28 @@ _enviar_resource: bool = True
 _travas: dict[int, asyncio.Lock] = {}
 
 
+_RE_SEGREDOS = (
+    (re.compile(r"(?i)bearer\s+[\w.~+/=-]{6,}"), "Bearer ***"),
+    (re.compile(r"\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]*"), "***"),
+    (re.compile(r"(?i)\b(access_token|refresh_token|id_token|client_secret|code_verifier|token|secret)"
+                r"(\W{1,3})[\w.~+/=-]{6,}"), r"\1\2***"),
+)
+
+
+def sem_segredos(texto: object) -> str:
+    """Texto sem Bearer, JWT nem `token=…`/`secret: …` (para mensagens que vão para a pessoa ou para o log)."""
+    texto = str(texto)
+    for padrao, troca in _RE_SEGREDOS:
+        texto = padrao.sub(troca, texto)
+    return texto
+
+
 class ErroOAuth(Exception):
     """Falha no login/renovação, com mensagem legível (nunca contém token, secret ou code)."""
+
+
+class SemConexao(ErroOAuth):
+    """Não deu para falar com o login do iFood (rede/timeout): não é problema de login, é de conexão."""
 
 
 class SemCredenciais(ErroOAuth):
@@ -100,7 +121,7 @@ class ErroOAuthToken(ErroOAuth):
             "invalid_target": "o parâmetro resource não foi aceito. Tente conectar de novo.",
             "invalid_scope": "scopes recusados. Deixe IFOOD_MCP_SCOPE vazio no .env.",
         }
-        detalhe = explicacoes.get(erro) or descricao or f"HTTP {status}"
+        detalhe = explicacoes.get(erro) or sem_segredos(descricao) or f"HTTP {status}"
         super().__init__(f"O login do iFood recusou: {detalhe}")
 
 
@@ -199,11 +220,28 @@ def carregar_tokens() -> Tokens | None:
         return None
 
 
+def _apagar_temporario(temporario: Path) -> None:
+    try:
+        temporario.unlink()
+    except OSError:
+        pass
+
+
 def salvar_tokens(tokens: Tokens) -> None:
+    """Grava de forma atômica: escreve `<arquivo>.tmp` e troca com `os.replace` (atômico também no Windows).
+    Quem lê nunca vê um JSON pela metade; se a gravação falhar, o login anterior fica intacto."""
     caminho = Path(ARQUIVO_TOKENS)
-    caminho.parent.mkdir(parents=True, exist_ok=True)
     temporario = caminho.with_name(caminho.name + ".tmp")
-    temporario.write_text(json.dumps(asdict(tokens), ensure_ascii=False), encoding="utf-8")
+    try:
+        caminho.parent.mkdir(parents=True, exist_ok=True)
+        with open(temporario, "w", encoding="utf-8") as arquivo:
+            arquivo.write(json.dumps(asdict(tokens), ensure_ascii=False))
+            arquivo.flush()
+            os.fsync(arquivo.fileno())
+    except OSError as e:
+        _apagar_temporario(temporario)
+        raise ErroOAuth(f"Não consegui gravar o login do iFood em {caminho.name} ({type(e).__name__}). "
+                        "Confira se a pasta backend pode ser gravada e conecte o iFood de novo.") from None
     try:
         os.chmod(temporario, 0o600)
     except OSError:  # Windows: sem permissões POSIX, segue
@@ -216,20 +254,25 @@ def salvar_tokens(tokens: Tokens) -> None:
         except PermissionError:
             if tentativa == 0:
                 time.sleep(0.1)
-    try:
-        temporario.unlink()
-    except OSError:
-        pass
+        except OSError as e:
+            _apagar_temporario(temporario)
+            raise ErroOAuth(f"Não consegui gravar o login do iFood em {caminho.name} ({type(e).__name__}). "
+                            "Conecte o iFood de novo.") from None
+    _apagar_temporario(temporario)
     raise ErroOAuth(
         f"Não consegui gravar o login do iFood em {caminho.name}: o arquivo está em uso. "
         f"Feche o arquivo {caminho.name} (editor, antivírus ou outra janela do app) e conecte o iFood de novo.")
 
 
 def apagar_tokens() -> None:
+    caminho = Path(ARQUIVO_TOKENS)
     try:
-        Path(ARQUIVO_TOKENS).unlink()
+        caminho.unlink()
     except FileNotFoundError:
         pass
+    except OSError as e:  # Windows: arquivo aberto em outro programa
+        raise ErroOAuth(f"Não consegui apagar o login salvo ({type(e).__name__}). Feche o arquivo {caminho.name} "
+                        "(editor, antivírus ou outra janela do app) e tente de novo.") from None
 
 
 def guardar_conta(primeiro_nome: str | None) -> None:
@@ -284,8 +327,8 @@ async def _post_token_auth(cfg: Config, dados: dict[str, str]) -> dict:
             try:
                 resposta = await http.post(URL_TOKEN, data=corpo, auth=auth, headers={"Accept": "application/json"})
             except httpx.HTTPError as e:
-                raise ErroOAuth(f"Não consegui falar com o login do iFood ({type(e).__name__}). "
-                                "Confira a internet e tente de novo.") from None
+                raise SemConexao(f"Não consegui falar com o login do iFood ({type(e).__name__}). "
+                                 "Confira a internet e tente de novo.") from None
             if resposta.status_code == 200:
                 try:
                     resultado = resposta.json()
@@ -358,9 +401,12 @@ async def renovar(cfg: Config) -> Tokens:
         })
     except ErroOAuthToken as e:
         if e.erro == "invalid_grant":
-            apagar_tokens()
+            try:
+                apagar_tokens()
+            except ErroOAuth:  # arquivo preso: o login já não vale de qualquer jeito
+                pass
             raise SemToken(MSG_SESSAO_EXPIRADA) from None
-        raise
+        raise SemToken(f"{MSG_SESSAO_EXPIRADA} ({e})") from None
     novos = _tokens_da_resposta(dados, anterior=atual)
     salvar_tokens(novos)
     return novos

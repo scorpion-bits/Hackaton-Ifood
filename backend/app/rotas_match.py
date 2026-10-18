@@ -80,23 +80,41 @@ def _desembrulhar(erro: BaseException) -> BaseException:
 
 
 def _erro_do_ifood(bruto: BaseException) -> ErroSala:
+    """Exceção do cliente MCP → `ErroSala` legível (nunca traceback nem token na mensagem).
+
+    Login/token (sem login, sem client_id/secret, sessão expirada, renovação recusada, 401 do MCP) → 401;
+    falta de conexão com o login → 502 sem prefixo; erro de tool → 502 "O iFood respondeu com erro: …"."""
     from .ifood_mcp import oauth
     from .ifood_mcp.cliente import MSG_401
 
     mensagens_de_login = {oauth.MSG_SEM_TOKEN, oauth.MSG_SEM_CREDENCIAIS, oauth.MSG_SESSAO_EXPIRADA, MSG_401}
+
+    def de_login(x: BaseException) -> ErroSala | None:
+        texto = oauth.sem_segredos(x)
+        # O cliente embrulha o ErroOAuth num ErroMCP (`from None`): a origem fica em __cause__/__context__.
+        origem = next((o for o in (x, x.__cause__, x.__context__) if isinstance(o, oauth.ErroOAuth)), None)
+        if isinstance(origem, oauth.SemConexao):
+            return ErroSala(502, texto)
+        if origem is not None or (isinstance(x, ErroMCP) and texto in mensagens_de_login):
+            return ErroSala(401, texto)
+        if isinstance(x, ErroMCP) and "recusou o login (401)" in texto:  # MCP recusou o token no meio da sessão
+            return ErroSala(401, oauth.MSG_SESSAO_EXPIRADA)
+        return None
+
     e = _desembrulhar(bruto)
     if isinstance(e, ErroSala):
         return e
     if isinstance(e, checkout.ErroCheckout):
-        return ErroSala(502, e.mensagem)
-    # Login/credencial (sem login, sem client_id/secret, sessão expirada, 401 após renovar) → 401, sem prefixo.
-    # O cliente embrulha o ErroOAuth num ErroMCP (`from None`), então a origem fica em __cause__/__context__.
-    if any(isinstance(x, (oauth.SemToken, oauth.SemCredenciais)) for x in (e, e.__cause__, e.__context__)) \
-            or (isinstance(e, ErroMCP) and str(e) in mensagens_de_login):
-        return ErroSala(401, str(e))
+        causa = e.__cause__
+        login = de_login(causa) if causa is not None else None
+        return login if login and login.status == 401 else ErroSala(502, oauth.sem_segredos(e.mensagem))
+    login = de_login(e)
+    if login is not None:
+        return login
+    texto = oauth.sem_segredos(e)
     if isinstance(e, ErroMCP):
-        return ErroSala(502, f"O iFood respondeu com erro: {e}")
-    return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {e}")
+        return ErroSala(502, f"O iFood respondeu com erro: {texto}")
+    return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {texto}")
 
 
 async def _usar_cliente(sala_id: str, operacao):
