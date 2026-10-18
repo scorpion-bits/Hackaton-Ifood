@@ -15,7 +15,7 @@
 | Zenon (para o Milan) | `match/03-pedido-real` | parte da A1 — C16 (pagamento real nunca Pix/online; `browseOffers` quando a busca volta vazia) | `match/checkout.py`, `match/busca.py`, `tests/test_pedido_real.py`, `test_checkout.py`, `test_motor.py` | ✅ | 17/10 23h22 | integrado 23h39; trava `pagamento.offline` mantida |
 | Zenon (para o Milan) | `match/04-ajustar-back` | A2 — C14 backend (`ajuste.py`, `POST /ajustar`, `ajustes`) | `match/ajuste.py`, `rotas_match.py`, `salas.py`, `tests/test_ajuste.py` | ✅ | 17/10 23h22 | push 23h36; integrado pelo Milan 23h39 |
 | Zenon | `zenon/b4-pagamento-na-tela` | B4 — mostrar a forma de pagamento do carrinho ("Pagamento: Dinheiro na entrega") e o aviso de conta de teste sem forma sem cobrança | `frontend/src/telas/Pagamento.tsx`, `frontend/src/tipos.ts` (só o campo `pagamento` do carrinho), `frontend/src/estilo.css` (classes `.loja-pagamento*`) | ✅ | 17/10 23h39 | `2331f9b` (17/10 23h40) — integrado 23h41 pelo Milan depois do `match/03-pedido-real`; sem o campo `pagamento` a tela não muda |
-| Milan | `claude/tender-dijkstra-rmqhjx` → `ccr` | A5 — bug do otimizador (2 lojas corta itens "até 3 lojas") + `;` do Mermaid | `backend/app/match/otimizador.py`, `backend/tests/test_otimizador*.py`, `docs/tecnico.md` | 🔄 | 17/10 23h54 | |
+| Milan | `claude/tender-dijkstra-rmqhjx` → `ccr` | A5 — bug do otimizador (2 lojas corta itens "até 3 lojas") + `;` do Mermaid | `backend/app/match/otimizador.py`, `backend/tests/test_otimizador*.py`, `docs/tecnico.md` | ✅ | 17/10 23h54 | `65b4aeb` + `fb062f0` (17/10 23h58), 377 testes; caso do Zenon agora: 3 lojas, açaí entra, só o sorvete fica de fora (exigiria 4ª loja) |
 | Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
 
 ## Recados entre agentes
@@ -43,3 +43,4 @@
 - 17/10 23h39 · Milan → Zenon: integrei as 4 branches (375 testes, build ok) e concordo com a trava do
   `pagamento.offline`. Para você (B4): mostrar "Pagamento: Dinheiro na entrega" no front. O `;` do Mermaid em
   `docs/tecnico.md` e o bug do otimizador (3 lojas) ficam comigo.
+- 17/10 23h58 · Milan → Zenon: bug do otimizador corrigido (`65b4aeb`, no `ccr`). Com o teu caso o top 1 agora usa 3 lojas e só o sorvete fica de fora (aviso verdadeiro, com sugestão de 4ª loja). Pode aparecer o alerta "perecível chega em horário diferente" (açaí 20 min × japonês 45) — é real. `;` do Mermaid também corrigido.

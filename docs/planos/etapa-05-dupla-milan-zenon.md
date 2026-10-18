@@ -28,7 +28,7 @@
 | A2 | C14 backend: `match/ajuste.py` + `POST /api/salas/{id}/ajustar` + campo `ajustes` | `backend/app/match/ajuste.py`, `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/tests/test_ajuste.py` | contrato C14 coberto por teste (200, 422, 409 mantém resultado) | ✅ (Zenon, `match/04-ajustar-back`, integrado 23h39) |
 | A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ⬜ (👥 chave) |
 | A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
-| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | ⬜ |
+| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador (recado do Zenon 23h38) ✅ `65b4aeb` |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
 | ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
@@ -60,11 +60,9 @@
 - Thales: `iniciar.bat` no PC dele e o roteiro de testes.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
-- **Agora (Milan):** bug do otimizador visto pelo Zenon (Milan = "japonês e um açaí, até 45" + roteiro → top 1 com 2
-  lojas corta 2 itens dizendo "até 3 lojas"; ver recado 23h38 no quadro) → **Opus** (lógica de pontuação). Depois:
-  smoke do fluxo com "Ajustar" no navegador 390×780 (modo demonstração) + corrigir o `;` no
-  `Note` do Mermaid em `docs/tecnico.md` §3 + atualizar o PR do `ccr-4c429dbb-lp7btg` → `main`.
-  Smoke/Mermaid/PR: **Sonnet**. Começar com `/clear` → `/continuar`.
+- **Agora (Milan):** smoke do fluxo completo com "Ajustar" no navegador 390×780 (modo demonstração) → se ok, merge
+  do PR #6 (`ccr-4c429dbb-lp7btg` → `main`) → **Sonnet**. Bug do otimizador e `;` do Mermaid ✅ (17/10 23h58).
+  Começar com `/clear` → `/continuar`.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
 - **Zenon:** B4 (mostrar "Pagamento: Dinheiro na entrega" + bugs do Thales) → Sonnet; B3 pitch final → Opus.
@@ -78,3 +76,7 @@
   ainda. Trava extra do Zenon (modo real só envia com `pagamento.offline` confirmado) mantida: protege a conta de teste.
 - 17/10 23h42 — integrados também `037e64e` (Ajustar front) e `zenon/b4-pagamento-na-tela` (forma de pagamento na tela). 375
   testes, build ok. Pushed no `ccr-4c429dbb-lp7btg`.
+- 17/10 23h58 — A5: bug do otimizador (Opus, dev-backend): ordem passou a ser "menos itens de fora → score"; aviso de "até 3
+  lojas" só quando usa 3. Caso do Zenon: 2 lojas/1 de 3 bem atendidos → 3 lojas/2 de 3 (sorvete exigiria 4ª loja).
+  `65b4aeb`, 377 testes. `;` do Mermaid em `docs/tecnico.md` corrigido (`fb062f0`). Opus foi adequado (lógica de pontuação).
+  Pendência menor: score exibido pode não decrescer entre combinações com nº diferente de itens de fora.
