@@ -1,0 +1,671 @@
+{
+  "tool": "bug25-whopper",
+  "nota": "18/10: Whopper R$ 4,90 na busca × R$ 40,99 no carrinho; total < subtotal+taxa com desconto 0 no app",
+  "searchOffers": {
+    "args": {
+      "query": "whopper",
+      "resultKind": "ITEM",
+      "pageSize": 10
+    },
+    "resposta": {
+      "agentHints": {
+        "nextStepWhenUserPicksItem": "***"
+      },
+      "hasMore": true,
+      "interpretedQuery": "whopper",
+      "nextPageToken": "***",
+      "resultKind": "ITEM",
+      "results": [
+        {
+          "itemEan": "",
+          "itemId": "16e10385-f1dc-45ec-9d40-29de663b35a5",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202510021904_2wdb77b9mre.jpg",
+          "itemName": "Cheeseburger Duplo + Whopper",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 80,
+          "unitPrice": 80
+        },
+        {
+          "itemEan": "",
+          "itemId": "bd4ba6e1-2ba5-4e27-92fe-409384702957",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202607220708_lrgyt87n15p.jpg",
+          "itemName": "Whopper + Bebida",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 48.99,
+          "unitPrice": 48.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "5b62cb91-2ba2-4904-b8e1-a6d93845f61d",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202606090708_f6rtt9iceh.jpg",
+          "itemName": "Whopper + Shake",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 48.99,
+          "unitPrice": 48.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "82c3801b-e210-4032-943e-7a493214f83e",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202606200709_90s6m5foyed.jpg",
+          "itemName": "3 Combos",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 93.99,
+          "unitPrice": 93.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "5c702bd6-a197-4967-a49f-d46c24534a17",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202606200709_df0e0ftkdum.jpg",
+          "itemName": "4 Sanduíches + 2 Bebidas",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 73.98,
+          "unitPrice": 73.98
+        },
+        {
+          "itemEan": "",
+          "itemId": "2bbd24c3-7d33-4ea5-9719-95dcd4d6da05",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202606200709_m6859yhfpq.jpg",
+          "itemName": "3 Combos - Whopper Especiais",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 128.97,
+          "unitPrice": 128.97
+        },
+        {
+          "itemEan": "",
+          "itemId": "641b86b9-02b5-4d4f-8627-422ca9a26f4c",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202507310904_lg23n281zmh.jpg",
+          "itemName": "Whopper Duplo",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 50.99,
+          "unitPrice": 50.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "26385ce0-0e75-4830-9bb6-bc0a645e0c97",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202603170704_dclt69s77p4.jpg",
+          "itemName": "Whopper Duplo",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 50.99,
+          "unitPrice": 50.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "8f96bb68-52da-406c-a1ae-b432cede8a4b",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202603170704_xbillln9ka.jpg",
+          "itemName": "Whopper Vegetariano",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 39.99,
+          "unitPrice": 39.99
+        },
+        {
+          "itemEan": "",
+          "itemId": "e96e3888-0f70-4a94-b13e-d827e3dff812",
+          "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202603310210_tbeu3t6i37c.jpg",
+          "itemName": "Whopper Furioso",
+          "merchant": {
+            "deliveryMethod": {
+              "deliveryMethodId": "HIGH_DENSITY",
+              "deliveryMethodMode": "DELIVERY",
+              "estimatedMinutes": {
+                "max": 69,
+                "min": 54
+              },
+              "fee": 6.99,
+              "promotionalFee": 6.99
+            },
+            "isOpen": true,
+            "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+            "merchantLogoUrl": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/29720a37-3158-4e25-9a32-a6ef5d3437de/202407311909_WZUP.png",
+            "merchantName": "Burger King - Passeio São Carlos",
+            "minimumOrderAmount": 20,
+            "ratingCount": 918,
+            "reviewRating": 4.8,
+            "straightLineDistanceKm": 0.66
+          },
+          "promotionalUnitPrice": 46.99,
+          "unitPrice": 46.99
+        }
+      ]
+    }
+  },
+  "getItem": {
+    "agentHints": {
+      "nextStep": "Add this item to the active cart with the chosen quantity and any selected options."
+    },
+    "appDeeplink": "ifood://dish-details/29720a37-3158-4e25-9a32-a6ef5d3437de/8f96bb68-52da-406c-a1ae-b432cede8a4b",
+    "itemDescription": "Um hambúrguer vegetariano grelhado de 113g, pão com gergelim, queijo derretido, picles, salada fresca (alface, cebola, tomate), ketchup e maionese bk.",
+    "itemId": "8f96bb68-52da-406c-a1ae-b432cede8a4b",
+    "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202603170704_xbillln9ka.jpg",
+    "itemName": "Whopper Vegetariano",
+    "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+    "merchantMinimumOrderAmount": 20,
+    "merchantName": "Burger King - Passeio São Carlos",
+    "optionGroups": [
+      {
+        "maxSelections": 10,
+        "minSelections": 0,
+        "name": "Deseja adicionar algum ingrediente no Whopper Vegetariano:",
+        "optionGroupId": "baee87bf-7b6b-49f9-ae37-ee4a57e3652d",
+        "options": [
+          {
+            "additionalPrice": 2,
+            "description": "Alface.",
+            "name": "Adicionar alface",
+            "optionId": "a92b4de6-c986-42a6-af7e-109255c68037",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_gdu7g11xwqk.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Catchup.",
+            "name": "Adicionar catchup",
+            "optionId": "db974e8b-e928-4016-96d5-8a22e1f076d9",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_sxh6q29hcwd.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Cebola.",
+            "name": "Adicionar cebola",
+            "optionId": "1c286b08-9839-483d-998e-0f3050d8baf0",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_4jclvcjry9y.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Maionese- Extra.",
+            "name": "Adicionar maionese",
+            "optionId": "7f85fca4-4a94-4ab5-ac18-eeb02dac9ebf",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_wiskbvo3zuc.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Picles.",
+            "name": "Adicionar picles",
+            "optionId": "3b67aa2a-c95d-41ab-954e-506c83e077a1",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_0oz8lusrv7w.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Jalapeno.",
+            "name": "Adicionar pimenta jalapeno",
+            "optionId": "6249b27e-dc8b-4282-8d5f-c8444d0fbb94",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_vltqn24k7z.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Queijo Cheddar.",
+            "name": "Adicionar queijo cheddar",
+            "optionId": "1d762202-5118-4cca-9a33-47ef4e4573d8",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_5eou1n4k7n.jpg"
+          },
+          {
+            "additionalPrice": 2,
+            "description": "Tomate.",
+            "name": "Adicionar tomate",
+            "optionId": "744feb0f-4366-48ea-805a-7d7b012d8d85",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_1g2c0d3k49r.jpg"
+          },
+          {
+            "additionalPrice": 2.5,
+            "description": "Bacon.",
+            "name": "Adicionar bacon fatiado",
+            "optionId": "fe81d1bb-777b-4be0-9076-5fa2a19e5a7b",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_u1mru08jg8.jpg"
+          },
+          {
+            "additionalPrice": 10.9,
+            "description": "Extra Burger De Vegetais",
+            "name": "Adicionar hamburger vegetal",
+            "optionId": "e56c3d74-494a-456d-923f-d069a812305c",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_ntd06oca7yl.jpg"
+          }
+        ]
+      },
+      {
+        "maxSelections": 10,
+        "minSelections": 0,
+        "name": "Deseja remover algum ingrediente no Whopper Vegetariano:",
+        "optionGroupId": "72d50f6f-055d-4db5-aa65-6e65c7260d95",
+        "options": [
+          {
+            "additionalPrice": 0,
+            "description": "Alface.",
+            "name": "Remover alface",
+            "optionId": "dba809c7-c206-4c03-9e3c-236f3b61db80",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_gdu7g11xwqk.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Catchup.",
+            "name": "Remover catchup",
+            "optionId": "89909b84-ab54-4d13-a457-f216c5db0409",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_sxh6q29hcwd.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Cebola.",
+            "name": "Remover cebola",
+            "optionId": "a44cb9c7-fcd0-45b3-8373-01eacb516859",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_4jclvcjry9y.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Maionese- Extra.",
+            "name": "Remover maionese",
+            "optionId": "f6e0bddc-17eb-4e09-b3ae-e636b06a4a07",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_wiskbvo3zuc.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Picles.",
+            "name": "Remover picles",
+            "optionId": "826bcd5a-a587-4790-bdca-0943fbcb2fb3",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_0oz8lusrv7w.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Queijo Cheddar.",
+            "name": "Remover queijo cheddar",
+            "optionId": "cbb71584-dd9f-4943-8d87-0140f5c84e72",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_5eou1n4k7n.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Tomate.",
+            "name": "Remover tomate",
+            "optionId": "908161b6-55cf-4b72-a2a4-eba9544b0816",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_1g2c0d3k49r.jpg"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Extra Burger De Vegetais",
+            "name": "Remover hamburger vegetal",
+            "optionId": "01d680b2-6d72-43d0-9815-de75efb38ae7",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505210303_ntd06oca7yl.jpg"
+          }
+        ]
+      },
+      {
+        "maxSelections": 1,
+        "minSelections": 0,
+        "name": "Deseja incrementar Acompanhamento no seu pedido:",
+        "optionGroupId": "c8714f7e-9e59-4cdb-b7c5-70c59eb4c411",
+        "options": [
+          {
+            "additionalPrice": 7,
+            "description": "Crocantes e irresistíveis, nossas batatas fritas são servidas sempre levemente salgadas. Estas delícias são o acompanhamento perfeito para o seu sanduíche perfeito.",
+            "name": "Batata Frita",
+            "optionId": "7a9a6456-c59a-4004-b1d4-9c0705614676",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505142303_rlqnx08hxn.jpg"
+          },
+          {
+            "additionalPrice": 8,
+            "description": "Cebolas cortadas em forma de anéis, empanadas com uma leve camada de farinha de rosca já temperada e fritas em óleo bem quente. Você pode levá-las nas versões grande ou média, para acompanhar seu sanduíche. Têm um sabor único. Uma verdadeira delícia!",
+            "name": "Onion Rings",
+            "optionId": "e787a06b-de4e-4132-82ff-2b3f5563faa5",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505142303_gikksswb81i.jpg"
+          },
+          {
+            "additionalPrice": 10.99,
+            "name": "Fanta Laranja Lata",
+            "optionId": "3accecd3-49e1-4418-8950-b7c2ac007f78",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202605131307_g11ktdjv3nc.jpg"
+          },
+          {
+            "additionalPrice": 10.99,
+            "name": "Guaraná Lata",
+            "optionId": "4d8db836-a577-4983-a432-8890ef364c5c",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202605060703_gg67bsqqwbi.jpg"
+          },
+          {
+            "additionalPrice": 10.99,
+            "name": "Suco de Laranja Natural One - 300 Ml",
+            "optionId": "c5127e65-a1da-47b0-a9a8-d66d06abab3a",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505142303_8o3bjdg2xqk.jpg"
+          },
+          {
+            "additionalPrice": 10.99,
+            "name": "Suco de Uva Natural One - 300 Ml",
+            "optionId": "e9018fa1-c15b-4796-a52a-a642ff9edaae",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505142303_5brbspq634l.jpg"
+          },
+          {
+            "additionalPrice": 18.99,
+            "name": "Bk Chicken 10",
+            "optionId": "b1a97b46-f03c-4ae7-9fb0-41a2eb23d437",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202603110703_sts7ylmugy.jpg"
+          },
+          {
+            "additionalPrice": 18.99,
+            "description": "O shake especial crocante tem um sabor maravilhoso e consistência crocante. Imagem meramente ilustrativa. (Shake de 400 ml).",
+            "name": "Shake Crocante - 400 Ml",
+            "optionId": "da30a31f-2ca6-4a32-8aab-46c7686a6703",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202602031904_34kzxfns8ni.jpg"
+          },
+          {
+            "additionalPrice": 18.99,
+            "description": "O shake de morango é delicioso, combina o sabor da fruta e do sorvete na medida certa para você. Imagem meramente ilustrativa. (Shake de 400 ml).",
+            "name": "Shake Morango - 400 Ml",
+            "optionId": "e5332d74-1f9d-411f-a8b1-06bccef02bf4",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202602031904_pqt97cnysv.jpg"
+          },
+          {
+            "additionalPrice": 18.99,
+            "name": "Sprite Zero",
+            "optionId": "abe085e3-170b-42f4-9010-5e40e7350183",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202610060409_vkptg4qqyx.jpg"
+          },
+          {
+            "additionalPrice": 19,
+            "name": "Balde de Batata Frita",
+            "optionId": "1cb244e9-6414-43e8-b448-054e331adddc",
+            "optionImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/9e6ad3e9-63a6-4f13-89a4-f405434694ad/202505142303_d9x3kis3a3r.jpg"
+          }
+        ]
+      },
+      {
+        "maxSelections": 2,
+        "minSelections": 0,
+        "name": "Escolha seus Condimentos:",
+        "optionGroupId": "5da06a86-6497-4477-b559-84878a45bb46",
+        "options": [
+          {
+            "additionalPrice": 0,
+            "description": "Adicionar sachê ketchup",
+            "name": "Sachê Ketchup",
+            "optionId": "e6fb1080-326c-44cc-be4b-b***"
+          },
+          {
+            "additionalPrice": 0,
+            "description": "Adicionar sachê mostarda",
+            "name": "Sachê Mostarda",
+            "optionId": "d1715d47-11fe-4a5e-83e7-ddcaf7e7d772"
+          }
+        ]
+      }
+    ],
+    "promotionalUnitPrice": 39.99,
+    "unitPrice": 39.99
+  },
+  "createCart": {
+    "args": {
+      "items": [
+        {
+          "itemId": "8f96bb68-52da-406c-a1ae-b432cede8a4b",
+          "quantity": 1
+        }
+      ]
+    },
+    "resposta": {
+      "cartId": "9c4d1655-a93f-410e-bc34-63ec68c4ffe9",
+      "merchant": {
+        "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+        "merchantName": "Burger King - Passeio São Carlos",
+        "orderMinimumPrice": 20.0,
+        "formattedAddress": "***"
+      },
+      "items": [
+        {
+          "itemId": "8f96bb68-52da-406c-a1ae-b432cede8a4b",
+          "cartItemId": "dc4d9d13-895f-4e44-ac03-9c185abd82e7",
+          "quantity": 1,
+          "unitPrice": 39.99,
+          "name": "Whopper Vegetariano"
+        }
+      ],
+      "deliveryAddress": {},
+      "deliveryMethod": {
+        "deliveryMethodId": "DEFAULT",
+        "deliveryMethodMode": "DELIVERY",
+        "deliveryMethodName": "***",
+        "fee": 9.99,
+        "estimatedMinutes": {
+          "min": 30,
+          "max": 40
+        }
+      },
+      "fees": [
+        {
+          "name": "Taxa de serviço",
+          "description": "A cobrança da taxa de serviço inclui o licenciamento de uso da Plataforma e contribui com custos operacionais, como desenvolvimento, atualização e suporte, além de viabilizar investimentos contínuos em segurança e inovação.",
+          "amount": 1.0
+        }
+      ],
+      "summary": {
+        "totalName": "***",
+        "totalAmount": 50.98,
+        "subtotalName": "***",
+        "subtotalAmount": 39.99,
+        "deliveryFeeName": "***",
+        "deliveryFeeAmount": 9.99,
+        "feeTotalName": "***",
+        "feeTotalAmount": 1.0,
+        "benefitsTotalName": "***",
+        "benefitsTotalAmount": 0.0,
+        "voucherTotalName": "***",
+        "voucherTotalAmount": 0.0
+      },
+      "appDeeplink": "ifood://cart?cartId=9c4d1655-a93f-410e-bc34-63ec68c4ffe9"
+    }
+  },
+  "getCart": {
+    "cartId": "9c4d1655-a93f-410e-bc34-63ec68c4ffe9",
+    "merchant": {
+      "merchantId": "29720a37-3158-4e25-9a32-a6ef5d3437de",
+      "merchantName": "Burger King - Passeio São Carlos",
+      "orderMinimumPrice": 20.0,
+      "formattedAddress": "***"
+    },
+    "items": [
+      {
+        "itemId": "8f96bb68-52da-406c-a1ae-b432cede8a4b",
+        "cartItemId": "dc4d9d13-895f-4e44-ac03-9c185abd82e7",
+        "quantity": 1,
+        "unitPrice": 39.99,
+        "name": "Whopper Vegetariano"
+      }
+    ],
+    "deliveryAddress": {},
+    "deliveryMethod": {
+      "deliveryMethodId": "DEFAULT",
+      "deliveryMethodMode": "DELIVERY",
+      "deliveryMethodName": "***",
+      "fee": 9.99,
+      "estimatedMinutes": {
+        "min": 30,
+        "max": 40
+      }
+    },
+    "fees": [
+      {
+        "name": "Taxa de serviço",
+        "description": "A cobrança da taxa de serviço inclui o licenciamento de uso da Plataforma e contribui com custos operacionais, como desenvolvimento, atualização e suporte, além de viabilizar investimentos contínuos em segurança e inovação.",
+        "amount": 1.0
+      }
+    ],
+    "summary": {
+      "totalName": "***",
+      "totalAmount": 30.99,
+      "subtotalName": "***",
+      "subtotalAmount": 39.99,
+      "deliveryFeeName": "***",
+      "deliveryFeeAmount": 9.99,
+      "feeTotalName": "***",
+      "feeTotalAmount": 1.0,
+      "benefitsTotalName": "***",
+      "benefitsTotalAmount": 19.99,
+      "voucherTotalName": "***",
+      "voucherTotalAmount": 0.0
+    },
+    "appDeeplink": "ifood://cart?cartId=9c4d1655-a93f-410e-bc34-63ec68c4ffe9"
+  }
+}

@@ -130,10 +130,10 @@ Frase que **não** entende (só se sobrar tempo): *"bom dia"* → o servidor res
 1. **Sem a disputa:** `MATCH_LEILAO=off` no `.env` e reiniciar o app. O Match vai direto ao "O pedido do grupo"; o Ajustar continua.
 2. **Modo demonstração offline:** `IFOOD_MCP_MODO=demo` e `LLM_PROVIDER=mock`. Não precisa de internet nem de chave.
    Resultado esperado: a seção acima.
-3. **Vídeo gravado** (`docs/roteiro-video.md`): `match-demo-rascunho.mp4` (1080p, 98 s, sem voz, falas na tela),
-   enviado pelo Zenon ao Thales fora do git em 18/10. Thales narra ao vivo lendo o painel da direita.
-   (👥 anotar aqui a pasta exata no PC do Thales.) ⚠️ Gravado antes do B9: mostra a tela antiga (deck, "Dar match",
-   "É um Match!"). Se for usar, narrar como "versão anterior" ou regravar a parte do resultado.
+3. **Vídeo gravado** (`docs/roteiro-video.md`): **`match-demo-plano-b.mp4`** (1920×1080, 94 s, sem voz, modo demonstração,
+   tela nova: "O pedido do grupo" → Ajustar → "Confirmar pedido"), enviado pelo Zenon ao Thales fora do git em 18/10.
+   Thales narra ao vivo (as falas aparecem à direita). **Não usar** o `match-demo-rascunho.mp4` (tela antiga, com deck).
+   (👥 anotar aqui a pasta exata no PC do Thales.)
 
 ## Checklist pré-demo (15 min antes)
 - [ ] `.env` no PC do Thales: `IFOOD_MCP_MODO` (demo ou real), `LLM_PROVIDER` (ou `mock`), `MATCH_LEILAO=on`.
