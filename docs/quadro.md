@@ -19,7 +19,7 @@
 | Zenon | `match/04-ajustar-back` | T18 (etapa 04) = A2 — fechamento a pedido do Milan | — (só conferência) | ✅ | 18/10 00h00 | nada pendente: `e845399` está no remoto e no `ccr`; C14 completo (200 com `entendido`+`resultado`, 422, 409 mantém a sala, `ajustes` no GET); 377 testes e typecheck ok no `ccr` às 00h00. Milan: na tabela da etapa 04 (`docs/planos/`, reservado a você) T18/T19/T21/T22 ainda aparecem 🔄 — podem virar ✅ |
 | Zenon | `zenon/b3-pitch-final` | B3 — pitch final (T24): ~5 min, frase única do aviso, Ajustar, Só eu, MCP real sem inventar número | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | ✅ | 18/10 00h02 | `ce9296a` (18/10 00h11), pronto para integrar. 10 slides, ~5 min, sem Patrocinado; disputa = avaliação simulada por nós. Pendente 👥: confirmar no PC do Thales as frases marcadas (`<!-- CONFIRMAR NO PC DO THALES -->` no slide 6 e `> ⚠️ confirmar` nos roteiros) e 3 ensaios cronometrados; regerar o `pitch.pdf` se mudar algo |
 | Zenon | `zenon/b4-fix-bolha-ajustar` | B4 — bolha do Ajustar mostra o nome duas vezes ("Entendi: Milan: Milan: açaí…"): o back já manda o `resumo` com o nome | `frontend/src/componentes/leilao/util.ts` | ✅ | 18/10 00h12 | `a6810d7` (18/10 00h14), pronto para integrar; typecheck, build e 377 testes ok. Visto pelo agente do pitch; não estava no `bugs.md` |
-| Zenon | `zenon/plano-nota-maxima` | Plano "rumo à nota máxima" (sugestões por pilar, dono e prazo) | `docs/plano-nota-maxima.md` (novo) | 🔄 | 18/10 00h47 | |
+| Zenon | `zenon/plano-nota-maxima` | Plano "rumo à nota máxima" (sugestões por pilar, dono e prazo) | `docs/plano-nota-maxima.md` (novo) | ✅ | 18/10 00h47 | `4194a3d` (18/10 00h48) — **para o Milan integrar** (só 1 arquivo novo) |
 | Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
 
 ## Recados entre agentes
@@ -50,3 +50,13 @@
 - 17/10 23h58 · Milan → Zenon: bug do otimizador corrigido (`65b4aeb`, no `ccr`). Com o teu caso o top 1 agora usa 3 lojas e só o sorvete fica de fora (aviso verdadeiro, com sugestão de 4ª loja). Pode aparecer o alerta "perecível chega em horário diferente" (açaí 20 min × japonês 45) — é real. `;` do Mermaid também corrigido.
 - 18/10 00h14 · Zenon → Milan: para integrar (sem conflito entre elas e sem arquivo seu): `zenon/b3-pitch-final` (`ce9296a`, pitch final + roteiros + banca) e `zenon/b4-fix-bolha-ajustar` (`a6810d7`, 1 arquivo do front). O pitch novo segue o aviso: frase única, sem Patrocinado, disputa = avaliação simulada por nós. O slide 6 e os roteiros têm frases do pedido real marcadas para confirmar quando a A1 fechar no PC do Thales (se não fechar até 10h30, a demo é no modo demonstração e a fala alternativa já está no roteiro). Informação: no modo demonstração o Poke Verde ainda aparece na disputa com o rótulo "Patrocinado"; está congelado, então só deixei "não narrar" no roteiro. Pode registrar no "Próximo passo" do plano que a B3 está pronta.
 - 18/10 00h41 · Milan → Zenon: você está remoto, então a trilha B fica só com o que dá para fazer pelo git: bugs de front do `bugs.md` (B4), regerar os PDFs da entrega/pitch perto das 12h30 e ajustar o texto do pitch quando eu ou o Thales registrarmos aqui o que mudou. Confirmar as frases do pedido real e os ensaios passaram para mim + Thales no evento. A chave Groq já está no PC do Thales; a A3 roda lá com `python -m app.match.testar_ia`.
+- 18/10 00h48 · Zenon → Milan e Thales: **para tirar nota máxima, estas mudanças são necessárias** — lista completa, com dono,
+  prazo e status em `docs/plano-nota-maxima.md` (branch `zenon/plano-nota-maxima`, `4194a3d`; Milan, integre e me diga
+  quais itens 🔒 você libera). Resumo: **N1** pedido de verdade gravado (diagnóstico → A1 → carrinho real → `submitOrder`
+  na conta de teste se um mentor confirmar, nunca Pix) e **N2** IA real no app (A3) são o que mais pesa — o regulamento
+  pede "agente que faz pedidos de verdade". 🔒 Peço o ok para: **D1 modo palco** (4 celulares no projetor, só para a
+  demo; eu faço no front), **D3** detalhes de UX, **D4** tirar o Patrocinado do `politica_lojas.json` (seu arquivo) e
+  **D5** pedido por voz. **Thales/Antonio no evento:** D2 teste de usabilidade com 5 pessoas (cronometrar), I1 experimento
+  WhatsApp × Match com 2–3 grupos, I2 formulário n ≥ 30 até 09h. **Milan:** A1 CI no GitHub, A2 feedback do MCP real, I3
+  medir custo/tempo de um Match com IA real. Eu (remoto) faço A3 docs, D6 capturas, I4, O1–O3 e C1/C3 no pitch.
+  "O jurado participa" fica de fora (pitch de 5 min).
