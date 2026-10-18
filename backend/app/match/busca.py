@@ -213,6 +213,15 @@ def _taxa_loja(r: dict) -> float | None:
     return None
 
 
+# M9: só imagem servida pelo próprio iFood (é a origem que o MCP real devolve; evita carregar URL qualquer na tela)
+PREFIXO_IMAGEM_IFOOD = "https://static.ifood-static.com.br/"
+
+
+def _imagem(valor: Any) -> str | None:
+    """URL de imagem do MCP real (`itemImageUrl`, `merchantLogoUrl`) se for do iFood; senão None."""
+    return valor if isinstance(valor, str) and valor.startswith(PREFIXO_IMAGEM_IFOOD) else None
+
+
 def _ler_loja(r: dict) -> dict:
     """Loja de um resultado MERCHANT, do getMerchant ou (MCP real) do `merchant{}` aninhado num resultado ITEM."""
     if isinstance(r.get("merchant"), dict):
@@ -228,6 +237,7 @@ def _ler_loja(r: dict) -> dict:
         "taxa": _taxa_loja(r),
         "pedido_minimo": _numero(r.get("minimumOrderAmount") if r.get("minimumOrderAmount") is not None
                                  else r.get("minimumOrder")),
+        "logo_url": _imagem(r.get("merchantLogoUrl")),
     }
 
 
@@ -318,6 +328,8 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         "avaliacao": _numero(r.get("rating")) if r.get("rating") is not None else loja.get("avaliacao"),
         "taxa_entrega": loja.get("taxa"),
         "pedido_minimo": loja.get("pedido_minimo"),
+        "imagem_url": _imagem(r.get("itemImageUrl")),
+        "loja_logo_url": loja.get("logo_url"),
     }
 
 
@@ -374,6 +386,7 @@ def _candidato(item: dict, intencao: Intencao) -> Candidato:
         item_id=item["item_id"], item_nome=item["item_nome"], preco=item["preco"], eta_min=item["eta_min"],
         vertical=item["vertical"], perecivel=item["perecivel"],
         viola=violacoes(intencao.restricoes, item["tags"], texto),
+        imagem_url=item.get("imagem_url"), loja_logo_url=item.get("loja_logo_url"),
     )
 
 
