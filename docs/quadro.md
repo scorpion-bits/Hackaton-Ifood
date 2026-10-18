@@ -7,8 +7,8 @@
 | Pessoa | Branch | Tarefa | Arquivos reservados | Status | Início | Fim / commit / pendência |
 |---|---|---|---|---|---|---|
 | Milan | `claude/tender-dijkstra-rmqhjx` | Aviso, quadro, plano da etapa 05, roteiro de testes | `docs/AVISO-EQUIPE.md`, `docs/quadro.md`, `docs/planos/etapa-05-*`, `docs/testes/roteiro-testes.md`, `CLAUDE.md` | ✅ | 17/10 23h20 | integrado no `ccr-4c429dbb-lp7btg` |
-| Milan | `ccr-4c429dbb-lp7btg` | A4 — integração e PR → `main` | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | 🔄 | 17/10 23h27 | 23h39: 4 branches do Zenon integradas, 375 testes; falta smoke no navegador e PR → `main` |
-| Milan | `milan/a1-mcp-real` | A1 — T8 + C16 (MCP real até o pedido) | `backend/app/match/busca.py`, `checkout.py`, `modelos.py`, `backend/app/ifood_mcp/*`, `docs/feedback-mcp.md`, `docs/mcp-real/` | ⬜ espera 👥 amostras | | |
+| Milan | `ccr-4c429dbb-lp7btg` | A4 — integração e PR → `main` | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | 🔄 | 17/10 23h27 | 18/10 09h35: M9, bug 37 e T16 integrados, 554 testes, e2e 7/7; falta o PR → `main` às 10h30 |
+| Milan | `milan/a1-mcp-real` | A1 — T8 + C16 (MCP real até o pedido) | `backend/app/match/busca.py`, `checkout.py`, `modelos.py`, `backend/app/ifood_mcp/*`, `docs/feedback-mcp.md`, `docs/mcp-real/` | ✅ | | A1 integrada no `ccr` (18/10 01h04) |
 | Zenon | `match/04-so-eu` | B5 — Só eu (C15) | `telas/Inicio.tsx`, `Organizador.tsx`, `SoEu.tsx`, `estilo.css`, `BarraInferior.tsx` | ✅ | 17/10 23h22 | já no `ccr` (961a8a7, 23h26), antes de eu ver o aviso |
 | Zenon | `match/04-ajustar-front` | B1 — C14 front (Ajustar com o IBits no deck; sala de 1 pessoa paga "junto" direto) | `telas/Deck.tsx`, `Resultado.tsx`, `Leilao.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts` | ✅ | 17/10 23h22 | `5d16de5` — integrado 23h39 (build ok; falta teste no navegador contra a A2) |
 | Zenon | `match/05-pacote-entrega` | B2 — `docs/ENTREGA.md` + PDF único dos 6 entregáveis (29 p.) | `docs/ENTREGA.md`, `docs/entrega/*` | ✅ | 17/10 23h22 | integrado 23h39; gerar o PDF de novo antes das 12h30 (`cd docs/entrega && npm i && node gerar_pdf.mjs`) |
