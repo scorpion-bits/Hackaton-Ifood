@@ -206,3 +206,59 @@ async def test_nao_reenvia_carrinho_ja_enviado():
     assert [(p["loja_id"], p["status"]) for p in segunda] == [("loja-demo-sorvete", "enviado")]
     assert terceira == []
     assert [c.tool for c in cli.rastro].count("submitOrder") == 2
+
+
+# --- bug 25: desconto que o getCart real aplica no total sem detalhar ---
+
+def _partes_dos_carrinhos(carrinhos: list[dict], donos: dict[str, list[tuple[str, float]]]):
+    """Partes como a rota faz: itens do carrinho + taxa/desconto por loja."""
+    from app.match.acerto import calcular_partes
+
+    escolhas: dict[str, list[Candidato]] = {}
+    for c in carrinhos:
+        for pid, preco in donos[c["loja_id"]]:
+            escolhas.setdefault(pid, []).append(Candidato(
+                participante_id=pid, loja_id=c["loja_id"], loja_nome=c["loja_id"], item_id="x", item_nome="x",
+                preco=preco, eta_min=None, vertical="", perecivel=False))
+    return calcular_partes(escolhas, {}, {c["loja_id"]: c["taxa"] for c in carrinhos},
+                           {c["loja_id"]: c["desconto"] for c in carrinhos})
+
+
+def test_total_menor_que_subtotal_mais_taxa_deriva_desconto_e_partes_fecham():
+    from app.match.acerto import centavos
+    from app.match.checkout import _ler_totais
+
+    # números do bug 25 (MCP real, conta de teste): o summary não trouxe desconto
+    bk = {"loja_id": "bk", **_ler_totais({"summary": {"subtotalAmount": 40.99, "deliveryFee": 9.99,
+                                                       "totalAmount": 31.51}})}
+    masc = {"loja_id": "masc", **_ler_totais({"summary": {"subtotalAmount": 37.80, "deliveryFee": 6.99,
+                                                           "totalAmount": 36.33}})}
+    assert (bk["desconto"], bk["total"], bk["desconto_derivado"]) == (19.47, 31.51, True)
+    assert (masc["desconto"], masc["desconto_derivado"]) == (8.46, True)
+
+    partes = _partes_dos_carrinhos([bk, masc], {
+        "bk": [("ana", 40.99)],
+        "masc": [("ana", 12.60), ("bia", 25.20)],
+    })
+    assert sum(centavos(p.total) for p in partes) == centavos(31.51) + centavos(36.33)
+    ana, bia = partes
+    # desconto da Mascavado (8,46) proporcional a 12,60 : 25,20 → 2,82 e 5,64; o do BK (19,47) só da Ana
+    assert (ana.desconto, bia.desconto) == (22.29, 5.64)
+    assert (ana.total, bia.total) == (round(31.51 + 12.60 + 3.50 - 2.82, 2), round(25.20 + 3.49 - 5.64, 2))
+
+
+def test_desconto_explicito_do_summary_e_lido_e_nao_e_derivado():
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"summary": {"subtotalAmount": 40.99, "deliveryFee": 9.99, "benefitsTotalAmount": 19.47,
+                                 "totalAmount": 31.51}})
+    assert t["desconto"] == 19.47 and "desconto_derivado" not in t
+
+
+def test_sem_desconto_nao_muda_o_formato():
+    from app.match.checkout import _ler_totais
+
+    t = _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0, "discount": 0, "total": 55.0})
+    assert t == {"subtotal": 50.0, "taxa": 5.0, "desconto": 0.0, "total": 55.0}
+    # total ausente (0) não vira desconto
+    assert _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0})["desconto"] == 0.0

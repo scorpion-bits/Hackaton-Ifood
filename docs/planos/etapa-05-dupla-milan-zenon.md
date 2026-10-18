@@ -29,7 +29,7 @@
 | A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ✅ 01h44 integrado (`8aa7eae`): reserva de modelo no 429, intérprete 1 chamada/grupo, tokens ~26k→13k por Match, bugs 12–14; 👥 confirmar no P5 |
 | A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
 | A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37; runs verdes no GitHub (run 18, 01h55) |
-| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador ✅ `65b4aeb`; 02h00: bugs 21, 23, 24 ✅ 02h10 (`79e50a5` + seguinte); bug 25 (desconto do carrinho × partes) 🔄 02h35 |
+| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador ✅ `65b4aeb`; 02h00: bugs 21, 23, 24 ✅ 02h10 (`79e50a5` + seguinte); bug 25 (desconto derivado do total do `getCart`, partes fecham) ✅ 02h45 |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
 > **Zenon trabalha de casa (remoto); Milan e Thales estão no evento.** Toda tarefa do Zenon tem que ser feita só com o
@@ -84,6 +84,7 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 02h45 — Bug 25 (dev-mcp-ifood, Opus): `_ler_totais` aceita desconto/benefício/voucher do `summary` e, sem campo, deriva desconto = subtotal + taxa − total (`desconto_derivado: true`); o rateio que já existia passa a fechar as partes. Busca não mudou (promoção é aplicada no total). 474 testes. A confirmar no real: nome do campo, desconto sobre a taxa, total do `getCart` = cobrado no `submitOrder`. Opus adequado (poderia ser Sonnet).
 - 18/10 02h35 — Integrados `zenon/b4-pix-sem-chave` (`b8f2254`) e o P6b + roteiro sem deck do Thales (`dcdb1fa`); limpas as linhas duplicadas pelo merge no quadro/bugs. 471 testes, typecheck e build ok. P6b: bug 21 ✅, 24 ✅; novo bug 25 (total do carrinho com desconto não lido → partes não fecham) → dev-mcp-ifood (Opus).
 - 18/10 02h30 — Integrado `zenon/b4-lojas-fora` (`f855c80`: faixa amarela em `Pagamento.tsx` + "X ficou sem pedido", parte de front do bug 26). Conflito só em `quadro.md`/`comunicacao.md` (mantidas as duas linhas). 471 testes, typecheck e build ok.
 - 18/10 02h25 — Respondido o Z8 do Zenon: aviso de loja que saiu termina em "o pedido segue com as outras lojas" (não há volta ao resultado na tela de pagamento depois do B9); ITEM-001 aponta para o Ajustar; ok para limpar deck/É um Match do `racional-ux.md`/`tecnico.md`. 471 testes. Esperando: B4 `lojas_fora` (Zenon) e P6b (Thales, iFood instável). Sem subagente (3 linhas).
