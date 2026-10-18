@@ -44,7 +44,8 @@ TIMEOUT_HTTP_S = 20.0
 
 MSG_SEM_CREDENCIAIS = (
     "Preencha IFOOD_MCP_CLIENT_ID e IFOOD_MCP_CLIENT_SECRET no .env (Portal do iFood → seu agente) "
-    "e reinicie o app."
+    "e reinicie o app. Já preencheu? Veja se a mesma linha não aparece de novo, vazia, mais abaixo no .env "
+    "(vale a última) e se o .env está na pasta raiz do projeto."
 )
 MSG_SEM_TOKEN = "Conecte o iFood primeiro (botão Conectar iFood)."
 MSG_SESSAO_EXPIRADA = "Sua sessão do iFood expirou. Conecte o iFood de novo (botão Conectar iFood)."

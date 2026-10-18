@@ -136,7 +136,10 @@ async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso():
     # pizza sem glúten: as pizzas violam a restrição e o resto não tem nada a ver com o pedido
     r = await _rodar([Desejo("ana", "Ana", "pizza", None, ["sem_gluten"])])
     assert r["combinacoes"] == []
-    assert any(a.startswith("Não achei pizza sem glúten para Ana;") for a in r["avisos"])
+    aviso = next(a for a in r["avisos"] if a.startswith("Não achei pizza sem glúten para Ana"))
+    assert "Refrigerante" not in aviso and "Suco" not in aviso  # bebida nunca é a "mais próxima" de comida
+    assert r["avisos"][-1] == "Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?"
+    assert sum("Quer mudar o pedido?" in a for a in r["avisos"]) == 1  # a pergunta não se repete
 
 
 async def test_restricao_sem_tag_que_confirme_avisa_sem_eliminar(monkeypatch):

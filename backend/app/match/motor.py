@@ -15,7 +15,7 @@ from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, ler_endereco
 from .interprete import CONSULTA_RESTRICAO, interpretar
-from .juiz import ROTULO_RESTRICAO, avaliar
+from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
@@ -172,6 +172,18 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         if not validos[slot]:
             teto = f" até {_reais(intencao.orcamento_max)}" if intencao.orcamento_max else ""
             avisos.append(f"Não achei {_o_que(intencao)}{teto} para {desejo.nome}.")
+    descartados: list[tuple[Desejo, Intencao]] = []
+    for (desejo, intencao), (_, detalhes) in zip(slots, buscas):
+        if (desejo, intencao) not in fracos:
+            continue
+        slot = intencao.participante_id
+        candidatos[slot] = [c for c in candidatos[slot]
+                            if not bebida_sem_pedir(intencao, detalhes.get((c.loja_id, c.item_id), {}))]
+        validos[slot] = _validos(intencao, candidatos[slot])
+        if not validos[slot]:  # só sobrou bebida para quem pediu comida: não sugere nada
+            descartados.append((desejo, intencao))
+            avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}. Quer mudar o pedido?")
+    fracos = [f for f in fracos if f not in descartados]
     for desejo, intencao in fracos:
         slot = intencao.participante_id
         proximo = max(validos[slot], key=lambda c: (c.nota, -c.preco))
@@ -195,13 +207,14 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             avisos.append(f"Nenhum item confirma '{ROTULO_RESTRICAO.get(r, r)}'{quem} — confirme com a loja.")
 
     ids_fracos = {i.participante_id for _, i in fracos}
-    nada_relevante = bool(fracos) and not any(
+    nada_relevante = bool(fracos or descartados) and not any(
         validos[i.participante_id] and i.participante_id not in ids_fracos for _, i in slots)
 
     orcamentos = {d.participante_id: lista[0].orcamento_max for d, lista in zip(desejos, interpretacoes)}
     pesos = pesos_por_perfil([lista[0].perfil for lista in interpretacoes])
     if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
         combos = []
+        avisos[:] = [a.removesuffix(" Quer mudar o pedido?") for a in avisos]  # a pergunta vai uma vez só, no fim
         avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
     else:
         combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,
