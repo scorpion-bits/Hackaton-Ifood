@@ -83,7 +83,7 @@
 ## Pendências conhecidas
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
-- Credenciais do MCP só no `.env` do PC da equipe (não no container da nuvem). MCP real: 23 tools (sem `listItemTaxonomy`);
+- Credenciais do MCP só no `.env` do **PC Windows do Thales** (não no container da nuvem). MCP real: 23 tools (sem `listItemTaxonomy`);
   `searchOffers`/`getRecommendations` exigem `userLocation`; formato real do `listAddresses` ainda sem amostra no git.
 - Campos legados em `config.py` (`ifood_modo`, `ifood_base_url`, `ifood_client_id/secret`) e no `conftest.py` → remover.
 

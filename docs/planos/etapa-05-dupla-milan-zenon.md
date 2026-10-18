@@ -55,7 +55,7 @@
 - Commit com autor humano (`--author="Nome <email>"` + `Responsável: Nome`).
 
 ## 👥 Agora
-- Quem está com o PC + `.env`: `python -m app.ifood_mcp.diagnostico --carrinho` e push de `docs/mcp-real/` (destrava A1).
+- **O `.env` está no PC Windows do Thales.** 17/10 23h53: ele está fazendo login (Conectar iFood no app) e vai rodar `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` e dar push de `docs/mcp-real/` (destrava A1).
 - Chave Groq/Gemini no `.env` + `python listar_modelos.py` (destrava A3).
 - Thales: `iniciar.bat` no PC dele e o roteiro de testes.
 
