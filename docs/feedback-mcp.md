@@ -19,6 +19,12 @@
   conta de teste funcionou.
 - **Mensagem de erro do `userLocation` clara:** diz o campo, o tipo (objeto) e os subcampos numéricos; deu para
   corrigir sem adivinhar.
+- **`getMerchant` ensina a buscar dentro da loja:** `catalogSummary.navigationHint` diz para usar `searchOffers` com
+  `refinements.merchantId`. Foi o que resolveu o "pedido completo" (o refri vem da mesma pizzaria da pizza). Sugestão:
+  pôr esse caminho também na descrição do `searchOffers`, onde o agente decide a busca.
+- **Taxa de entrega e pedido mínimo já no `searchOffers`** (`merchant.deliveryMethod.fee`/`promotionalFee`,
+  `minimumOrderAmount`): dá para comparar custo total (itens + taxa) entre lojas antes de criar carrinho. A doc não
+  destaca isso; nós só achamos lendo a amostra.
 - **`list_tools` com `input_schema` útil:** foi o que permitiu adaptar os argumentos ao servidor real e descartar o
   que a tool não declara.
 

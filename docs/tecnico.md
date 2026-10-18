@@ -152,16 +152,34 @@ flowchart TD
   A[listAddresses] -->|sem endereço| X1[aviso: cadastre um endereço]
   A --> B[interpretar cada desejo em slots<br/>IA ou regras + quantidades]
   B --> C[buscar candidatos por slot<br/>searchOffers / getMerchant / browseOffers]
-  C --> D[juiz: nota 0–1 + motivo<br/>IA ou regras]
+  C --> C2[2º item em diante: buscar também DENTRO<br/>da loja do 1º item - refinements.merchantId]
+  C2 --> D[juiz: nota 0–1 + motivo<br/>IA ou regras]
   D --> E{melhor nota do slot ≥ 0,5?}
   E -->|não| F[opção aproximada + aviso<br/>bebida nunca substitui comida]
   E -->|sim| G
   F --> G[leilão por loja<br/>MATCH_LEILAO=off pula]
-  G --> H[otimizar: top 3, até 3 lojas<br/>só itens ofertados]
+  G --> G2[combos: combo/kit que cita 2+ itens<br/>da pessoa vira 1 candidato]
+  G2 --> H[otimizar: top 3, até 3 lojas<br/>custo com a taxa da busca]
   H --> J[fechar leilão: vencedoras,<br/>réplica, fechamento do IBits]
   J --> I
-  I[avisos: N lojas = N pedidos, N taxas, N entregas<br/>taxa só aparece no carrinho]
+  I[avisos: N lojas = N pedidos, N taxas, N entregas<br/>taxa estimada pela busca; valor final no carrinho]
 ```
+
+**Pedido completo** (etapa 05, Trilha A′): cada pessoa pode pedir até 4 itens ("uma pizza e uma coca", "hambúrguer
+com batata e refri"). (1) Bebida pela marca ("coca", "guaraná") também busca "refrigerante". (2) O 2º item em diante
+é procurado também **dentro das 2 melhores lojas do 1º item**, com `searchOffers` + `refinements.merchantId` — o
+caminho que o próprio `getMerchant` real indica em `catalogSummary.navigationHint`; assim o refri vem da pizzaria da
+pizza, não de outra loja (+1 taxa, +1 entrega). (3) Um combo/kit da loja que cita 2+ itens da pessoa vira um
+candidato só (`Candidato.cobre`), que o otimizador compara com os itens avulsos — nunca os dois juntos
+(`Combinacao.cobertos` diz quais itens o combo atende). (4) A taxa de entrega e o pedido mínimo vêm do
+`merchant{}` de cada resultado do `searchOffers` e entram no custo; quando juntar itens reduz lojas, a tela diz quanto
+o pedido paga a menos de taxa do que se cada item viesse da loja com a melhor nota.
+
+**Só eu além de restaurante:** lista de compras de mercado, farmácia, pet shop ou adega ("preciso fazer compras: arroz,
+feijão e detergente", "dipirona e protetor solar") vira 1 item por produto, cada um buscado com o `merchantType` da
+categoria. O lugar ("fazer compras", "na farmácia") não vira item; item sem categoria segue o anterior; no varejo,
+produto diferente não ganha por ser mais barato (só concorrem itens perto da melhor nota) e não há "opção
+aproximada". Lojas diferentes continuam sendo carrinhos e entregas diferentes: o Match não junta entregas.
 
 Regras de relevância já no código: item com nota < 0,25 sai se houver opção melhor; slot cujo melhor item fica
 abaixo de 0,5 vira "Opção aproximada: …" com aviso "Não achei X; a opção mais próxima é Y"; se ninguém tem item
@@ -269,8 +287,11 @@ S(C) = média_p(sat_p) + α·mín_p(sat_p) − β·(custo_total / orçamento_ref
 - **Perecível:** ε só se um sorvete/açaí de restaurante vier de loja com ETA diferente em mais de 15 min.
 - **Enumeração exaustiva** por conjunto de lojas, com ≤ 8 candidatos por slot, poda acima de 50 mil combinações por
   conjunto e 120 mil no total. Desempate determinístico (score, depois custo, depois chave estável).
-- Taxa de entrega: a busca não traz taxa; o otimizador roda "sem taxa" (`taxa_conhecida: false`) e a tela avisa que a
-  taxa aparece no carrinho, antes do "ok".
+- Taxa de entrega: vem do `searchOffers` (`merchant.deliveryMethod.promotionalFee`/`fee`) e entra no custo
+  (`taxa_conhecida: true`); é estimativa — o valor final é o do `getCart`, mostrado antes do "ok". Loja sem taxa na
+  busca → a combinação roda "sem taxa" e a tela avisa.
+- **Combos:** opção da pessoa com um combo que cobre outros slots dela; esses slots não levam outro item, não contam
+  como de fora, e a nota do combo vale para cada slot coberto.
 - Cada combinação traz os componentes do score e uma explicação curta ("3 lojas · todos com nota ≥ 0,7 · R$ … sem
   taxa · chega em até … min").
 
@@ -352,6 +373,8 @@ Máximo de 6 participantes (limite do otimizador). Envio parcial (falha no 2º p
 |---|---|
 | `listAddresses` primeiro | O motor chama `listAddresses` antes de qualquer busca; sem endereço, para com aviso. |
 | `query` só descritivo; preço/distância em `refinements` | A busca manda o termo descritivo ("sushi", "sorvete"), `resultKind`, `limit` e as coordenadas do endereço; orçamento e restrições são filtrados no nosso código, não na `query`. |
+| Buscar dentro de uma loja com `refinements.merchantId` (`getMerchant` → `catalogSummary.navigationHint`) | O 2º item em diante de cada pessoa é procurado também dentro das lojas do 1º item (`busca.buscar_na_loja`); o rastro mostra `refinements={merchantId}`. |
+| `merchantType` restringe a vertical | Itens de varejo (mercado, farmácia, pet, adega) buscam com o `merchantType` da categoria. |
 | 1 carrinho = 1 restaurante + 1 endereço | `checkout.py` agrupa a combinação por loja e monta 1 carrinho por loja. |
 | `createCart` não é idempotente | Uma trava por sala serializa as ações do organizador que falam com o MCP; a máquina de estados só aceita "escolher" em `match_pronto`, então clique duplo não cria carrinho em dobro. |
 | Não confundir `itemId`, `cartItemId`, `cartId` | O checkout guarda o dono de cada `cartItemId` e confere o `getCart` contra o que foi adicionado. |
@@ -382,6 +405,9 @@ Limites hoje:
 - O MCP não junta pedidos de lojas diferentes: N lojas = N pedidos, N taxas, N entregas (o app avisa antes).
 - Vouchers (`listVouchers`/`setVoucher`), `scheduledTime` e endereço novo (`createAddress`) não são usados.
 - Até 6 pessoas por sala; o login OAuth só volta para o `localhost` do PC que roda o app.
+- Até 4 itens por pessoa (o otimizador enumera as opções de cada pessoa; 5+ fica lento). Lista maior → aviso com o que
+  ficou de fora.
+- Pedido mínimo da loja é lido da busca, mas ainda não vira regra (o carrinho real é quem recusa).
 
 Próximos passos:
 - Ajustar `busca.py`/`checkout.py` às amostras reais; rodar o Match real até o `getCart` com taxa real.
