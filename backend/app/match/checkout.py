@@ -461,13 +461,26 @@ def _ler_totais(resp: dict) -> dict:
     # bug 25: o getCart real aplica promoção/benefício no total sem o app ver o campo. Nomes plausíveis, todos
     # opcionais (suposição a confirmar no real); vale o primeiro achado (não soma, para não contar 2 vezes).
     desconto = _primeiro_valor(fontes, _CHAVES_DESCONTO) or 0.0
-    totais = {"subtotal": subtotal, "taxa": taxa, "desconto": desconto, "total": total}
-    # sem desconto explícito e total menor que subtotal + taxa: o total do iFood é a verdade → desconto derivado
-    sobra = _centavos(subtotal) + _centavos(taxa) - _centavos(total)
+    # bug 29: "Taxa de serviço" do iFood (R$ 0,99–1,00 por carrinho) está no total: `summary.feeTotalAmount` ou a
+    # soma de `fees[].amount` (conferido em docs/mcp-real/bug25-whopper-carrinho.json). Entra nas partes com a entrega.
+    servico = _primeiro_valor(fontes, ("feeTotalAmount", "serviceFee", "serviceFeeAmount"))
+    if servico is None:
+        lista = next((f.get("fees") for f in fontes if isinstance(f.get("fees"), list)), [])
+        servico = round(sum(_numero_ou_zero(x.get("amount")) for x in lista if isinstance(x, dict)), 2)
+    totais = {"subtotal": subtotal, "taxa": taxa, "servico": servico or 0.0, "desconto": desconto, "total": total}
+    # sem desconto explícito e total menor que subtotal + taxas: o total do iFood é a verdade → desconto derivado
+    sobra = _centavos(subtotal) + _centavos(taxa) + _centavos(servico or 0.0) - _centavos(total)
     if desconto == 0 and total > 0 and sobra > 0:
         totais["desconto"] = sobra / 100
         totais["desconto_derivado"] = True
     return totais
+
+
+def _numero_ou_zero(valor) -> float:
+    try:
+        return float(valor) if valor is not None and not isinstance(valor, bool) else 0.0
+    except (TypeError, ValueError):
+        return 0.0
 
 
 # Chaves de desconto aceitas no getCart (raiz, corpo, `summary` ou `totals`). Só `discount*` é visto no demo; as de

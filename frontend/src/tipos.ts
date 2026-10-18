@@ -127,6 +127,8 @@ export interface Carrinho {
   itens: unknown[];
   subtotal: number;
   taxa: number;
+  /** Taxa de serviço do iFood (bug 29), já incluída no total; dividida nas partes junto com a entrega. */
+  servico?: number;
   desconto: number;
   total: number;
   eta_min: number | null;

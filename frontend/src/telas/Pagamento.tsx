@@ -359,6 +359,12 @@ function CartaoLoja({ c }: { c: Carrinho }) {
           <dt>Taxa de entrega</dt>
           <dd>{brl(c.taxa)}</dd>
         </div>
+        {!!c.servico && (
+          <div>
+            <dt>Taxa de serviço</dt>
+            <dd>{brl(c.servico)}</dd>
+          </div>
+        )}
         <div>
           <dt>Desconto</dt>
           <dd>{brl(c.desconto)}</dd>

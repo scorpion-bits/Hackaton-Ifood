@@ -259,6 +259,40 @@ def test_sem_desconto_nao_muda_o_formato():
     from app.match.checkout import _ler_totais
 
     t = _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0, "discount": 0, "total": 55.0})
-    assert t == {"subtotal": 50.0, "taxa": 5.0, "desconto": 0.0, "total": 55.0}
+    assert t == {"subtotal": 50.0, "taxa": 5.0, "servico": 0.0, "desconto": 0.0, "total": 55.0}
     # total ausente (0) não vira desconto
     assert _ler_totais({"subtotal": 50.0, "deliveryFee": 5.0})["desconto"] == 0.0
+
+
+def test_taxa_de_servico_do_ifood_entra_nos_totais_e_fecha_a_conta():
+    """Bug 29 (P7/P8 no real): o getCart traz "Taxa de serviço" (`fees[]`, `summary.feeTotalAmount`) dentro do total;
+    sem lê-la, as partes ficavam R$ 0,99–1,00 abaixo do carrinho."""
+    import json
+    from pathlib import Path
+
+    from app.match.checkout import _ler_totais
+    amostra = json.loads((Path(__file__).resolve().parents[2] / "docs" / "mcp-real" / "bug25-whopper-carrinho.json")
+                         .read_text(encoding="utf-8"))
+
+    def achar(no):
+        if isinstance(no, dict):
+            if isinstance(no.get("summary"), dict) and "feeTotalAmount" in no["summary"]:
+                return no
+            for v in no.values():
+                if (r := achar(v)) is not None:
+                    return r
+        if isinstance(no, list):
+            for v in no:
+                if (r := achar(v)) is not None:
+                    return r
+        return None
+
+    t = _ler_totais(achar(amostra))
+    assert (t["subtotal"], t["taxa"], t["servico"], t["desconto"], t["total"]) == (39.99, 9.99, 1.0, 0.0, 50.98)
+    # com desconto do iFood (benefício): itens + entrega + serviço − desconto == total
+    t = _ler_totais({"summary": {"subtotalAmount": 33.90, "deliveryFeeAmount": 9.99, "feeTotalAmount": 0.99,
+                                 "benefitsTotalAmount": 16.95, "totalAmount": 27.93}})
+    assert round(t["subtotal"] + t["taxa"] + t["servico"] - t["desconto"], 2) == t["total"]
+    # só a lista fees[] (sem summary): soma os valores
+    assert _ler_totais({"subtotal": 10.0, "deliveryFee": 5.0, "fees": [{"amount": 0.99}], "total": 15.99})["servico"] == 0.99
+

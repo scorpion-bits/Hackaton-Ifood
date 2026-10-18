@@ -194,7 +194,8 @@ def _calcular_partes(sala: dict, carrinhos: list[dict]) -> tuple[list[dict], lis
                 preco=preco, eta_min=c.get("eta_min"), vertical="", perecivel=False,
             ))
     escolhas = {p["id"]: por_pessoa[p["id"]] for p in sala["participantes"] if p["id"] in por_pessoa}
-    taxas = {c["loja_id"]: float(c["taxa"] or 0) for c in carrinhos}
+    # taxa de entrega + taxa de serviço do iFood (bug 29): as duas estão no total do carrinho e são divididas igual
+    taxas = {c["loja_id"]: float(c["taxa"] or 0) + float(c.get("servico") or 0) for c in carrinhos}
     descontos = {c["loja_id"]: float(c["desconto"] or 0) for c in carrinhos}
     try:
         partes = calcular_partes(escolhas, nomes, taxas, descontos)
