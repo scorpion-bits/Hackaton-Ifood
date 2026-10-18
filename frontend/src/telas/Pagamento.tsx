@@ -25,6 +25,8 @@ const FORMA_ROTULO: Record<string, string> = {
 };
 /** Mesmo prefixo de `PREFIXO_LOJA_FORA` em `rotas_match.py` (bug 21: loja que o iFood recusou no escolher). */
 const PREFIXO_LOJA_FORA = "Não consegui montar o carrinho em ";
+// Começo do 409 do /enviar com IFOOD_MCP_PERMITIR_ENVIO=false (rotas_match.MSG_ENVIO_DESLIGADO_SALA).
+const PREFIXO_ENVIO_DESLIGADO = "Conta de teste: o envio real está desligado";
 
 function juntarNomes(nomes: string[]): string {
   return nomes.length <= 1 ? (nomes[0] ?? "") : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
@@ -400,6 +402,8 @@ export default function Pagamento({
   // Conta de teste no modo real: o servidor avisa que o envio real está desligado (o pedido para no carrinho).
   // Só `=== false` muda a tela; se o campo não vier, tudo segue como antes.
   const [envioDesligado, setEnvioDesligado] = useState(false);
+  // Bug 28 (decisão T8): com o envio real desligado, o fim é "carrinhos prontos no iFood", não uma caixa de erro.
+  const [prontosNoIfood, setProntosNoIfood] = useState(false);
   useEffect(() => {
     if (!organizador || sala.demonstracao) return;
     let vivo = true;
@@ -443,7 +447,12 @@ export default function Pagamento({
       await api.enviar(salaId, token);
       setConfirmarEnvio(false);
     } catch (x) {
-      setErro(x instanceof Error ? x.message : "Não consegui enviar os pedidos.");
+      const msg = x instanceof Error ? x.message : "";
+      if (envioDesligado || msg.startsWith(PREFIXO_ENVIO_DESLIGADO)) {
+        setProntosNoIfood(true);
+      } else {
+        setErro(msg || "Não consegui enviar os pedidos.");
+      }
       setConfirmarEnvio(false);
     } finally {
       setEnviando(false);
@@ -544,6 +553,25 @@ export default function Pagamento({
       {erro && (
         <div className="alerta alerta-erro" role="alert">
           {erro}
+        </div>
+      )}
+
+      {prontosNoIfood && (
+        <div className="alerta alerta-ok" role="status">
+          <strong>✅ Carrinhos prontos no iFood</strong>
+          <ul className="resumo-env">
+            {carrinhos.map((c) => (
+              <li key={c.cart_id}>
+                <span>{c.loja_nome}</span>
+                <strong>{brl(c.total)}</strong>
+              </li>
+            ))}
+            <li className="total">
+              <span>Total</span>
+              <strong>{brl(totalGeral)}</strong>
+            </li>
+          </ul>
+          <p className="alerta-ok-nota">Na conta de teste o envio fica desligado; com uma conta real, o pedido sai aqui.</p>
         </div>
       )}
 

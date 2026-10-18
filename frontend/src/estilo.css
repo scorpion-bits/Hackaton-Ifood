@@ -211,6 +211,9 @@ textarea { resize: none; min-height: 84px; }
 .alerta { border-radius: var(--r-md); padding: 12px 14px; font-weight: 600; font-size: 0.9rem; }
 .alerta-erro { background: var(--erro-fundo); color: var(--marca-escura); border: 1px solid var(--marca); }
 .alerta-demo { background: var(--aviso-fundo); color: var(--aviso-texto); border: 2px solid var(--aviso-texto); margin: 0; width: 100%; text-align: left; font-weight: 600; }
+.alerta-ok { background: var(--ok-fundo); color: var(--ok); border: 2px solid var(--ok); margin: 0 0 12px; text-align: left; }
+.alerta-ok .resumo-env { color: var(--texto, inherit); margin: 8px 0; }
+.alerta-ok-nota { margin: 0; font-weight: 500; font-size: 0.85rem; }
 .alerta-demo strong { display: block; font-size: 1rem; font-weight: 800; }
 .aviso-nota { border-radius: var(--r-md); padding: 11px 13px; font-size: 13.5px; font-weight: 700; background: var(--marca-suave); color: var(--texto); }
 .aviso-nota.ok { background: var(--ok-fundo); color: var(--ok); }
