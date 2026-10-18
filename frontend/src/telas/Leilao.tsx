@@ -144,11 +144,11 @@ export default function Leilao({
   const nMcp = R.length;
   const nIa = typeof med?.chamadas_llm === "number" ? med.chamadas_llm : 0;
   const rodapeMedicao =
-    nMcp > 0 || typeof med?.ms_total === "number"
+    nMcp > 0 || (typeof med?.ms_total === "number" && med.ms_total >= 100)
       ? [
           nMcp > 0 ? `MCP · ${nMcp} ${nMcp === 1 ? "chamada" : "chamadas"}` : null,
           nIa > 0 ? `${nIa} ${nIa === 1 ? "agente com IA" : "agentes com IA"}` : null,
-          typeof med?.ms_total === "number" ? `disputa em ${segundos(med.ms_total)} s` : null,
+          typeof med?.ms_total === "number" && med.ms_total >= 100 ? `disputa em ${segundos(med.ms_total)} s` : null,
         ]
           .filter(Boolean)
           .join(" · ")

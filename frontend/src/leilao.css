@@ -48,7 +48,7 @@
 .ld-legenda { font-size: 11px; color: var(--ld-mudo); margin: 0; }
 .ld-titulo { font-size: 1.35rem; line-height: 1.1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 .ld-arena { display: flex; flex-wrap: wrap; gap: 22px 6px; padding: 20px 0 0; flex: none; }
-.ld-ag { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 24%; max-width: 24%; min-width: 0; transition: opacity 0.4s, filter 0.4s; }
+.ld-ag { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 calc((100% - 18px) / 4); max-width: calc((100% - 18px) / 4); min-width: 0; transition: opacity 0.4s, filter 0.4s; }
 .ld-ab { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; line-height: 1; border: 3px solid var(--ld-card); box-shadow: 0 0 0 2px var(--ld-linha); transition: box-shadow 0.25s, transform 0.25s; flex: none; overflow: hidden; }
 .ld-ab img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ld-ag small { font-size: 10.5px; font-weight: 800; color: var(--ld-mudo); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -145,14 +145,15 @@
 .ld-mwrap { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
 .ld-eyebrow { font-size: 12.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; margin: 0; }
 .ld-mtitle { font-size: 56px; line-height: 1; margin: 2px 0; font-weight: 800; transform: rotate(-4deg); text-shadow: 0 6px 0 rgba(0, 0, 0, 0.14); animation: ld-slam 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) 0.12s both; }
-.ld-par { display: flex; align-items: center; justify-content: center; margin: 26px 0 16px; width: 100%; }
+.ld-par { display: flex; align-items: center; justify-content: center; margin: 26px 0 16px; width: 100%; max-width: 100%; }
+.ld-eyebrow { position: relative; z-index: 2; }
 .ld-pgrupo { display: flex; animation: ld-fromL 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both; }
 .ld-prest { display: flex; animation: ld-fromR 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both; }
 .ld-face { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; font-weight: 800; font-size: 16px; line-height: 1; }
 .ld-face-p { width: 30px; height: 30px; font-size: 14px; }
-.ld-face-g { width: 70px; height: 70px; border: 4px solid #fff; margin-left: -18px; font-size: 28px; }
+.ld-face-g { width: 56px; height: 56px; border: 3px solid #fff; margin-left: -16px; font-size: 22px; }
 .ld-face-g:first-child { margin-left: 0; }
-.ld-rt { width: 88px; height: 88px; border: 4px solid #fff; font-size: 42px; margin-left: -18px; box-shadow: none; }
+.ld-rt { width: 70px; height: 70px; border: 3px solid #fff; font-size: 32px; margin-left: -16px; box-shadow: none; }
 .ld-rt:first-child { margin-left: 0; }
 .ld-mcoracao { width: 56px; height: 56px; border-radius: 50%; background: #fff; color: #c8101e; display: grid; place-items: center; margin: 0 -12px; z-index: 3; animation: ld-heartpop 0.6s cubic-bezier(0.2, 1.8, 0.4, 1) 0.95s both; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); }
 .ld-mtexto { font-weight: 800; font-size: 17px; line-height: 1.25; max-width: 320px; margin: 0; animation: ld-tagin 0.5s 1.2s both; }
