@@ -1,5 +1,11 @@
 # CLAUDE.md — memória operacional (só estado vigente; máx. 250 linhas — o hook arquiva o excesso)
 
+## ⚠️ Aviso (17/10 ~23h15) — vale acima de qualquer plano
+- **Leia `docs/AVISO-EQUIPE.md` e `docs/quadro.md` antes de qualquer tarefa.**
+- Foco único: **MCP real + Match em pedido em grupo funcionando**. Leilão/deck/Patrocinado congelados (só bug). Nada novo.
+- Todo commit com autor humano: pergunte "quem é você?", use `git commit --author="Nome <email>"` + `Responsável: Nome`.
+- Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
+
 ## Evento
 - Hackathon SEMCOMP × iFood "Vendendo com Agentes", São Carlos. Prêmios R$ 4.000 / 2.000 / 1.000.
 - **Desafio oficial:** agente de IA que opera o **MCP do iFood (consumidor)** para fazer pedidos — da escolha do
