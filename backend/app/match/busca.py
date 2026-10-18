@@ -425,7 +425,9 @@ async def buscar_detalhado(cliente: ClienteIFood, intencao: Intencao, endereco: 
         return sum(1 for c, _ in coletados.values() if not c.viola)
 
     for consulta in intencao.consultas:
-        if bons() >= 2 * MAX_POR_SLOT:
+        # latência (T7, P10 real: ~1,9 s por searchOffers): com MAX_POR_SLOT opções boas, a consulta seguinte
+        # ("refrigerante" depois de "coca") não muda o resultado e custa mais uma chamada em sequência
+        if bons() >= MAX_POR_SLOT:
             break
         extra: dict[str, Any] = {}
         if len(intencao.verticais) == 1 and intencao.verticais[0] != TIPO_PADRAO_REAL:
