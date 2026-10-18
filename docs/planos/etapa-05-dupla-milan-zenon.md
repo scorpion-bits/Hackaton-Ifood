@@ -1,0 +1,65 @@
+# Etapa 05 — Reta final em dupla: Milan (back + MCP) × Zenon (front + entrega) · Thales testa
+
+> Plano vigente a partir de **17/10 ~23h55** (pedido do Milan). Continua a etapa 04
+> (`etapa-04-leilao-e-entrega.md`: contratos C11–C16 valem como estão) e **substitui a divisão de tarefas dela**.
+> Regras de autor, quadro e branches: `docs/AVISO-EQUIPE.md`. Antes de começar qualquer tarefa: `docs/quadro.md`.
+
+- **Objetivo (1 frase):** o Match em grupo faz um pedido de verdade pelo MCP real na conta de teste, com a conversa
+  "Ajustar com o IBits", testado no PC do Thales — e os 6 entregáveis + pitch final prontos.
+- **Pronto quando:** (1) no PC com `.env`, `IFOOD_MCP_MODO=real`: sala → convidados → Rodar Match com lojas reais →
+  `getCart` com taxa real → pedido (sem Pix); (2) "Ajustar com o IBits" refaz o Match; (3) `./iniciar.sh --testes` e
+  `npm run build` passam; o modo demonstração sustenta a demo sem internet; (4) roteiro de testes do Thales sem
+  bloqueio; (5) PR do branch de integração → `main` mergeado.
+- **Prazo (BRT):** agora → **dom 10h30 congelar** → 12h30 submissão.
+
+## Prioridade (corte de cima para baixo se faltar tempo)
+1. **MCP real até o pedido** (T8 + C16) — pilar "uso correto do MCP".
+2. **Ajustar com o IBits** (C14) — o regulamento pede agente conversacional + ferramentas determinísticas.
+3. Testes do Thales → correções.
+4. Pacote de entrega (6 entregáveis) e pitch final.
+5. **Só eu** (C15) e polimento de UI — **só se 1–4 estiverem ok**. Nada além disto.
+
+## Divisão — quem mexe em quê (arquivos exclusivos; não tocar no do outro)
+
+### Trilha A — Milan (este agente: back, MCP, integração)
+| ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
+|---|---|---|---|---|
+| A1 | T8 + C16: busca/checkout no formato real; `browseOffers` quando a busca vem vazia; pagamento real nunca Pix (prefere dinheiro/na entrega) | `backend/app/match/busca.py`, `checkout.py`, `modelos.py`, `backend/app/ifood_mcp/*`, `backend/tests/test_checkout.py`, `test_busca*.py`, `docs/feedback-mcp.md`, `docs/mcp-real/` | testes passam com as amostras reais; 👥 no PC: carrinho real com taxa | ⬜ (👥 amostras) |
+| A2 | C14 backend: `match/ajuste.py` + `POST /api/salas/{id}/ajustar` + campo `ajustes` | `backend/app/match/ajuste.py`, `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/tests/test_ajuste.py` | contrato C14 coberto por teste (200, 422, 409 mantém resultado) | ⬜ |
+| A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ⬜ (👥 chave) |
+| A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
+| A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | ⬜ |
+
+### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
+| ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
+|---|---|---|---|---|
+| B1 | C14 front: campo "Ajustar com o IBits" no deck, bolhas da conversa, disputa curta, aviso ao convidado | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `frontend/src/componentes/leilao/*`, `frontend/src/leilao.css`, `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/App.tsx` | build ok; fluxo funciona contra a rota da A2 (antes dela: contra um mock local no próprio front) | ⬜ |
+| B2 | Pacote de entrega (T22): `docs/ENTREGA.md` + PDF único dos 6 entregáveis | `docs/ENTREGA.md`, `docs/entrega/*` | PDF gerado com os 6 entregáveis e capturas | ⬜ |
+| B3 | Pitch final (T24): ~5 min, palavras do regulamento, MCP real, Ajustar | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | PDF do pitch; roteiro cronometrado com o Thales | ⬜ (depois de A1/A2) |
+| B4 | Bugs de front vindos do Thales | conforme o bug (só `frontend/`) | bug fechado no `docs/testes/bugs.md` | ⬜ |
+| B5 | Só eu (C15) + polimento de UI — **só se a prioridade 1–4 estiver ok** | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `SoEu.tsx`, `componentes/Folha.tsx`, `estilo.css` | build ok; 1 pessoa pede em ~20 s | Só eu ✅ (T20, sessão da etapa 04, 961a8a7); polimento ⏸️ |
+
+### Trilha C — Thales (agente do Thales guia os testes; não edita código)
+- Segue `docs/testes/roteiro-testes.md` e registra cada problema em `docs/testes/bugs.md` (só o agente do Thales
+  escreve lá; Milan e Zenon só mudam o status da linha do bug que corrigirem).
+
+### Fronteira entre A e B (o contrato é a API)
+- O formato das rotas está nos contratos C7 (etapa 02) e C11/C14 (etapa 04). **O back não muda o formato sem recado**
+  no `docs/quadro.md`; o front não muda arquivo de `backend/`.
+- `api.ts`/`tipos.ts` são do Zenon; `rotas_match.py`/`salas.py` são do Milan.
+- Arquivo que não está em nenhuma lista → pedir no "Recados" antes de mexer.
+
+## Fluxo de branches
+- Cada tarefa: branch `milan/<id>-<nome>` ou `zenon/<id>-<nome>` saído do `ccr-4c429dbb-lp7btg`.
+- Ao terminar: testes + build → push → atualizar o quadro → o Milan (A4) integra no `ccr-4c429dbb-lp7btg`.
+- Commit com autor humano (`--author="Nome <email>"` + `Responsável: Nome`).
+
+## 👥 Agora
+- Quem está com o PC + `.env`: `python -m app.ifood_mcp.diagnostico --carrinho` e push de `docs/mcp-real/` (destrava A1).
+- Chave Groq/Gemini no `.env` + `python listar_modelos.py` (destrava A3).
+- Thales: `iniciar.bat` no PC dele e o roteiro de testes.
+
+## Registro de execução
+- 17/10 ~23h55 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
+  T18–T22 marcados 🔄 sem branch no remoto: **se essa sessão ainda tem trabalho, ela dá push no branch e escreve no
+  quadro**; o dono da trilha aproveita o que vier e não refaz.

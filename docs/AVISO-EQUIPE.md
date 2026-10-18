@@ -24,6 +24,15 @@ Prioridades, nesta ordem:
 - "Patrocinado" — não evoluir e não destacar no pitch.
 - Funcionalidade nova de qualquer tipo, pesquisa nova, refatoração grande.
 
+### 1.1 Quem faz o quê (17/10 ~23h55) — plano `docs/planos/etapa-05-dupla-milan-zenon.md`
+- **Milan** (agente dele): backend, MCP real, "Ajustar" no back, prompts de IA e **integração** (único que integra).
+- **Zenon** (agente dele): frontend ("Ajustar" na tela), pacote dos 6 entregáveis e pitch final.
+- **Thales** (agente dele): **guia os testes** pelo `docs/testes/roteiro-testes.md` e registra em `docs/testes/bugs.md`;
+  não edita código.
+- Antonio: apoio nos testes com o Thales.
+- A rodada 3 da etapa 04 (Ajustar, pedido real, Só eu) continua valendo, na ordem de prioridade do plano da etapa 05;
+  "Só eu" e polimento de UI só depois que o resto estiver funcionando.
+
 ## 2. Regras de colaboração (obrigatórias para todo agente)
 
 ### 2.1 Autor humano em todo commit
@@ -46,6 +55,6 @@ Cada pessoa usa a própria sessão do Claude. **Todo commit leva quem pediu o tr
 - Branch de integração: **`ccr-4c429dbb-lp7btg`** (integração vigente). Daqui sai o PR para a `main`.
 - Branch novo de tarefa: `<pessoa>/<tarefa>` (ex.: `zenon/fix-convidado`), criado a partir do de integração.
 - Commits pequenos em português: `tipo(escopo): descrição` (regra de sempre).
-- Quem integra no `ccr-4c429dbb-lp7btg` e na `main` é **uma sessão só por vez** (marcada no quadro como
-  "integração"). Ninguém faz force-push em branch dos outros.
+- Quem integra no `ccr-4c429dbb-lp7btg` e na `main` é **só o agente do Milan**. Os outros dão push no branch
+  da tarefa e avisam no quadro. Ninguém faz force-push em branch dos outros.
 - Antes do push: `./iniciar.sh --testes` (e `cd frontend && npm run build` se mexeu no front).

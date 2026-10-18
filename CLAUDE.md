@@ -5,6 +5,8 @@
 - Foco único: **MCP real + Match em pedido em grupo funcionando**. Leilão/deck/Patrocinado congelados (só bug). Nada novo.
 - Todo commit com autor humano: pergunte "quem é você?", use `git commit --author="Nome <email>"` + `Responsável: Nome`.
 - Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
+- **Plano vigente: `docs/planos/etapa-05-dupla-milan-zenon.md`** — Milan = back/MCP/integração (só ele integra);
+  Zenon = front/entregáveis/pitch; Thales = testes guiados (`docs/testes/roteiro-testes.md`, sem editar código).
 
 ## Evento
 - Hackathon SEMCOMP × iFood "Vendendo com Agentes", São Carlos. Prêmios R$ 4.000 / 2.000 / 1.000.
@@ -37,7 +39,7 @@
   convidados entram por link/QR sem login; só o organizador usa o iFood. Pagamento "junto" ou "separado" (vaquinha:
   Pix real para a chave do organizador / cartão simulado / dinheiro; pedido só sai com 100% pago; prazo 10 min +
   2 min por pessoa acima de 2). Detalhes: `docs/planos/etapa-01b-match-estrategia.md` e `docs/decisions.md` (7–8).
-- **Plano vigente:** `docs/planos/etapa-04-leilao-e-entrega.md` (leilão de agentes por loja + MCP real + entrega; branch de integração `ccr-4c429dbb-lp7btg`, 1 branch por tarefa). Etapas: `docs/planos/README.md`.
+- **Plano vigente:** `docs/planos/etapa-05-dupla-milan-zenon.md` (divisão de tarefas); contratos C11–C16 em `docs/planos/etapa-04-leilao-e-entrega.md` (leilão de agentes por loja + MCP real + entrega; branch de integração `ccr-4c429dbb-lp7btg`, 1 branch por tarefa). Etapas: `docs/planos/README.md`.
 - ✅ Agente "IBits" **aprovado** (17/10). Portal: https://mcp-developer.ifood.com.br/pt-BR ("Faça login"). 3 contas de teste
   (`unique-`, `safe-`, `fair-thales@test.ifood.com.br`, expiram em ~16 dias; OTP no portal). Redirect URLs: `http://localhost:8000/oauth/callback` (app),
   `http://127.0.0.1:19876/mcp/oauth/callback` e `http://localhost:19876/mcp/oauth/callback` (opencode).
