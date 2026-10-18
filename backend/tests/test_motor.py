@@ -133,8 +133,10 @@ async def test_item_fora_do_dicionario_busca_pelo_proprio_texto(monkeypatch):
     r = await _rodar([Desejo("milan", "Milan", "japonês, até R$ 45"),
                       Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
     assert ["feijoada completa"] in consultas
-    # o demo não tem feijoada: o aviso é honesto e a pessoa que achou o que queria segue
-    assert "Não achei feijoada completa até R$ 60 para Ana." in r["avisos"]
+    # o demo não tem feijoada: a busca específica volta vazia, cai no browseOffers perto do endereço (C16) e o
+    # aviso é honesto ("a opção mais próxima é X"); a pessoa que achou o que queria segue
+    assert "browseOffers" in [c["tool"] for c in r["rastro"]]
+    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
     assert r["combinacoes"]
 
 
