@@ -531,7 +531,13 @@ export default function Pagamento({
       {!separado && (
         <div className="cartao">
           <h2>Pagamento único</h2>
-          <p className="suave">{organizador ? "Você paga o total no iFood e acerta com o grupo depois." : "O organizador paga tudo e acerta com o grupo."}</p>
+          <p className="suave">
+            {sala.participantes.length === 1
+              ? "Você paga o total no iFood."
+              : organizador
+                ? "Você paga o total no iFood e acerta com o grupo depois."
+                : "O organizador paga tudo e acerta com o grupo."}
+          </p>
         </div>
       )}
 

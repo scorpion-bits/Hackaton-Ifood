@@ -112,7 +112,10 @@ function Cartao({
   const n = lojas.length;
   const afin = afinidadeDe(c);
   const itens = Object.values(c.escolhas);
-  const totalItens = Math.round(itens.reduce((s, i) => s + i.preco, 0) * 100) / 100;
+  // convidado vê só a parte dele (o smoke achou "Esta é a sua parte" com o total do grupo embaixo)
+  const so = pids.length < totalPessoas;
+  const meus = so ? Object.entries(c.escolhas).filter(([slot]) => pids.includes(slot.split("#")[0])).map(([, i]) => i) : itens;
+  const totalItens = Math.round(meus.reduce((s, i) => s + i.preco, 0) * 100) / 100;
   const etas = itens.map((i) => i.eta_min).filter((e): e is number => typeof e === "number");
   const eta = etas.length ? Math.max(...etas) : null;
   const explicacao = c.explicacao ?? "";
@@ -142,8 +145,10 @@ function Cartao({
         </div>
         <Linhas c={c} sala={sala} pids={pids} mostrarSem={mostrarSem} antes={antes} />
         <p className={`ld-note ${n > 1 ? "warn" : "ok"}`}>
-          {n > 1 ? `Dividido em ${n} pedidos: ${n} entregas.` : "Um pedido só: uma entrega."} A taxa de cada entrega
-          aparece no carrinho antes do seu ok.
+          {n > 1 ? `Dividido em ${n} pedidos: ${n} entregas.` : "Um pedido só: uma entrega."}{" "}
+          {c.taxa_conhecida
+            ? "A taxa de entrega estimada pela busca do iFood já entrou na escolha; o valor final aparece no carrinho antes do seu ok."
+            : "A taxa de cada entrega aparece no carrinho antes do seu ok."}
         </p>
         {explicacao && <p className="ld-explica">{explicacao}</p>}
         {avs.map((a, i) => (
@@ -155,7 +160,9 @@ function Cartao({
       <div className="ld-cfoot">
         <div>
           <div className="ld-tot">{brl(totalItens)}</div>
-          <small>{c.taxa_conhecida ? "itens · taxa já considerada na escolha" : "só itens · taxa no carrinho"}</small>
+          <small>
+            {so ? "seus itens · a taxa é dividida no pagamento" : c.taxa_conhecida ? "itens · taxa já considerada na escolha" : "só itens · taxa no carrinho"}
+          </small>
         </div>
         <span className={`ld-tx${n > 1 ? " w" : ""}`}>
           {n} {n > 1 ? "entregas" : "entrega"}

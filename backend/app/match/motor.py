@@ -498,6 +498,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
                 avisos.append(economia)
             avisos.append("A taxa de entrega veio da busca do iFood (estimada); o valor final aparece no carrinho, "
                           "antes de você confirmar.")
+            if any(orcamentos.values()):  # smoke 18/10: "até R$ 42" e total com taxa R$ 48,79 sem explicação
+                avisos.append("O orçamento de cada pessoa vale para os itens; a taxa de entrega é somada à parte.")
         else:
             avisos.append("A taxa de entrega de cada loja só aparece no carrinho, antes de você confirmar.")
 
