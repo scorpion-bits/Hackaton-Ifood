@@ -231,3 +231,15 @@ def test_escolher_sem_falha_traz_lojas_fora_vazio(c):
     assert r.status_code == 200 and r.json()["lojas_fora"] == []
     assert len(r.json()["carrinhos"]) == len(comb["lojas"])
     assert centavos(sum(k["total"] for k in r.json()["carrinhos"])) > 0
+
+
+def test_erro_interno_do_ifood_nao_mostra_json_cru_na_tela():
+    """Bug 34: o 502 do /escolher com INTERNAL mostrava o JSON do iFood, em inglês; o erro inteiro fica no rastro."""
+    bruto = ErroMCP('{"code": "INTERNAL", "message": "An internal failure at an upstream service"}', codigo="INTERNAL")
+    erro = checkout._erro_da_loja("loja-x", "Lanchonete Tropical", bruto)
+    assert erro.mensagem == ("Não deu para montar o carrinho de Lanchonete Tropical: "
+                             "o iFood está instável agora; tente de novo em instantes")
+    assert erro.__cause__ is bruto
+    legivel = checkout._erro_da_loja("loja-x", "Kaigan", ErroMCP("Could not retrieve merchant (código MERCH-007)",
+                                                                  codigo="MERCH-007"))
+    assert "MERCH-007" in legivel.mensagem  # erro já legível continua como está
