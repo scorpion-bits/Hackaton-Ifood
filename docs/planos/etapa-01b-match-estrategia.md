@@ -106,6 +106,14 @@ MCP visível · modo demonstração com dados gravados (selo) para não depender
 memória do grupo, agentes por participante.
 
 ## 8. Mais agentes?
+> **Substituída pela D9 em 17/10 (~22h, `etapa-04-leilao-e-entrega.md`).** A regra "não criar agente por pessoa nem
+> enxame" abaixo vale para **pessoas** (continua sem agente por convidado), mas não para **lojas**: a D9 criou um
+> **agente vendedor por loja** (só vê o próprio cardápio, até 8 lojas, em paralelo, ~6 s cada) e o IBits como agente
+> comprador. Por quê: (1) o tema do evento é "Vendendo com Agentes" e, com a D9, o Match cobre os dois lados (lojas
+> vendendo, turma comprando); (2) o custo que motivou a regra ficou limitado — 1 chamada por loja, tempo máximo,
+> validação dura e fallback determinístico sem LLM (o modo mock roda sem chave); (3) a disputa torna visível o trabalho
+> da IA e abre o modelo do Patrocinado (D10). O texto original fica como registro.
+
 **No produto:** não criar "um agente por pessoa" nem enxame — custa tokens, latência e rate limit e não melhora a
 resposta. Arquitetura: **1 agente** que usa as tools do MCP para descobrir (busca flexível) + chamadas de LLM com
 papel fixo (intérprete, juiz de aderência, mediador/explicador) + otimizador e checkout em código. No pitch:
