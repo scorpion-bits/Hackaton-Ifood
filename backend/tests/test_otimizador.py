@@ -164,7 +164,7 @@ def test_poda_com_muitas_pessoas_nao_explode():
 def test_explicacao_e_para_dict_serializavel():
     candidatos = {"ana": [cand("ana", "A", "a1", 82.4, 0.75)]}
     comb = otimizar(candidatos, Pesos())[0]
-    assert comb.explicacao.startswith("1 loja · todos com nota ≥ 0,7 · R$ 82,40 sem taxa")
+    assert comb.explicacao.startswith("1 loja · todos bem atendidos · R$ 82,40 sem taxa")
     dados = para_dict(comb)
     json.dumps(dados)
     assert dados["escolhas"]["ana"]["preco"] == 82.4
@@ -237,3 +237,21 @@ def test_pessoa_sem_opcao_no_conjunto_de_lojas_fica_de_fora_sem_zerar_o_resultad
     assert combos and all(len(c.lojas) <= 2 for c in combos)
     assert len(combos[0].escolhas) == 2
     assert combos[0].componentes["pessoas_sem_opcao"] == 1
+
+
+def test_explicacao_em_linguagem_simples_sem_nota():
+    """Sem jargão: nada de "nota ≥ 0,7"; diz se todos ficaram bem atendidos ou se alguém ficou longe do pedido."""
+    from app.match import leilao
+    from app.match.otimizador import BEM_ATENDIDO
+
+    assert leilao.FELIZ == BEM_ATENDIDO  # "bem atendido" é o mesmo limiar do fechamento do leilão
+    bem = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)], "bia": [cand("bia", "A", "b1", 20, 0.6)]}, Pesos())[0]
+    longe = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)], "bia": [cand("bia", "A", "b1", 20, 0.3)]},
+                     Pesos())[0]
+    sem = otimizar({"ana": [cand("ana", "A", "a1", 20, 0.8)],
+                    "caio": [cand("caio", "A", "x", 30, 0.9, viola=["sem_gluten"])]}, Pesos())[0]
+    assert "todos bem atendidos" in bem.explicacao
+    assert "alguém ficou longe do que pediu" in longe.explicacao
+    assert "quem entrou está bem atendido" in sem.explicacao and "sem opção válida para caio" in sem.explicacao
+    for comb in (bem, longe, sem):
+        assert "nota" not in comb.explicacao and "≥" not in comb.explicacao

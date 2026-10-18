@@ -69,15 +69,22 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     assert replicas == [{"quem": "loja-demo-sorvete", "tipo": "replica",
                          "texto": "Fecho 2 sorvetes num pedido só: 1 entrega em vez de 2."}]
 
-    # patrocinado do demo: aparece primeiro entre os lances, com rótulo, e não vence
+    # patrocinado do demo: só tinha suco (bebida) dentro do orçamento do Antonio, que pediu comida → não oferta
+    # bebida; passa com fala honesta e, por ser patrocinado, fala primeiro. Não vence.
     lojas = {l["loja_id"]: l for l in bloco["lojas"]}
-    assert lojas["loja-demo-poke"]["patrocinado"] is True and lojas["loja-demo-poke"]["vencedora"] is False
-    assert lances[0]["quem"] == "loja-demo-poke" and lances[0]["patrocinado"] is True
+    poke = lojas["loja-demo-poke"]
+    assert poke["patrocinado"] is True and poke["vencedora"] is False and poke["passou"] and poke["ofertas"] == []
+    assert falas[1] == {"quem": "loja-demo-poke", "tipo": "passe",
+                        "texto": "Aqui não tem o que Antonio pediu dentro de R$ 25. Passo."}
     assert sum(l["patrocinado"] for l in lojas.values()) == 1
+    assert not any(o["item_id"] == "pk-suco" for l in bloco["lojas"] for o in l["ofertas"])
 
     demo = _itens_do_demo()
     for loja in bloco["lojas"]:
         assert loja["fonte_fala"] == "modelo" and loja["imagem_url"] is None
+        if loja["passou"]:
+            assert loja["ofertas"] == [] and loja["agrupa"] is None
+            continue
         assert loja["avaliacao"] is not None and loja["eta_min"] is not None
         por_slot: dict[str, int] = {}
         for o in loja["ofertas"]:
@@ -89,11 +96,14 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     assert lojas["loja-demo-sorvete"]["fala"] == ("Eu atendo todo mundo com Sundae de morango, R$ 18,90. "
                                                   "Nota 4,9, a melhor da sala.")
     assert lojas["loja-demo-sorvete"]["agrupa"]["pessoas"] == 3
+    assert lojas["loja-demo-sorvete"]["agrupa"]["decisao"] == "regra"  # sem LLM, juntar é regra
     # o otimizador só escolheu itens ofertados
     ofertados = {(o["slot_id"], o["item_id"]) for l in bloco["lojas"] for o in l["ofertas"]}
     assert all((s, e["item_id"]) in ofertados for c in r["combinacoes"] for s, e in c["escolhas"].items())
     assert set(bloco["medicoes"]) == {"ms_total", "ms_por_loja", "chamadas_llm"}
-    assert bloco["medicoes"]["chamadas_llm"] == 0 and set(bloco["medicoes"]["ms_por_loja"]) == set(lojas)
+    # só loja com algo para ofertar consulta o agente (o Poke passou sem chamada)
+    assert bloco["medicoes"]["chamadas_llm"] == 0
+    assert set(bloco["medicoes"]["ms_por_loja"]) == set(lojas) - {"loja-demo-poke"}
     json.dumps(r)
 
 
@@ -116,14 +126,23 @@ async def test_patrocinado_nao_muda_a_combinacao(monkeypatch):
     assert [f for f in resultados[2]["leilao"]["falas"] if f["tipo"] == "lance"][0]["quem"] == "loja-demo-burger"
 
 
-def test_patrocinado_garante_entrar_no_corte_de_8_lojas():
-    intencoes = {"p": Intencao("p")}
-    lista = [Candidato("p", f"loja-{n:02d}", f"Loja {n}", f"i{n}", f"Item {n}", 10.0, 30, "RESTAURANT", False,
+async def test_patrocinada_fora_do_top_8_nao_entra(monkeypatch):
+    """Patrocínio é só visibilidade: com > 8 lojas, pagar não compra vaga no corte (nem muda o conjunto)."""
+    _agentes(monkeypatch, {})
+    desejo, intencao = Desejo("p", "Paula", "pizza"), Intencao("p", consultas=["pizza"])
+    lista = [Candidato("p", f"loja-{n:02d}", f"Loja {n}", f"i{n}", f"Pizza {n}", 10.0, 30, "RESTAURANT", False,
                        nota=round(0.95 - n * 0.05, 2)) for n in range(12)]
-    sem = leilao._escolher_lojas({"p": lista}, intencoes, {})
-    assert len(sem) == 8 and "loja-11" not in sem
-    com = leilao._escolher_lojas({"p": lista}, intencoes, {"loja-11": {"patrocinado": True}})
-    assert len(com) == 8 and "loja-11" in com and "loja-00" in com
+    assert leilao._escolher_lojas({"p": lista}, {"p": intencao}) == [f"loja-{n:02d}" for n in range(8)]
+    for politica in ({}, {"loja-11": {"patrocinado": True}}, {"loja-09": {"patrocinado": True}}):
+        _, bloco = await leilao.rodar_leilao(carregar(), [(desejo, intencao)], {"p": lista}, {}, {"p": "Paula"},
+                                             politica)
+        assert [l["loja_id"] for l in bloco["lojas"]] == [f"loja-{n:02d}" for n in range(8)]
+        assert not any(f["quem"] in politica for f in bloco["falas"])
+    # patrocinada dentro do top 8: o lance dela vem primeiro, com o rótulo
+    _, bloco = await leilao.rodar_leilao(carregar(), [(desejo, intencao)], {"p": lista}, {}, {"p": "Paula"},
+                                         {"loja-06": {"patrocinado": True}})
+    lances = [f for f in bloco["falas"] if f["tipo"] == "lance"]
+    assert lances[0]["quem"] == "loja-06" and lances[0]["patrocinado"] is True
 
 
 async def test_leilao_desligado_volta_ao_motor_sem_leilao(monkeypatch):
@@ -356,8 +375,10 @@ async def test_caminho_llm_gera_fala_do_llm(monkeypatch):
     _provedor_falso(monkeypatch)
     r = await _rodar(ROTEIRO)
     bloco = r["leilao"]
-    assert bloco["llm"] is True and bloco["medicoes"]["chamadas_llm"] == len(bloco["lojas"])
-    assert all(l["fonte_fala"] == "llm" and l["fonte_ofertas"] == "llm" for l in bloco["lojas"])
+    # o Poke (só bebida para quem pediu comida) passa sem gastar chamada; as outras lojas falam pelo LLM
+    ativas = [l for l in bloco["lojas"] if l["loja_id"] != "loja-demo-poke"]
+    assert bloco["llm"] is True and bloco["medicoes"]["chamadas_llm"] == len(ativas)
+    assert all(l["fonte_fala"] == "llm" and l["fonte_ofertas"] == "llm" for l in ativas)
     sorvete = next(l for l in bloco["lojas"] if l["loja_id"] == "loja-demo-sorvete")
     assert sorvete["fala"] == "Aqui tem Sundae de morango por R$ 18,90, chego em 25 min."
     replica = next(f for f in bloco["falas"] if f["tipo"] == "replica")
@@ -372,11 +393,12 @@ async def test_agente_lento_usa_fallback_sem_derrubar_o_leilao(monkeypatch):
     lojas = {l["loja_id"]: l for l in r["leilao"]["lojas"]}
     japones = lojas.pop("loja-demo-japones")
     assert japones["fonte_ofertas"] == "modelo" and japones["fonte_fala"] == "modelo" and japones["ofertas"]
+    assert lojas.pop("loja-demo-poke")["passou"]  # nada para ofertar: passa sem chamar o LLM
     assert all(l["fonte_fala"] == "llm" for l in lojas.values())
     assert r["leilao"]["llm"] is True
     assert r["leilao"]["medicoes"]["ms_por_loja"]["loja-demo-japones"] < 2000
     # a tentativa que estourou o tempo não conta como chamada ao LLM
-    assert r["leilao"]["medicoes"]["chamadas_llm"] == len(r["leilao"]["lojas"]) - 1
+    assert r["leilao"]["medicoes"]["chamadas_llm"] == len(r["leilao"]["lojas"]) - 2
     assert r["combinacoes"] and set(r["leilao"]["vencedoras"]) == VENCEDORAS
 
 
@@ -503,3 +525,67 @@ async def test_abertura_usa_o_texto_da_pessoa_sem_categoria(monkeypatch):
     r = await _rodar([Desejo("a", "Ana", "feijoada completa")])
     assert "feijoada completa" in r["leilao"]["falas"][0]["texto"]
     assert "surpreenda-me" not in r["leilao"]["falas"][0]["texto"]
+
+
+# ---------- avaliação 2 do jurado (T17d) ----------
+async def test_bebida_nunca_e_oferta_para_quem_pediu_comida_e_patrocinada_passa_primeiro(monkeypatch):
+    vistos = {}
+
+    async def falso(cfg, sistema, usuario, timeout=None):
+        dados = json.loads(usuario)
+        vistos[dados["loja"]] = [i["item_id"] for p in dados["pedidos"] for i in p["itens"]]
+        return None
+
+    monkeypatch.setattr(leilao, "completar_json", falso)
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    monkeypatch.setenv("LLM_MODEL", "modelo-teste")
+    slots, candidatos, detalhes, nomes = _cenario()
+    slots[0] = (Desejo("ana", "Ana", "um sorvete, até R$ 21"), Intencao("ana", consultas=["sorvete"],
+                                                                           orcamento_max=21.0))
+    # Praça só tem, para a Ana, um suco (bebida) dentro do orçamento; o pr1 vira bebida também
+    candidatos["ana"].append(Candidato("ana", L3, "Praça", "pr-suco", "Suco verde", 9.9, 30, "RESTAURANT", False,
+                                       nota=0.6, motivo="m"))
+    detalhes[(L3, "pr-suco")] = {"tags": ["vegano"], "categoria": "Bebidas"}
+    detalhes[(L3, "pr1")] = {"tags": [], "categoria": "Bebidas"}
+    candidatos["bia"] = [c for c in candidatos["bia"] if c.loja_id != L3]  # Praça não tem nada para a Bia
+    _, bloco = await leilao.rodar_leilao(carregar(), slots, candidatos, detalhes, nomes,
+                                         {L3: {"patrocinado": True}})
+    lojas = {l["loja_id"]: l for l in bloco["lojas"]}
+    assert "Praça" not in vistos  # nada para ofertar: passa sem gastar chamada (e o agente nunca vê a bebida)
+    assert lojas[L3]["passou"] and lojas[L3]["ofertas"] == [] and lojas[L3]["patrocinado"]
+    assert bloco["falas"][1] == {"quem": L3, "tipo": "passe",
+                                 "texto": "Aqui não tem o que Ana pediu dentro de R$ 21. Passo."}
+    # sem orçamento, a fala não cita valor
+    assert leilao._fala_passe({"ana": [c for c in candidatos["ana"] if c.loja_id == L3]},
+                              {"ana": (Desejo("ana", "Ana", "um sorvete"), Intencao("ana", consultas=["sorvete"]))},
+                              detalhes) == "Aqui não tem o que Ana pediu. Passo."
+    # quem pediu bebida pode receber bebida
+    pediu = Intencao("ana", consultas=["suco"])
+    suco = next(c for c in candidatos["ana"] if c.item_id == "pr-suco")
+    assert leilao._ofertavel(suco, pediu, detalhes) and not leilao._ofertavel(suco, slots[0][1], detalhes)
+
+
+async def test_agente_decide_se_agrupa(monkeypatch):
+    base = {"ofertas": [{"slot_id": "ana", "item_id": "pr1"}, {"slot_id": "bia", "item_id": "pr2"}],
+            "fala": "Atendo as 2.", "replica": "Fecho os 2 pedidos num só: 1 entrega em vez de 2."}
+    slots, _, _, nomes = _cenario()
+    pessoa_de = {"ana": "ana", "bia": "bia"}
+    combinacao = {"lojas": [L3], "afinidade": 50, "felizes": 2,
+                  "escolhas": {"ana": {"loja_id": L3, "item_id": "pr1", "nota": 0.5},
+                               "bia": {"loja_id": L3, "item_id": "pr2", "nota": 0.5}}}
+    # o agente recusa juntar → sem agrupamento e sem réplica
+    _, bloco, lojas = await _leilao(monkeypatch, {"Praça": {**base, "agrupa": False}})
+    assert lojas[L3]["atende"] == 2 and lojas[L3]["agrupa"] is None
+    leilao.fechar_leilao(bloco, [combinacao], slots, pessoa_de, nomes)
+    assert not any(f["tipo"] == "replica" for f in bloco["falas"])
+    # o agente decide juntar → decisão do agente, texto dele
+    _, _, lojas = await _leilao(monkeypatch, {"Praça": {**base, "agrupa": True}})
+    assert lojas[L3]["agrupa"]["decisao"] == "agente" and lojas[L3]["agrupa"]["fonte"] == "llm"
+    # sem "agrupa" no JSON (ou valor inválido) → vale a regra (atende 2+ → junta)
+    for extra in ({}, {"agrupa": "sim"}):
+        _, _, lojas = await _leilao(monkeypatch, {"Praça": {**base, **extra}})
+        assert lojas[L3]["agrupa"]["decisao"] == "regra"
+    # "agrupa": true com 1 pessoa só não vale
+    _, _, lojas = await _leilao(monkeypatch, {"Gelato": {"ofertas": [{"slot_id": "ana", "item_id": "sv1"}],
+                                                         "fala": "SV1.", "agrupa": True}})
+    assert lojas[L1]["agrupa"] is None

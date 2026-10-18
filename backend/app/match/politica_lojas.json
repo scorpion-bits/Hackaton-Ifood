@@ -1,4 +1,6 @@
 {
-  "_aviso": "Política das lojas do modo demonstração (D10). Patrocinado só muda a visibilidade: entra no corte de 8 lojas, o lance aparece primeiro e ganha o rótulo. Nunca muda nota, filtro ou escolha. Escolhida por não vencer o roteiro da demo. No modo real nenhuma loja é patrocinada.",
-  "loja-demo-poke": {"patrocinado": true}
+  "_aviso": "Demonstração. Patrocinado só muda a visibilidade: a fala da loja aparece primeiro e ganha o rótulo. Não garante vaga entre as lojas consultadas e não muda nota, filtro nem escolha. Escolhida por não vencer o roteiro da demo. No modo real nenhuma loja é patrocinada.",
+  "loja-demo-poke": {
+    "patrocinado": true
+  }
 }
