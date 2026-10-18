@@ -1,0 +1,44 @@
+Provedor: groq · modelo: openai/gpt-oss-20b · chave: sim · MCP: demo
+
+=== Roteiro da demo (3 pessoas) ===
+  Milan: "japonês e um sorvete, até 45"
+  Zenon: "hambúrguer e sorvete, até 50"
+  Antonio: "algo barato e vegetariano, até 25"
+  → p1: Guioza de legumes (6 un.) · Kaigan Sushi (demo) · R$ 22.90
+  → p1#2: Copinho de sorvete 1 bola · Gelato Bom Clima (demo) · R$ 12.90
+  → p2: Smash burger clássico · Brasa Burger (demo) · R$ 29.90
+  → p2#2: Copinho de sorvete 1 bola · Gelato Bom Clima (demo) · R$ 12.90
+  → p3: Sunomono · Kaigan Sushi (demo) · R$ 12.90
+  explicação: 3 lojas · alguém ficou longe do que pediu · R$ 91,50 sem taxa · chega em até 45 min · atenção: perecível chega em horário diferente
+  LLM: 6 ok, 5 caíram no fallback, 23.8 s
+
+=== Frase livre 1 ===
+  Thales: "quero algo leve, sem lactose, até 40"
+  → p1: Bowl de quinoa e legumes · Poke Verde (demo) · R$ 33.90
+  explicação: 1 loja · todos bem atendidos · R$ 33,90 sem taxa · chega em até 30 min
+  LLM: 0 ok, 3 caíram no fallback, 1.5 s
+
+=== Frase livre 2 ===
+  Thales: "tô morrendo de fome, um lanche bem caprichado"
+  → p1: Burger de grão-de-bico · Brasa Burger (demo) · R$ 32.90
+  → p1#2: Smash burger clássico · Brasa Burger (demo) · R$ 29.90
+  explicação: 1 loja · todos bem atendidos · R$ 62,80 sem taxa · chega em até 35 min
+  LLM: 0 ok, 6 caíram no fallback, 2.8 s
+
+=== Frase livre 3 ===
+  Thales: "pizza pra dividir, mas eu não como carne"
+  → p1: Brotinho de muçarela · Forno da Praça Pizzaria (demo) · R$ 24.90
+  explicação: 1 loja · todos bem atendidos · R$ 24,90 sem taxa · chega em até 50 min
+  LLM: 1 ok, 2 caíram no fallback, 2.5 s
+
+=== Frase livre 4 ===
+  Thales: "uma comida caseira tipo marmita, até 30"
+  (nenhuma combinação) Não achei caseira marmita para Thales; a opção mais próxima é Missoshiru (Kaigan Sushi (demo)).; Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?
+  LLM: 0 ok, 4 caíram no fallback, 2.0 s
+
+=== Frase livre 5 ===
+  Thales: "doce qualquer, chega rápido"
+  → p1: Sorvete de chocolate belga 500 ml · Gelato Bom Clima (demo) · R$ 29.90
+  → p1#2: Poke de tofu · Poke Verde (demo) · R$ 36.90
+  explicação: 2 lojas · todos bem atendidos · R$ 66,80 sem taxa · chega em até 30 min
+  LLM: 0 ok, 7 caíram no fallback, 3.5 s
