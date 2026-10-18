@@ -46,7 +46,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | Junto ou separado | Definir quem paga | Duas opções com a consequência escrita ("na fatura aparecem N cobranças") | A pessoa escolhe sabendo o efeito |
 | Vaquinha | Receber de todos | Barra "x de N pagos", contador de prazo, botão "Recebi" para Pix e dinheiro | O organizador vê quem falta sem cobrar no grupo |
 | "Confira antes do ok" | Conferir tudo | Subtotal por loja, taxa do carrinho, total geral, aviso de N entregas | O último momento de corrigir |
-| "Deslize para enviar" | Dar o consentimento | Gesto deliberado (ou botão "Confirmar envio") | Evita envio por toque acidental |
+| "Deslize para enviar" | Dar o consentimento | Gesto deliberado (ou botão "Enviar sem deslizar"), que abre o resumo final com "Confirmo enviar N pedidos ao iFood" | Evita envio por toque acidental |
 | Pedidos | Acompanhar | 1 cartão por pedido, status individual e rastro das tools MCP | Cada loja entrega no seu tempo |
 
 ### Convidado
@@ -71,10 +71,9 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   Fala com número inventado (também por extenso), contagem errada, "todo mundo" sem atender todos, restrição que a
   tag do item não confirma, promessa (frete, cupom…) ou superlativo cai no texto pronto, e a tela mostra a origem
   ("agente da loja (IA)" ou "texto conferido").
-- **Patrocinado rotulado e sem poder de compra.** A loja patrocinada aparece primeiro e com selo "Patrocinado", mas
-  nunca muda nota, filtro ou escolha, e não garante vaga entre as lojas consultadas. Na demo, a patrocinada **não**
-  vence: mostra que pagar não compra o pedido.
-  No modo real, nenhuma loja é patrocinada.
+- **Patrocinado rotulado e sem poder de compra (desligado hoje).** O mecanismo existe e é testado: a loja patrocinada
+  aparece primeiro e com selo "Patrocinado", mas nunca muda nota, filtro ou escolha, e não garante vaga entre as lojas
+  consultadas. Hoje nenhuma loja é patrocinada, nem na demo nem no modo real.
 - **Respeita o tempo.** Uma fala por vez (~0,8 s), botão **Pular** sempre visível, e o aparelho só vê o leilão uma vez
   por sala.
 
@@ -93,7 +92,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 
 | Risco | Decisão de design |
 |---|---|
-| Pedido enviado sem querer | `submitOrder` só com `userConsent: true`, depois de "Deslize para enviar" ou "Confirmar envio" na tela |
+| Pedido enviado sem querer | `submitOrder` só com `userConsent: true`, depois de "Deslize para enviar" (ou "Enviar sem deslizar") e de "Confirmo enviar N pedidos ao iFood" no resumo final |
 | Total diferente do mostrado | Antes de enviar, o carrinho é lido de novo (`getCart`). Se o total mudou, as partes são recalculadas e o app pede novo ok |
 | Confundir demo com pedido real | Selo DEMONSTRAÇÃO fixo no topo; cartão simulado com selo; "Simulado: nenhuma cobrança real" |
 | Alergia | O cardápio nem sempre informa. Restrição vira "segundo a descrição" e aparece o aviso "pode não estar informado, confirme com a loja" |
@@ -119,9 +118,11 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   `--marca-escura` `#C8101E` (5,9:1), como já fazem erros, chips ativos e o botão do banner; o vermelho puro fica
   em fundos de botão e texto grande em negrito. Pendente: links (`a`) ainda usam o vermelho puro. O verde `--ok`
   `#2F8A55` dá 4,3:1 → sempre em negrito e junto de palavra ou ícone ("pago", "respondeu"), nunca como única pista.
-- **Cor nunca é a única pista.** Status tem palavra ("⏳ aguardando", "pago"); Patrocinado tem texto, não só cor.
+- **Cor nunca é a única pista.** Status tem palavra ("⏳ aguardando", "pago"); o selo Patrocinado, quando ligado, é
+  texto, não só cor.
 - **Alvos de toque grandes** nos botões principais e chips; botões ocupam a largura no celular.
-- **Alternativa a todo gesto.** O resultado não tem gesto, só botões. Envio: botão "Confirmar envio" além do deslize.
+- **Alternativa a todo gesto.** O resultado não tem gesto, só botões. Envio: botão "Enviar sem deslizar" além do
+  deslize.
 - **Movimento reduzido.** Com `prefers-reduced-motion`, o leilão mostra as falas sem animação e o cartão do pedido
   aparece sem transição (as telas do app seguem a mesma regra). **Pular** existe para todos.
 - **Leitores de tela.** Chips com `aria-pressed` e grupo rotulado (já no app), linha do tempo do pedido rotulada,
