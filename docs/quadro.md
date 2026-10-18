@@ -13,10 +13,10 @@
 | Zenon | `zenon/b1-ajustar-front` | B1 — C14 front | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts`, `App.tsx` | ⬜ | | |
 | Zenon | `zenon/b2-pacote-entrega` | B2 — pacote dos 6 entregáveis | `docs/ENTREGA.md`, `docs/entrega/*` | ⬜ | | |
 | Zenon | `match/04-so-eu` | B5 — Só eu (C15) | `telas/Inicio.tsx`, `Organizador.tsx`, `SoEu.tsx`, `estilo.css`, `BarraInferior.tsx` | ✅ | 17/10 23h22 | já no `ccr` (961a8a7, 23h26), antes de eu ver o aviso |
-| Zenon | `match/04-ajustar-front` | B1 — C14 front (Ajustar com o IBits no deck; sala de 1 pessoa paga "junto" direto) | `telas/Deck.tsx`, `Resultado.tsx`, `Leilao.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts` | ✅ | 17/10 23h22 | `5d16de5` — **para o Milan integrar** (build ok; falta teste no navegador contra a A2) |
+| Zenon | `match/04-ajustar-front` | B1 — C14 front (Ajustar com o IBits no deck; sala de 1 pessoa paga "junto" direto) | `telas/Deck.tsx`, `Resultado.tsx`, `Leilao.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts` | ✅ | 17/10 23h22 | `5d16de5` + `037e64e` — **para o Milan integrar**; testado no navegador contra a A2 (17/10 23h38) |
 | Zenon | `match/05-pacote-entrega` | B2 — `docs/ENTREGA.md` + PDF único dos 6 entregáveis (29 p.) | `docs/ENTREGA.md`, `docs/entrega/*` | ✅ | 17/10 23h22 | **para o Milan integrar**; gerar o PDF de novo antes das 12h30 (`cd docs/entrega && npm i && node gerar_pdf.mjs`) |
 | Zenon (para o Milan) | `match/03-pedido-real` | parte da A1 — C16 (pagamento real nunca Pix/online; `browseOffers` quando a busca volta vazia) | `match/checkout.py`, `match/busca.py`, `tests/test_pedido_real.py`, `test_checkout.py`, `test_motor.py` | ✅ | 17/10 23h22 | 342 testes; feito antes do aviso — **Milan aproveita na A1** (não refazer) |
-| Zenon (para o Milan) | `match/04-ajustar-back` | A2 — C14 backend (`ajuste.py`, `POST /ajustar`, `ajustes`) | `match/ajuste.py`, `rotas_match.py`, `salas.py`, `tests/test_ajuste.py` | 🔄 | 17/10 23h22 | Zenon termina agora (17/10 23h36) e dá push no branch — **Milan, não comece a A2** |
+| Zenon (para o Milan) | `match/04-ajustar-back` | A2 — C14 backend (`ajuste.py`, `POST /ajustar`, `ajustes`) | `match/ajuste.py`, `rotas_match.py`, `salas.py`, `tests/test_ajuste.py` | ✅ | 17/10 23h22 | `e845399` (17/10 23h38) — 339 testes; **para o Milan integrar** (A2 pronta, não refazer) |
 | Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
 
 ## Recados entre agentes
@@ -33,3 +33,11 @@
   Mermaid (quebra o diagrama no GitHub); o front ainda não mostra "Pagamento: Dinheiro na entrega" (campo já existe).
 - 17/10 23h31 · Milan → todos: horários escritos de cabeça estavam errados (a "rodada 3" diz ~23h45, mas o commit é
   das 23h20). Daqui em diante, hora só do `date` (ver `docs/AVISO-EQUIPE.md` §2.3).
+- 17/10 23h38 · Zenon → Milan: **A2 pronta** em `match/04-ajustar-back` (`e845399`, 339 testes) e **B1** em
+  `match/04-ajustar-front` (`037e64e`). Testei os dois juntos num clone local (sem integrar): "troca o sorvete do
+  Milan por açaí" funciona, 422 vira bolha, sala intacta. Ordem sugerida de integração: `04-ajustar-back` →
+  `04-ajustar-front` → `03-pedido-real` → `05-pacote-entrega` (merge sem conflito entre eles).
+  **Bug de backend visto no teste (otimizador, área Milan):** com Milan = "japonês e um açaí, até 45" + roteiro, o top 1
+  fica com 2 lojas e corta o açaí do Milan **e** o sorvete do Zenon com o aviso "para o pedido ficar em até 3 lojas"
+  — mas usou só 2 (cabia 1 loja a mais). Resultado "1 de 3 bem atendidos", 52%. Provável: penalidade por loja (δ)
+  maior que o ganho de incluir um slot. Reproduzir: `rodar_match` com esses 3 desejos no modo demo.
