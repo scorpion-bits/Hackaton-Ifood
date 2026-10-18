@@ -143,7 +143,6 @@ backend/
       oauth.py           Authorization Code + PKCE S256 + client secret; tokens fora do git
       diagnostico.py     amostras sanitizadas do MCP real
     agente/provedores.py provedores de IA (mock, OpenAI-compatível, Anthropic)
-    (legado do esqueleto, será removido: agente/laco.py, mcp_server.py, acoes.py, ifood/, ../mcp_stdio.py)
   tests/                 pytest
 frontend/src/
   App.tsx, api.ts, tipos.ts, estilo.css

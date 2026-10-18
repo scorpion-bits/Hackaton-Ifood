@@ -57,11 +57,14 @@
   `acerto.py` (partes em centavos, prazo 10+2/pessoa), `pix.py` (BR Code), `checkout.py` (sequência MCP, consentimento),
   `salas.py` (estado em SQLite). Campos das tools só em `busca.py` e `checkout.py`.
 - `backend/app/rotas_match.py` — API da sala (`/api/salas...`, contrato C7 da etapa 02). `main.py` serve `frontend/dist`.
-- `backend/app/ifood_mcp/` — `cliente.py` (`abrir_cliente(cfg)`, rastro), `demo_server.py` + `dados_demo_match.json`
-  (MCP de demonstração, 7 lojas fictícias). Modo real: etapa 03.
-- `frontend/src/` — home estilo iFood (`telas/Inicio.tsx`), `Organizador`, `Convidado`, `Resultado`, `Pagamento`, `Pedidos`.
-- Esqueleto antigo (`agente/`, `mcp_server.py`, `ifood/`, `acoes.py`) segue no repo só como referência; remover depois da 03.
-- `pitch/` — slides do Match; `docs/roteiro-demo.md`. Testes: `./iniciar.sh --testes` (95).
+- `backend/app/ifood_mcp/` — `cliente.py` (`abrir_cliente(cfg)`, rastro; modo real adapta args ao `input_schema` →
+  `userLocation`; `submitOrder` real só com `IFOOD_MCP_PERMITIR_ENVIO=true`), `oauth.py`, `diagnostico.py`,
+  `demo_server.py` + `dados_demo_match.json` (7 lojas fictícias). `rotas_oauth.py`: `/oauth/*`, `/api/ifood/*`.
+- `frontend/src/` — home estilo iFood (`telas/Inicio.tsx`), `Organizador`, `Convidado`, `Resultado` (disputa `Leilao.tsx`
+  → `Deck.tsx` → escolha), `Pagamento`, `Pedidos`. Fixture do leilão em dev: `#/leilao-exemplo`.
+- Legado do esqueleto removido (T9); ficam `agente/provedores.py` e `listar_modelos.py`. `/api/saude` traz `ip_local`.
+- `pitch/` — slides do Match; `docs/roteiro-demo.md`. Testes: `./iniciar.sh --testes` (177 + os da etapa 04).
+- Entregáveis: `docs/tecnico.md`, `docs/racional-ux.md`, `docs/pesquisa-mercado.md`, `docs/feedback-mcp.md`, `docs/avaliacao-jurado.md`.
 
 ## Como rodar
 - Linux: `./iniciar.sh` (app em :8000) · `--dev` · `--testes`.
@@ -70,8 +73,9 @@
 ## Pendências conhecidas
 - `iniciar.ps1` não foi executado (sem PowerShell no container) → 👥 testar no PC do Thales.
 - Provedor de IA gratuito ainda não testado com chave real → 👥 criar chave Groq/Gemini e rodar `listar_modelos`.
-- Credenciais do MCP só no `.env` do PC da equipe (não no container da nuvem). Nomes das tools vêm da doc → confirmar com `list_tools`.
-- O domínio antigo do esqueleto (lojas/vendedor/comprador, Merchant API) não é usado pelo Match; remover só depois da etapa 03.
+- Credenciais do MCP só no `.env` do PC da equipe (não no container da nuvem). MCP real: 23 tools (sem `listItemTaxonomy`);
+  `searchOffers`/`getRecommendations` exigem `userLocation`; formato real do `listAddresses` ainda sem amostra no git.
+- Campos legados em `config.py` (`ifood_modo`, `ifood_base_url`, `ifood_client_id/secret`) e no `conftest.py` → remover.
 
 ## Docs
 - `docs/mcp-ifood.md` (MCP do consumidor: conexão, 24 tools, sequência), `docs/feedback-mcp.md`, `docs/ifood-apis.md`

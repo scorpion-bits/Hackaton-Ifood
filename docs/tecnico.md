@@ -328,8 +328,6 @@ Limites hoje:
 - O MCP não junta pedidos de lojas diferentes: N lojas = N pedidos, N taxas, N entregas (o app avisa antes).
 - Vouchers (`listVouchers`/`setVoucher`), `scheduledTime` e endereço novo (`createAddress`) não são usados.
 - Até 6 pessoas por sala; o login OAuth só volta para o `localhost` do PC que roda o app.
-- O domínio antigo do esqueleto (vendedor/comprador, Merchant API, `mcp_server.py`, `acoes.py`, `ifood/`) ainda está
-  no repositório e não é usado pelo Match; será removido.
 
 Próximos passos:
 - Terminar o leilão (C11–C13) e o ajuste ao formato real; rodar o Match real até o `getCart` com taxa real.
@@ -352,6 +350,7 @@ Próximos passos:
   - `test_salas.py`: fluxo inteiro da API; sem token → 403; enviar antes de 100% pago → 409.
   - `test_oauth.py`, `test_diagnostico.py`: PKCE S256, `state` inválido, troca e renovação, token nunca em resposta
     ou log, 401 → renova 1 vez; sanitização com payloads cheios de dados pessoais.
-  - Os testes antigos do esqueleto (`test_agente_e_api.py`, `test_mcp_e_acoes.py`, `test_provedores_http.py`).
+  - `test_endereco_localizacao.py`: endereço em formatos variados, `userLocation` pelo `input_schema`, `submitOrder` real travado.
+  - `test_saude.py`: `/api/saude` com `ip_local` para o QR.
 - **[em implementação nesta etapa]** `test_leilao.py`: fala com número inventado cai no template; item de outra loja
   é rejeitado; patrocinado não muda a escolha; roteiro mock inalterado; tempo limite respeitado.
