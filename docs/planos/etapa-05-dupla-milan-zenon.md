@@ -81,7 +81,7 @@
   B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) perto das 12h30 → Haiku.
 
 ## Registro de execução
-- 18/10 01h12 — A1 (dev-mcp-ifood, Opus): bugs 1/2/3/5 do MCP real com as amostras do Thales. createCart com items,
+- 18/10 01h04 — A1 (dev-mcp-ifood, Opus): bugs 1/2/3/5 do MCP real com as amostras do Thales. createCart com items,
   listPaymentMethods por merchantId, erro em resposta normal vira ErroMCP com código, parser de busca no formato real
   (antes descartava 100% dos itens reais), browseOffers com merchantType. 402 testes; demo igual à linha de base.
   Falta amostra de carrinho com sucesso → P4 do Thales (depende de endereço salvo, P1). Opus foi adequado.
