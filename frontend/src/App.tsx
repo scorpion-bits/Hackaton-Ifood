@@ -3,6 +3,7 @@ import { api, lerLocal, ultimaSalaOrg } from "./api";
 import type { EstadoSala } from "./tipos";
 import StatusIfood from "./componentes/StatusIfood";
 import Selo from "./componentes/Selo";
+import Marca from "./componentes/Marca";
 import Rastro from "./componentes/Rastro";
 import Inicio from "./telas/Inicio";
 import Organizador from "./telas/Organizador";
@@ -97,7 +98,7 @@ function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }>
     <div className="app-sala">
       <header className="topo-sala">
         <a href="#/" className="voltar" aria-label="Voltar ao início">‹</a>
-        <strong>Match</strong>
+        <strong className="topo-logo"><Marca altura={34} /></strong>
         <span />
       </header>
       <Selo ativo={!!sala?.demonstracao} contaTeste={!!sala?.conta_teste && !sala?.demonstracao} />

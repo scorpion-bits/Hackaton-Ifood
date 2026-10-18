@@ -3,6 +3,7 @@ import { chaveOrg, chaveUltimaSala, gravarLocal, lerLocal, chaveEu, ultimaSalaOr
 import BarraInferior from "../componentes/BarraInferior";
 import Folha from "../componentes/Folha";
 import Icone from "../componentes/Icone";
+import Marca from "../componentes/Marca";
 import StatusIfood, { RecarregarDemo } from "../componentes/StatusIfood";
 import { MSG_FORA_PROTOTIPO, useToast } from "../componentes/Toast";
 import SoEu from "./SoEu";
@@ -210,8 +211,7 @@ export default function Inicio() {
 
         <button type="button" className="hero" onClick={() => setEscolhendo(true)} aria-label="Fazer um match">
           <span className="hero-marca">
-            <Icone nome="coracao" tamanho={30} />
-            match
+            <Marca cor="branca" altura={52} />
           </span>
           <span className="hero-texto">Cada um quer uma coisa? A gente acha o pedido que agrada todo mundo.</span>
           <span className="hero-cta">

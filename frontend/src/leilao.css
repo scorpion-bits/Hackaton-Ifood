@@ -180,3 +180,7 @@
   .ld-cartao.ld-atual, .ld-faixa, .aj-linha, .ld-bdg.ld-atualizado { animation: none !important; }
   .aj-digitando i { animation: none; opacity: 0.6; }
 }
+
+/* Visual v2 (18/10, Thales): cartões com cantos e sombras do app do iFood; só estilo. */
+.ld-cartao { border-radius: 16px; box-shadow: 0 2px 10px rgba(26, 26, 26, 0.08); }
+.ld-bdg.ld-pct { color: #ea1d2c; }
