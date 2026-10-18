@@ -279,7 +279,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
     if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
         combos = []
-        avisos[:] = [a.removesuffix(" Quer mudar o pedido?") for a in avisos]  # a pergunta vai uma vez só, no fim
+        # a pergunta vai uma vez só, no fim; sem combinação, "a opção mais próxima" contradiz o aviso final (bug 14)
+        avisos[:] = [a.removesuffix(" Quer mudar o pedido?").split("; a opção mais próxima é")[0].rstrip(".") + "."
+                     for a in avisos]
         avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
     else:
         combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,

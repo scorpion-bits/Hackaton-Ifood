@@ -171,7 +171,8 @@ async def test_pedido_fora_do_cardapio_avisa_opcao_aproximada(sem_consulta_livre
 async def test_tudo_irrelevante_devolve_combinacoes_vazias_com_aviso(sem_consulta_livre):
     r = await _rodar([Desejo("ana", "Ana", "feijoada completa, até R$ 60")])
     assert r["combinacoes"] == []
-    assert any(a.startswith("Não achei feijoada completa para Ana; a opção mais próxima é ") for a in r["avisos"])
+    assert "Não achei feijoada completa para Ana." in r["avisos"]
+    assert not any("a opção mais próxima" in a for a in r["avisos"])  # bug 14: sem combinação, nada de "mais próxima"
     assert any("Nada do que foi pedido está nos cardápios" in a for a in r["avisos"])
     # pizza sem glúten: as pizzas violam a restrição e o resto não tem nada a ver com o pedido
     r = await _rodar([Desejo("ana", "Ana", "pizza", None, ["sem_gluten"])])

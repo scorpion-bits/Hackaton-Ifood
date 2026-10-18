@@ -26,7 +26,7 @@
 |---|---|---|---|---|
 | A1 | T8 + C16: busca/checkout no formato real; `browseOffers` quando a busca vem vazia; pagamento real nunca Pix (prefere dinheiro/na entrega) | `backend/app/match/busca.py`, `checkout.py`, `modelos.py`, `backend/app/ifood_mcp/*`, `backend/tests/test_checkout.py`, `test_busca*.py`, `docs/feedback-mcp.md`, `docs/mcp-real/` | testes passam com as amostras reais; 👥 no PC: carrinho real com taxa | 🔄 C16 ✅ (Zenon, `match/03-pedido-real`, integrado 23h39); falta T8 formato real ⬜ 👥 amostras |
 | A2 | C14 backend: `match/ajuste.py` + `POST /api/salas/{id}/ajustar` + campo `ajustes` | `backend/app/match/ajuste.py`, `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/tests/test_ajuste.py` | contrato C14 coberto por teste (200, 422, 409 mantém resultado) | ✅ (Zenon, `match/04-ajustar-back`, integrado 23h39) |
-| A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | 🔄 01h34 P2 chegou (Groq 429 → quase tudo no fallback); prompts + reserva de modelo + bugs 12–15 (dev-backend, Sonnet) |
+| A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ✅ 01h44 integrado (`8aa7eae`): reserva de modelo no 429, intérprete 1 chamada/grupo, tokens ~26k→13k por Match, bugs 12–14; 👥 confirmar no P5 |
 | A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
 | A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37 (402 testes + typecheck/build locais; falta ver o 1º run no GitHub) |
 | A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador (recado do Zenon 23h38) ✅ `65b4aeb` |
@@ -85,6 +85,10 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 01h44 — A3 integrada (dev-backend, Sonnet, worktree): reserva de modelo no 429, 11→9 chamadas, ~26k→13k tokens
+  contados por Match (ainda >8k/min num só modelo: a reserva é obrigatória), bugs 12/13/14; 14b (aviso duplo) feito por
+  mim no `motor.py`. 427 testes; roteiro no fallback igual. P5 para o Thales. Sonnet foi adequado. Obs.: o worktree saiu
+  do `main` antigo (6bc3fa0), não do `ccr`: conflito só no `config.py`/`testar_ia.py`.
 - 18/10 01h41 — Integrados Thales (P2 IA real; endereço mock pelo `.env` + `options=[]`, bugs 16–20) e Zenon (bugs 8/11, B7).
   **Carrinho real com taxa já sai** (BK, taxa R$ 9,99) com endereço mock. A6 CI ✅. Decisões do Milan: Z1 liberado até 05h
   (B9), D1 fora, **bug 18: usar o Cartão de Teste** (nunca Pix; envio só com flag + consentimento). Em andamento: A3
