@@ -500,7 +500,9 @@ textarea { resize: none; min-height: 84px; }
 .ord-h > div { flex: 1; min-width: 0; }
 .ord-h h2 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
 .ord-h small { display: block; font-size: 12.5px; font-weight: 600; }
-.ord-h .lbl { font-weight: 800; color: var(--marca-escura); font-size: 13px; }
+/* status do pedido: andamento em verde (sempre com a palavra); vermelho só quando o pedido não saiu */
+.ord-h .lbl { font-weight: 800; color: var(--ok); font-size: 13px; }
+.ord-h .lbl.falha { color: var(--marca-escura); }
 .ord-total { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .loja-cart h2 { margin: 0; }
 .linhas, .itens-cart { margin: 0; }

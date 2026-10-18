@@ -359,7 +359,7 @@ export default function Deck({
         </span>
         {onVerLeilao && (
           <button type="button" className="ld-skip" onClick={onVerLeilao}>
-            Rever a disputa
+            Rever a avaliação
           </button>
         )}
       </div>

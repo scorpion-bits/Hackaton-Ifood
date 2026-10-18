@@ -167,7 +167,7 @@ export default function Leilao({
       ? [
           nMcp > 0 ? `MCP · ${nMcp} ${nMcp === 1 ? "chamada" : "chamadas"}` : null,
           nIa > 0 ? `${nIa} ${nIa === 1 ? "agente com IA" : "agentes com IA"}` : null,
-          typeof med?.ms_total === "number" && med.ms_total >= 100 ? `disputa em ${segundos(med.ms_total)} s` : null,
+          typeof med?.ms_total === "number" && med.ms_total >= 100 ? `avaliação em ${segundos(med.ms_total)} s` : null,
         ]
           .filter(Boolean)
           .join(" · ")
@@ -189,10 +189,10 @@ export default function Leilao({
   }
 
   return (
-    <section className="tela ld-raiz ld-sala" aria-label="A disputa pelo pedido">
+    <section className="tela ld-raiz ld-sala" aria-label="Como o IBits avaliou cada loja">
       <div className="ld-top">
         <span className="ld-step">
-          {compacto ? "Refazendo o pedido" : "Disputa das lojas"}
+          {compacto ? "Refazendo o pedido" : "Avaliação das lojas"}
         </span>
         {R.length > 0 && (
           <span className="ld-mcp" title="Chamadas ao MCP do iFood neste match">
@@ -207,11 +207,11 @@ export default function Leilao({
       </div>
 
       <div>
-        <h1 className="ld-titulo">{compacto ? "As lojas disputam de novo" : "A disputa pelo seu pedido"}</h1>
+        <h1 className="ld-titulo">{compacto ? "O IBits avalia de novo" : "Como o IBits avaliou cada loja"}</h1>
         <p className="ld-subtitulo">
           {compacto
-            ? "Com o seu ajuste, os agentes das lojas refizeram a disputa."
-            : "Como os agentes das lojas disputaram, com dados do iFood."}
+            ? "Com o seu ajuste, o IBits avaliou cada loja de novo, com dados do iFood."
+            : "Um avaliador por loja, que só lê o cardápio dela. Preços e prazos vêm do iFood."}
         </p>
       </div>
 
