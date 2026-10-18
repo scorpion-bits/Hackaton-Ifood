@@ -108,7 +108,7 @@ sequenceDiagram
       M->>MCP: searchOffers(resultKind=MERCHANT) + getMerchant(merchantId)
     end
   end
-  Note over M,MCP: getItem ainda não é chamado; o preço vem do searchOffers/getMerchant.
+  Note over M,MCP: getItem ainda não é chamado — o preço vem do searchOffers/getMerchant.
   Note over M: IA dá nota 0–1 e motivo a cada item
   M->>L: itens de cada loja (só os dela) + desejos, em paralelo
   L-->>M: ofertas validadas + falas (ou fallback por template)
