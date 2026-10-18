@@ -3,7 +3,7 @@ import type { Participante } from "../../tipos";
 import { IconeCoracao, IconeEnviar, IconeFaisca } from "./visual";
 import { reduzirMovimento } from "./util";
 
-/** Uma ida e volta com o IBits (C14). O estado vive em `Resultado`, para não se perder quando o deck some durante a disputa curta. */
+/** Uma ida e volta com o IBits (C14). O estado vive em `Resultado`, para não se perder quando o pedido some durante a avaliação curta. */
 export interface Troca {
   id: number;
   texto: string;
@@ -69,7 +69,7 @@ function TrocaBolhas({ t }: { t: Troca }) {
       )}
       {t.estado === "pronto" && (
         <Bolha de="ibits">
-          {entendeu} Pronto, atualizei as opções.
+          {entendeu} Pronto, atualizei o pedido.
         </Bolha>
       )}
       {t.estado === "erro" && <Bolha de="ibits">{t.erro}</Bolha>}

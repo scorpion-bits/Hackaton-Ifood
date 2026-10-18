@@ -1,4 +1,4 @@
-/* Leilão ao vivo, Deck e "É um Match!" (visual do protótipo aprovado). Tudo com prefixo ld- para não colidir com estilo.css. */
+/* Avaliação das lojas (leilão visual), o pedido escolhido pelo IBits e o Ajustar. Tudo com prefixo ld- para não colidir com estilo.css. */
 .ld-raiz {
   --ld-coral: #ff6b4a;
   --ld-ouro: #f2b01e;
@@ -17,21 +17,14 @@
 
 @keyframes ld-pop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes ld-beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-@keyframes ld-tagin { from { transform: translateY(6px) scale(0.9); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes ld-bidup { 0% { transform: translateY(12px) scale(0.6); opacity: 0; } 14% { transform: none; opacity: 1; } 80% { transform: none; opacity: 1; } 100% { transform: translateY(-10px); opacity: 0; } }
 @keyframes ld-talk { 0%, 100% { transform: scale(1.1); } 50% { transform: scale(1.2); } }
 @keyframes ld-dot { 0%, 60%, 100% { transform: none; opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 @keyframes ld-msgin { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes ld-entra { from { transform: scale(0.95) translateY(16px); opacity: 0.6; } to { transform: none; opacity: 1; } }
-@keyframes ld-floatup { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translateY(-760px) scale(1.2) rotate(18deg); opacity: 0; } }
-@keyframes ld-slam { 0% { transform: rotate(-14deg) scale(2.4); opacity: 0; } 100% { transform: rotate(-4deg) scale(1); opacity: 1; } }
-@keyframes ld-fromL { from { transform: translateX(-140px) rotate(-14deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ld-fromR { from { transform: translateX(140px) rotate(14deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ld-heartpop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 @keyframes ld-flash { from { background: var(--ld-soft); } to { background: var(--ld-card); } }
 @media (prefers-reduced-motion: reduce) {
-  .ld-raiz *, .ld-raiz *::before, .ld-raiz *::after,
-  .ld-match, .ld-match *, .ld-match *::before { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .ld-raiz *, .ld-raiz *::before, .ld-raiz *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 /* ---------- barra de cima ---------- */
@@ -88,23 +81,18 @@
 .ld-seguir { flex: none; }
 .ld-nota-rodape { font-size: 11.5px; color: var(--ld-mudo); text-align: center; margin: 0; flex: none; }
 
-/* ---------- deck ---------- */
-.ld-deckbody { gap: 10px; overflow-x: hidden; }
-.ld-conteudo { display: contents; }
-.ld-deck { position: relative; height: clamp(420px, calc(100svh - 330px), 600px); margin-bottom: 30px; flex: none; }
-.ld-cartao { position: absolute; inset: 0; background: var(--ld-card); border: 1px solid var(--ld-linha); border-radius: 26px; overflow: hidden; box-shadow: var(--ld-sombra); display: flex; flex-direction: column; touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; transition: transform 0.4s cubic-bezier(0.2, 0.85, 0.25, 1), opacity 0.3s; }
-.ld-cartao.front { z-index: 3; cursor: grab; animation: ld-entra 0.35s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
-.ld-cartao.b1 { z-index: 2; transform: scale(0.95) translateY(16px); }
-.ld-cartao.b2 { z-index: 1; transform: scale(0.9) translateY(32px); }
-.ld-cartao.drag { transition: none; cursor: grabbing; }
-.ld-foto { position: relative; height: 22%; min-height: 84px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 48px; line-height: 1; flex: none; }
+/* ---------- pedido escolhido pelo IBits (um cartão só, sem deslizar) ---------- */
+.ld-resultado { gap: 12px; }
+.ld-cab h1 { margin: 0; font-size: 1.45rem; line-height: 1.1; letter-spacing: -0.01em; }
+.ld-cab p { margin: 4px 0 0; color: var(--ld-mudo); font-size: 0.95rem; }
+.ld-cartao { position: relative; background: var(--ld-card); border: 1px solid var(--ld-linha); border-radius: 26px; overflow: hidden; box-shadow: var(--ld-sombra); display: flex; flex-direction: column; flex: none; animation: ld-entra 0.35s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+.ld-foto { position: relative; height: 96px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 48px; line-height: 1; flex: none; }
 .ld-foto > span:not(.ld-bdg) { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25)); }
 .ld-bdg { position: absolute; top: 12px; border-radius: 999px; padding: 6px 11px; font-size: 12.5px; font-weight: 800; display: flex; gap: 6px; align-items: center; font-family: inherit; }
 .ld-bdg.ld-pct { left: 12px; background: #fff; color: #c8101e; }
 .ld-bdg.um { right: 12px; background: rgba(0, 0, 0, 0.5); color: #fff; }
 .ld-bdg.dois { right: 12px; background: #ffe3a3; color: #6b4200; }
-.ld-cbody, .ld-cbody * { touch-action: pan-y; }
-.ld-cbody { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 8px; display: flex; flex-direction: column; gap: 10px; }
+.ld-cbody { padding: 14px 16px 8px; display: flex; flex-direction: column; gap: 10px; }
 .ld-cnome { font-size: 1.3rem; line-height: 1.08; margin: 0; letter-spacing: -0.01em; font-weight: 800; overflow-wrap: anywhere; }
 .ld-cmeta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--ld-mudo); font-size: 12.5px; font-weight: 700; }
 .ld-why { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -127,46 +115,15 @@
 .ld-cfoot small { display: block; color: var(--ld-mudo); font-size: 12px; font-weight: 700; margin-top: 2px; }
 .ld-tx { border-radius: 999px; padding: 6px 11px; font-size: 12px; font-weight: 800; background: var(--ld-ok-bg); color: #1f6b40; white-space: nowrap; }
 .ld-tx.w { background: var(--ld-aviso-bg); color: var(--ld-aviso); }
-.ld-estampa { position: absolute; top: 58px; padding: 2px 12px; border: 4px solid #fff; border-radius: 10px; font-weight: 800; font-size: 28px; letter-spacing: 0.04em; opacity: 0; pointer-events: none; z-index: 5; color: #fff; }
-.ld-estampa.sim { left: 14px; transform: rotate(-14deg); background: #1f6b40; }
-.ld-estampa.nao { right: 14px; transform: rotate(14deg); background: #4b4546; }
-.ld-acoes { display: flex; justify-content: center; align-items: flex-start; gap: 34px; flex: none; }
-.ld-acao { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.ld-acao > span { font-size: 12px; font-weight: 800; color: var(--ld-mudo); }
-.ld-redondo { width: 60px; height: 60px; border-radius: 50%; background: var(--ld-card); border: 1px solid var(--ld-linha); display: grid; place-items: center; box-shadow: var(--ld-sombra); transition: transform 0.15s, opacity 0.2s; }
-.ld-redondo:active:not(:disabled) { transform: scale(0.88); }
-.ld-redondo.passa { color: var(--ld-mudo); }
-.ld-redondo.gosta { width: 72px; height: 72px; background: linear-gradient(135deg, var(--marca), var(--ld-coral)); color: #fff; border: 0; box-shadow: 0 12px 24px rgba(234, 29, 44, 0.35); }
 .ld-dica { color: var(--ld-mudo); font-size: 12.5px; text-align: center; margin: 0; }
+.ld-confirmar { flex: none; }
+.ld-confirmar .erro { margin: 0; text-align: center; }
 
-/* ---------- É um Match! ---------- */
-.ld-match { position: fixed; top: 0; bottom: 0; left: 50%; width: 100%; max-width: 420px; transform: translateX(-50%); z-index: 60; background: linear-gradient(160deg, #ea1d2c 0%, #ff4e50 55%, #ff8a4a 100%); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 22px; gap: 6px; overflow: hidden; }
-.ld-confete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; opacity: 0.85; }
-.ld-coracoes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
-.ld-fh { position: absolute; bottom: -40px; opacity: 0; animation: ld-floatup 3.8s ease-in forwards; color: rgba(255, 255, 255, 0.75); }
-.ld-mwrap { position: relative; z-index: 6; text-shadow: 0 1px 8px rgba(120, 0, 10, 0.45); display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
-.ld-eyebrow { font-size: 12.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; margin: 0; }
-.ld-mtitle { font-size: 56px; line-height: 1; margin: 2px 0; font-weight: 800; transform: rotate(-4deg); text-shadow: 0 6px 0 rgba(0, 0, 0, 0.14); animation: ld-slam 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) 0.12s both; }
-.ld-par { display: flex; align-items: center; justify-content: center; margin: 26px 0 16px; width: 100%; max-width: 100%; }
-.ld-eyebrow { position: relative; z-index: 6; }
-.ld-pgrupo { display: flex; animation: ld-fromL 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both; }
-.ld-prest { display: flex; animation: ld-fromR 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both; }
 .ld-face { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; font-weight: 800; font-size: 16px; line-height: 1; }
 .ld-face-p { width: 30px; height: 30px; font-size: 14px; }
-.ld-face-g { width: 56px; height: 56px; border: 3px solid #fff; margin-left: -16px; font-size: 22px; }
-.ld-face-g:first-child { margin-left: 0; }
-.ld-rt { width: 70px; height: 70px; border: 3px solid #fff; font-size: 32px; margin-left: -16px; box-shadow: none; }
-.ld-rt:first-child { margin-left: 0; }
-.ld-mcoracao { width: 56px; height: 56px; border-radius: 50%; background: #fff; color: #c8101e; display: grid; place-items: center; margin: 0 -12px; z-index: 3; animation: ld-heartpop 0.6s cubic-bezier(0.2, 1.8, 0.4, 1) 0.95s both; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); }
-.ld-mtexto { font-weight: 800; font-size: 17px; line-height: 1.25; max-width: 320px; margin: 0; animation: ld-tagin 0.5s 1.2s both; }
-.ld-msub { font-weight: 700; font-size: 14px; max-width: 300px; margin: 0; animation: ld-tagin 0.5s 1.35s both; }
-.ld-mfoot { position: relative; z-index: 5; width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 22px; animation: ld-tagin 0.5s 1.5s both; }
-.ld-btn-branco, .ld-btn-claro { display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 27px; font-weight: 800; font-size: 1rem; padding: 0 22px; cursor: pointer; }
-.ld-btn-branco { background: #fff; color: #c8101e; border: 0; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18); }
 .ld-btn-claro { background: transparent; color: #fff; border: 2px solid rgba(255, 255, 255, 0.85); }
-.ld-btn-branco:focus-visible, .ld-btn-claro:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-/* ---------- escolha (depois do match) ---------- */
+/* ---------- como pagar (depois de confirmar o pedido) ---------- */
 .ld-voltar { align-self: flex-start; }
 .modo small.ld-cobrancas { color: var(--marca-escura); font-weight: 700; }
 
@@ -184,8 +141,6 @@
 .ld-faixa { display: flex; align-items: center; gap: 8px; background: var(--ld-soft); color: var(--marca-escura); border-radius: var(--r-md, 12px); padding: 4px 4px 4px 12px; font-size: 13px; font-weight: 800; flex: none; animation: ld-faixain 0.35s ease-out both; }
 .ld-faixa > span { flex: 1; min-width: 0; }
 .ld-faixa button { width: 44px; height: 44px; border: 0; background: none; color: inherit; display: grid; place-items: center; border-radius: 50%; }
-.ld-merro { background: rgba(255, 255, 255, 0.95); color: #8f0a15; border-radius: 12px; padding: 8px 12px; font-size: 13px; font-weight: 800; margin: 0; text-shadow: none; }
-.ld-btn-branco:disabled, .ld-btn-claro:disabled { opacity: 0.7; cursor: default; }
 
 .aj { background: var(--ld-card); border: 1px solid var(--ld-linha); border-radius: 22px; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--ld-sombra); flex: none; }
 .aj-cab { display: flex; align-items: center; gap: 8px; min-height: 32px; }
