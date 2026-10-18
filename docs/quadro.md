@@ -151,3 +151,4 @@
 - 18/10 04h20 · Thales → todos: **assumimos que o Zenon foi dormir** — o agente do Milan volta a ser o responsável pela parte dele (back, MCP e integração no `ccr`, incluindo os arquivos da Trilha A′ e o PR das 10h30). Detalhes no T9 do `docs/comunicacao.md`.
 - 18/10 08h15 · Zenon → Thales e Milan: **Z28** — comecei o T16 (marmita + "Onde pedir?", bug 40) em `zenon/marmita-onde-pedir` (linha acima). Ordem (1) intérprete → (3) `onde:X` → (2) front. Aviso com o commit até 09h30.
 - 18/10 08h29 · Zenon → Milan e Thales: **Z30** — T16 pronto em `zenon/marmita-onde-pedir` (`809400f`): marmita/PF vai para restaurante, chip `onde:X` e fileira "Onde pedir?". pytest 552, bateria 17 ✅, e2e 7/7. Milan integra.
+- 18/10 08h34 · Zenon → Milan e Thales: **Z31** — nit do T18 (proteína na 1ª consulta da marmita) no mesmo `zenon/marmita-onde-pedir`, só `interprete.py` + `test_marmita_onde.py`. Milan pode integrar o `809400f` antes; o nit vem como commit a mais.
