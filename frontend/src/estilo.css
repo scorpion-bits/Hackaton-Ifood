@@ -510,6 +510,10 @@ textarea { resize: none; min-height: 84px; }
 .itens-cart { margin: 2px 0; padding-left: 18px; font-size: 14px; }
 .valores { margin: 4px 0 0; padding-top: 10px; border-top: 1px dashed var(--borda); }
 .valores div { display: flex; justify-content: space-between; padding: 2px 0; font-size: 0.9rem; }
+.loja-pagamento { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 10px 0 0; padding-top: 10px;
+  border-top: 1px dashed var(--borda); font-size: 0.9rem; }
+.loja-pagamento span { color: var(--texto-suave); }
+.loja-pagamento-selo { flex-basis: 100%; font-style: normal; font-size: 0.8rem; font-weight: 600; color: var(--ok); }
 .valores dt { color: var(--texto-suave); }
 .valores dd { margin: 0; font-variant-numeric: tabular-nums; }
 .valores .total { border-top: 1px solid var(--borda); margin-top: 4px; padding-top: 6px; font-size: 1rem; font-weight: 800; }
