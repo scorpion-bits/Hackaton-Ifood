@@ -121,7 +121,7 @@ Limites: ≤ 8 lojas no leilão (as de melhor nota), ≤ 2 passes, ≤ 5 lances,
 | T14 | `match/05-pitch-v2` | Pitch v2 + roteiro 2 min + roteiro do vídeo + banca + PDF | pitch-demo | opus | medium | `pitch/*`, `docs/roteiro-demo.md`, `docs/pitch-perguntas-banca.md` | T8, T10, T12 | narrativa vendedores × comprador; fatos com fonte; PDF gerado | 🔄 (v1 ✅; final após T8/T13) |
 | T15 | (integração) | Integrar rodadas 2–3; `CLAUDE.md`, `decisions.md`, checklist (congelar 10h30) | engenheiro-chefe | — | — | — | R2 | suíte, build, navegador | ⬜ |
 | T16 | (só leitura) | Avaliação 2 do jurado (produto, pitch, 6 entregáveis) | jurado | opus | high | — | T15 | lista final de correções | ⬜ |
-| T17 | `match/fix-*` | Correções do QA/jurado | conforme o arquivo | sonnet | high | conforme | T16 | — | ⬜ |
+| T17 | `match/fix-*` | Correções do QA/jurado | conforme o arquivo | sonnet | high | conforme | T16 | — | 🔄 (QA rodada 1 ✅) |
 
 Status: ⬜ a fazer · 🔄 em andamento · ✅ feito · ❌ falhou (ver registro) · ⏸️ adiado
 
@@ -172,6 +172,15 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
   atendidos" no fechamento; tema escuro automático desligado (cores fixas no leilão); rodapé "não afiliado";
   `match/fix-polimento-leilao` (arena 4 por linha, "É um Match!" cabe em 390 px, sem "disputa em 0,0 s").
   Rodada 2 em execução: T11 (QA) e T14 (pitch v2, primeira passada; a versão final espera T8/T13). T8 espera 👥 amostras.
+
+- 18/10 ~01h30 — T11 ✅ (QA: 0 bloqueios no roteiro; 8 importantes). Correções: `match/fix-front-qa` (toque no deck,
+  disputa espera o organizador, Pix demo "não pague", foco, contagem, home real) + `match/fix-back-qa` (validação
+  semântica das falas, item cortado conta 0, endereço sem coordenadas/id, envio real travado → 409 +
+  `envio_real_permitido`, rastro com argumentos descartados, quantidades) + `match/fix-docs-qa`. T14 v1 ✅ (12
+  slides, PDF, roteiros). PR #6 aberto (`ccr-4c429dbb-lp7btg` → `main`). **278 testes**; fluxo no navegador ok.
+  Pendente: T8 (👥 amostras `docs/mcp-real/`), T13 (👥 chave de IA), T14 final, T16 (jurado 2), QA final.
+  Limitação conhecida (mock): pedido sem categoria conhecida ("coxinha", "feijoada") não gera consulta própria —
+  com IA real o intérprete gera a consulta; avaliar na T13.
 
 ## Fechamento
 (preenchido ao concluir)
