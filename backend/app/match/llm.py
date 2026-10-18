@@ -41,27 +41,30 @@ def extrair_json(texto: str | None) -> dict | None:
     return None
 
 
-async def completar_json(cfg: Config, sistema: str, usuario: str) -> dict | None:
-    """Pede ao LLM um objeto JSON. Qualquer falha → `None` (o chamador usa o fallback)."""
+async def completar_json(cfg: Config, sistema: str, usuario: str, timeout: float | None = None) -> dict | None:
+    """Pede ao LLM um objeto JSON. Qualquer falha → `None` (o chamador usa o fallback).
+
+    `timeout` (s) troca o limite padrão de 8 s (o leilão usa ~6 s por agente de loja)."""
     if cfg.llm_provedor == "mock" or not cfg.llm_modelo:
         return None
+    limite = timeout if timeout and timeout > 0 else TIMEOUT_S
     sistema = sistema + "\nResponda somente com um objeto JSON válido, sem texto antes ou depois."
     try:
         if cfg.llm_provedor == "anthropic":
-            texto = await asyncio.wait_for(_anthropic(cfg, sistema, usuario), TIMEOUT_S)
+            texto = await asyncio.wait_for(_anthropic(cfg, sistema, usuario, limite), limite)
         else:
-            texto = await asyncio.wait_for(_openai(cfg, sistema, usuario), TIMEOUT_S)
+            texto = await asyncio.wait_for(_openai(cfg, sistema, usuario, limite), limite)
     except Exception as e:  # timeout, rede, chave, modelo… o motor segue com o fallback
         log.warning("LLM (%s) falhou: %s", cfg.llm_provedor, e)
         return None
     return extrair_json(texto)
 
 
-async def _openai(cfg: Config, sistema: str, usuario: str) -> str | None:
+async def _openai(cfg: Config, sistema: str, usuario: str, limite: float = TIMEOUT_S) -> str | None:
     from openai import AsyncOpenAI, BadRequestError
 
     cliente = AsyncOpenAI(api_key=cfg.llm_chave or "sem-chave", base_url=cfg.llm_base_url,
-                          http_client=_cliente_http(cfg.llm_provedor), timeout=TIMEOUT_S, max_retries=0)
+                          http_client=_cliente_http(cfg.llm_provedor), timeout=limite, max_retries=0)
     mensagens = [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}]
     try:
         resp = await cliente.chat.completions.create(
@@ -76,11 +79,11 @@ async def _openai(cfg: Config, sistema: str, usuario: str) -> str | None:
     return resp.choices[0].message.content
 
 
-async def _anthropic(cfg: Config, sistema: str, usuario: str) -> str | None:
+async def _anthropic(cfg: Config, sistema: str, usuario: str, limite: float = TIMEOUT_S) -> str | None:
     import anthropic
 
     cliente = anthropic.AsyncAnthropic(api_key=cfg.llm_chave or None, http_client=_cliente_http("anthropic"),
-                                       timeout=TIMEOUT_S, max_retries=0)
+                                       timeout=limite, max_retries=0)
     resp = await cliente.messages.create(
         model=cfg.llm_modelo, max_tokens=MAX_TOKENS, system=sistema,
         messages=[{"role": "user", "content": usuario}],
