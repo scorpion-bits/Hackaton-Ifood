@@ -40,6 +40,9 @@
 | B2 | Pacote de entrega (T22): `docs/ENTREGA.md` + PDF único dos 6 entregáveis | `docs/ENTREGA.md`, `docs/entrega/*` | PDF gerado com os 6 entregáveis e capturas | ✅ integrado 23h39; gerar o PDF de novo antes das 12h30 |
 | B3 | Pitch final (T24): ~5 min, palavras do regulamento, MCP real, Ajustar | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | PDF do pitch; roteiro cronometrado com o Thales | ✅ integrado (`ce9296a`); 👥 confirmar frases marcadas no PC do Thales + 3 ensaios |
 | B4 | Bugs de front vindos do Thales | conforme o bug (só `frontend/`) | bug fechado no `docs/testes/bugs.md` | 🔄 bolha do Ajustar com nome duplicado ✅ (`a6810d7`) |
+| B6 | Smoke no navegador 390×780, modo demonstração: sala → 3 convidados → Rodar Match → disputa → deck → **Ajustar** → pagamento → pedido; também Só eu e "Recarregar demo". Conferir checklist (nenhum botão quebrado, selo DEMONSTRAÇÃO) e trocar as capturas de `docs/entrega/04-interface.md` | `docs/testes/bugs.md` (só linhas novas, área/front ou back), `docs/entrega/*` | lista do que quebrou no `bugs.md`; capturas novas | ⬜ |
+| B7 | Vídeo do plano B (≤ 2 min, `docs/roteiro-video.md`) gravado em casa no modo demonstração → arquivo para o Thales (Drive/WhatsApp, **não** no git) | `docs/roteiro-video.md`, `docs/roteiro-demo.md` (só a seção Plano B) | `match-demo.mp4` no PC do Thales | ⬜ |
+| B8 | Jurado simulado no pitch final + 6 entregáveis e correção de texto do que tirar ponto; README com passo a passo para a banca | `README.md`, `pitch/*`, `docs/ENTREGA.md`, `docs/racional-ux.md`, `docs/proposta-negocio.md`, `docs/avaliacao-jurado.md` | nota do jurado registrada; README testado do zero | ⬜ |
 | B5 | Só eu (C15) + polimento de UI — **só se a prioridade 1–4 estiver ok** | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `SoEu.tsx`, `componentes/Folha.tsx`, `estilo.css` | build ok; 1 pessoa pede em ~20 s | Só eu ✅ (T20, sessão da etapa 04, 961a8a7); polimento ⏸️ |
 
 ### Trilha C — Thales (agente do Thales guia os testes; não edita código)
@@ -74,7 +77,8 @@
   Groq/Gemini (destrava A3). Sem isso, a demo vai no modo demonstração (já estável). Congelar código às 10h30.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
-- **Zenon (remoto, só git):** B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) → Haiku.
+- **Zenon (remoto, só git):** B6 smoke no navegador → Sonnet; B7 vídeo do plano B (👥); B8 jurado + README → Opus;
+  B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) perto das 12h30 → Haiku.
 
 ## Registro de execução
 - 18/10 00h41 — Zenon passa a ser remoto: trilha B só com git; confirmação de frases e ensaios → Milan + Thales.
