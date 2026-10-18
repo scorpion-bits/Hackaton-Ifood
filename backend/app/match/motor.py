@@ -169,15 +169,21 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
                        "pessoas": []}
     avisos: list[str] = resultado["avisos"]
 
+    falha_enderecos: str | None = None  # detalhe do erro do listAddresses
     try:
         endereco = ler_endereco(await cliente.chamar("listAddresses"))
     except ErroMCP as e:
         if "(401)" in str(e):  # login recusado no meio da sessão: a rota devolve 401 com a mensagem certa
             raise
-        avisos.append(f"Não consegui ler os endereços no iFood: {e}")
+        falha_enderecos = str(e)
         endereco = None
-    if endereco is None and not avisos and (endereco := endereco_mock(cfg)):
-        avisos.append(MSG_ENDERECO_MOCK)  # conta sem endereço salvo (ADR-2001 no createAddress): usa o mock do .env
+    if endereco is None and (mock := endereco_mock(cfg)):
+        # lista vazia (ADR-2001 no createAddress) ou listAddresses fora do ar (bug 23): usa o mock do .env
+        endereco = mock
+        avisos.append(f"Não consegui ler os endereços no iFood ({falha_enderecos}); usando o endereço de teste."
+                      if falha_enderecos else MSG_ENDERECO_MOCK)
+    elif falha_enderecos:
+        avisos.append(f"Não consegui ler os endereços no iFood: {falha_enderecos}")
     if endereco is None:
         if not avisos:
             avisos.append(MSG_SEM_ENDERECO)
@@ -239,11 +245,14 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             descartados.append((desejo, intencao))
             avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}. Quer mudar o pedido?")
     fracos = [f for f in fracos if f not in descartados]
+    aviso_aproximada: dict[str, tuple[str, str]] = {}  # slot -> (texto provisório, "Não achei X para Y"), bug 24
     for desejo, intencao in fracos:
         slot = intencao.participante_id
         proximo = max(validos[slot], key=lambda c: (c.nota, -c.preco))
-        avisos.append(f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}; a opção mais próxima é "
-                      f"{proximo.item_nome} ({proximo.loja_nome}). Quer mudar o pedido?")
+        base = f"Não achei {_pediu(desejo, intencao)} para {desejo.nome}"
+        texto = f"{base}; a opção mais próxima é {proximo.item_nome} ({proximo.loja_nome}). Quer mudar o pedido?"
+        avisos.append(texto)
+        aviso_aproximada[slot] = (texto, base)
         candidatos[slot] = _marcar_aproximada(candidatos[slot])
         validos[slot] = _validos(intencao, candidatos[slot])
 
@@ -294,6 +303,11 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
                       "Tente aumentar o orçamento ou tirar uma restrição.")
     else:
         melhor = combos[0]
+        for slot, (texto, base) in aviso_aproximada.items():  # o aviso cita o item que a combinação de fato usa
+            esc = melhor.escolhas.get(slot)
+            novo = (f"{base}; a opção mais próxima é {esc.item_nome} ({esc.loja_nome}). Quer mudar o pedido?"
+                    if esc else f"{base}. Quer mudar o pedido?")
+            avisos[:] = [novo if a == texto else a for a in avisos]
         extras, fora = _avisos_da_melhor(melhor, slots, validos, pessoa_de, nomes)
         avisos.extend(extras)
         if fora:  # mediação: mostra o que daria para incluir com mais uma loja (sempre com confirmação humana)

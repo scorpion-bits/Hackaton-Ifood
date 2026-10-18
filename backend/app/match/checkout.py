@@ -22,6 +22,7 @@ Valores (subtotal, taxa, desconto, total) vêm sempre do `getCart`; nada é reca
 
 from __future__ import annotations
 
+import asyncio
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -635,29 +636,103 @@ async def _montar_loja(cliente, loja_id: str, linhas: list[_Linha], endereco_id:
     }
 
 
+# Erros do iFood que costumam passar numa 2ª tentativa (bug 21/22: `getCart` → INTERNAL "upstream service").
+CODIGOS_TRANSITORIOS = ("INTERNAL", "SERVICE_UNAVAILABLE")
+ESPERA_NOVA_TENTATIVA_S = 0.5  # 1 nova tentativa, sem atrasar mais que ~1 s
+
+
+def _transitorio(e: ErroMCP) -> bool:
+    codigo = str(getattr(e, "codigo", None) or "").upper()
+    texto = str(e).upper()
+    return codigo in CODIGOS_TRANSITORIOS or any(f"(CÓDIGO {c}" in texto for c in CODIGOS_TRANSITORIOS)
+
+
+class _ComNovaTentativa:
+    """Embrulha o cliente: `createCart`/`getCart` com erro transitório (INTERNAL) ganham 1 nova tentativa."""
+
+    TOOLS = ("createCart", "getCart")
+
+    def __init__(self, cliente):
+        self._cliente = cliente
+
+    def __getattr__(self, nome: str):
+        return getattr(self._cliente, nome)
+
+    async def chamar(self, tool: str, **args):
+        try:
+            return await self._cliente.chamar(tool, **args)
+        except ErroMCP as e:
+            if tool not in self.TOOLS or not _transitorio(e):
+                raise
+        await asyncio.sleep(ESPERA_NOVA_TENTATIVA_S)
+        return await self._cliente.chamar(tool, **args)
+
+
+def _erro_da_loja(loja_id: str, nome: str, e: ErroMCP) -> ErroCheckout:
+    if getattr(e, "codigo", None) == "ITEM-001":
+        erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
+                                     f"complementos que o iFood não informou ({e}). Escolha outra combinação.",
+                            codigo="complemento_obrigatorio")
+    else:
+        erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {e}")
+    erro.__cause__ = e
+    return erro
+
+
+def _falha(loja_id: str, linhas: list[_Linha], erro: ErroCheckout) -> dict:
+    """Uma loja que saiu do pedido (bug 21): quem ficou sem quais itens e o que o iFood respondeu."""
+    causa = erro.__cause__
+    return {
+        "loja_id": loja_id,
+        "loja_nome": linhas[0].loja_nome,
+        "codigo_ifood": getattr(causa, "codigo", None),
+        "erro": erro.mensagem,
+        "participantes": list(dict.fromkeys(l.participante_id for l in linhas)),
+        "itens": [{"participante_id": l.participante_id, "slot": l.slot, "item_id": l.item_id,
+                   "nome": l.item_nome} for l in linhas],
+        "excecao": erro,
+    }
+
+
 async def montar_carrinhos(cliente, combinacao: Combinacao | dict, endereco_id: str,
-                           pagamento_id: str | None = None, geo: dict | None = None) -> list[dict]:
+                           pagamento_id: str | None = None, geo: dict | None = None,
+                           falhas: list[dict] | None = None) -> list[dict]:
     """1 carrinho por loja da combinação, na sequência obrigatória do MCP. Falha → `ErroCheckout`.
 
     `geo` ({latitude, longitude} do endereço; ou `combinacao["geo"]`): o getItem real exige `userLocation` (bug 17).
     Sem forma de pagamento aceitável o carrinho volta montado, com `pagamento.codigo = "sem_pagamento_sem_cobranca"`.
+
+    `falhas` (lista; ou `combinacao["falhas"]`, como o `geo`) liga o modo "pula a loja que falhou" (bug 21): a loja
+    com erro sai, as outras seguem, e cada loja que saiu é anotada nessa lista (ver `_falha`). Se TODAS falharem,
+    levanta `ErroCheckout` do mesmo jeito. Sem a lista (padrão), a 1ª loja com erro derruba tudo, como sempre.
+    `createCart`/`getCart` com erro transitório (INTERNAL) ganham 1 nova tentativa antes de desistir da loja.
     """
-    if geo is None:  # a rota manda as coordenadas dentro da combinação (campo "geo")
-        geo = _campo(combinacao, "geo") if isinstance(combinacao, dict) else None
+    if isinstance(combinacao, dict):  # a rota manda coordenadas e a lista de falhas dentro da combinação
+        if geo is None:
+            geo = _campo(combinacao, "geo")
+        if falhas is None and isinstance(combinacao.get("falhas"), list):
+            falhas = combinacao["falhas"]
     grupos = _agrupar_por_loja(_linhas_da_combinacao(combinacao))
     if not grupos:
         raise ValueError("A combinação não tem nenhum item.")
+    cli = _ComNovaTentativa(cliente)
     carrinhos = []
+    erros: list[ErroCheckout] = []
     for loja_id, linhas in grupos.items():
         try:
-            carrinhos.append(await _montar_loja(cliente, loja_id, linhas, endereco_id, pagamento_id, geo))
+            carrinhos.append(await _montar_loja(cli, loja_id, linhas, endereco_id, pagamento_id, geo))
         except ErroMCP as e:
-            nome = linhas[0].loja_nome
-            if getattr(e, "codigo", None) == "ITEM-001":
-                raise ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
-                                            f"complementos que o iFood não informou ({e}). Escolha outra combinação.",
-                                   codigo="complemento_obrigatorio") from e
-            raise ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {e}") from e
+            erro = _erro_da_loja(loja_id, linhas[0].loja_nome, e)
+            if falhas is None:
+                raise erro from e
+            erros.append(erro)
+            falhas.append(_falha(loja_id, linhas, erro))
+    if not carrinhos:  # todas as lojas falharam: o erro de sempre (com todas as lojas, se forem várias)
+        primeiro = erros[0]
+        if len(erros) == 1:
+            raise primeiro
+        juntos = ErroCheckout(primeiro.loja_id, " ".join(e.mensagem for e in erros), codigo=primeiro.codigo)
+        raise juntos from primeiro.__cause__
     return carrinhos
 
 
