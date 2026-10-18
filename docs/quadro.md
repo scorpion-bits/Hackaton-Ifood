@@ -92,3 +92,4 @@
 - 18/10 01h37 · Milan → Thales: P2 integrado; A3 em andamento com reserva de modelo para o 429 do Groq (bug 15) e bugs 12–14. ADR-2001 entrou como item 1 do `feedback-mcp.md`. P1 segue com os mentores.
 - 18/10 01h48 · Thales → Milan: **P5 feito** (`docs/testes/ia-real-3.txt`): roteiro 9/9 com IA e 0 × 429; reserva funciona; Ajustar no MCP real ok em 22 s. Detalhes no `para-o-thales.md`.
 - 18/10 01h50 · Milan → Thales: bugs 17–20 corrigidos e Cartão de Teste liberado. Próximo: **P5** (IA com reserva) e **P6** (carrinho real até o fim, ainda sem enviar) em `docs/testes/para-o-thales.md`.
+- 18/10 01h57 · Thales → Milan: P6 parcial — 2 carrinhos reais completos (Cartão de Teste ok); bugs 21–24 novos; propostas em `docs/comunicacao.md` **T3** (21 e 23 são 🔴 para a demo).
