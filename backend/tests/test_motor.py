@@ -594,7 +594,8 @@ async def test_busca_na_loja_vai_nas_lojas_de_melhor_nota_e_preco_do_primeiro_it
     slots = [(Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana", consultas=["pizza"])),
              (Desejo("ana", "Ana", "pizza e um refri"), Intencao("ana#2", consultas=["refri"]))]
     await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
-    assert chamadas == ["L4", "L3", "L2"]
+    # 3 de melhor nota (L4, L3, L2) + a mais barata que faltava (L5, nota baixa: o otimizador pode escolhê-la pelo preço)
+    assert chamadas == ["L4", "L3", "L2", "L5"]
 
 
 # ---------- mensagens honestas (bugs 31 e 32, P8/P9 no MCP real) ----------
@@ -683,3 +684,24 @@ def test_bebida_pelo_nome_nao_vira_opcao_aproximada_de_comida():
     for nome in ("Pizza de calabresa", "Combo X-salada + refri", "X-Bacon + Coca 350ml", "Frango tudo"):
         assert not bebida_sem_pedir(pizza, {}, nome), nome
     assert not bebida_sem_pedir(Intencao("p", consultas=["coca"]), {}, "Coca-Cola Original 350ml")
+
+
+async def test_busca_na_loja_inclui_a_loja_mais_barata_do_primeiro_item(monkeypatch):
+    """Teste do Thales (MCP real, SP): "um hambúrguer e uma batata frita" → Big Mac do McDonald's (o mais barato, nota
+    baixa) + batata de outra padaria; o McDonald's tem McFritas, mas a batata nunca era procurada nele."""
+    def c(slot, loja, preco, nota):
+        return Candidato(slot, loja, loja, f"{loja}-{slot}", "Hambúrguer", preco, 40, "RESTAURANT", False, nota=nota)
+
+    principal = [c("ana", "Original", 34.9, 0.9), c("ana", "Habibs", 22.0, 0.9), c("ana", "Achapa", 30.0, 0.8),
+                 c("ana", "Estadao", 28.0, 0.85), c("ana", "Mcdonalds", 2.9, 0.4)]
+    chamadas: list[str] = []
+
+    async def espiao(cliente, intencao, endereco, loja_id, vertical=""):
+        chamadas.append(loja_id)
+        return [], {}
+
+    monkeypatch.setattr(motor_mod, "buscar_na_loja", espiao)
+    slots = [(Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana", consultas=["hambúrguer"])),
+             (Desejo("ana", "Ana", "um hambúrguer e uma batata frita"), Intencao("ana#2", consultas=["batata frita"]))]
+    await motor_mod._completar_na_mesma_loja(None, slots, [([], {}), ([], {})], [principal, []], {})
+    assert "Mcdonalds" in chamadas and len(chamadas) <= motor_mod.MAX_LOJAS_DO_PRINCIPAL + motor_mod.MAX_LOJAS_MAIS_BARATAS

@@ -23,6 +23,7 @@ from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
 MAX_LOJAS_DO_PRINCIPAL = 3  # lojas do 1º item da pessoa onde os outros itens dela também são procurados (A′F1)
+MAX_LOJAS_MAIS_BARATAS = 2  # + as lojas do 1º item mais baratas: o otimizador costuma escolher por preço (Big Mac R$ 2,90)
 MAX_LOJAS = 3  # cada loja a mais = +1 pedido, +1 taxa, +1 entrega (o δ do otimizador penaliza; os avisos deixam o custo explícito)
 TOP = 3
 NOTA_MINIMA = 0.25  # abaixo disso o item quase não tem a ver com o pedido; só fica se não houver nada melhor
@@ -231,6 +232,12 @@ async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Dese
             if c.loja_id not in melhor_da_loja or chave[:2] > melhor_da_loja[c.loja_id][:2]:
                 melhor_da_loja[c.loja_id] = chave
         lojas = sorted(melhor_da_loja, key=lambda l: melhor_da_loja[l][:2], reverse=True)[:MAX_LOJAS_DO_PRINCIPAL]
+        # Teste do Thales (MCP real, SP): o Big Mac (o mais barato, nota baixa) ganhou, mas a batata só foi procurada nas
+        # lojas de melhor nota → batata de outra loja (+1 entrega) com McFritas no próprio McDonald's. Entram também as
+        # lojas mais baratas do 1º item, para que 1 loja vença sempre que der.
+        preco_min = {c.loja_id: min(x.preco for x in julgados[indices[0]] if x.loja_id == c.loja_id and not x.viola)
+                     for c in julgados[indices[0]] if not c.viola}
+        lojas += [l for l in sorted(preco_min, key=preco_min.get)[:MAX_LOJAS_MAIS_BARATAS] if l not in lojas]
         for k in indices[1:]:
             desejo, intencao = slots[k]
             detalhes = buscas[k][1]
