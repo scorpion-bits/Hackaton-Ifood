@@ -114,7 +114,7 @@ cd backend
 cd backend && .venv/bin/python -m pytest -q
 cd frontend && npm run typecheck
 ```
-Hoje: **176 testes** no backend (pytest), todos passando. Os testes zeram as credenciais e isolam o arquivo de
+Hoje: **mais de 220 testes** no backend (pytest), todos passando. Os testes zeram as credenciais e isolam o arquivo de
 tokens; nenhum teste chama o iFood real.
 
 ## Estrutura

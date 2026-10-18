@@ -337,7 +337,7 @@ Próximos passos:
 
 ## 12. Testes
 
-- **176 testes** no backend (pytest), todos passando em 18/10/2026:
+- **Mais de 220 testes** no backend (pytest), todos passando em 18/10/2026 (`./iniciar.sh --testes` mostra o número exato):
   `cd backend && .venv/bin/python -m pytest -q`. Typecheck do frontend: `cd frontend && npm run typecheck`.
   Tudo junto: `./iniciar.sh --testes` (Windows: `iniciar.ps1 -Testes`).
 - O que cobrem (arquivos em `backend/tests/`):
