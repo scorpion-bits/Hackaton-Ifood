@@ -31,6 +31,29 @@
 | A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37; runs verdes no GitHub (run 18, 01h55) |
 | A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador ✅ `65b4aeb`; 02h00: bugs 21, 23, 24 ✅ 02h10 (`79e50a5` + seguinte); bug 25 (desconto derivado do total do `getCart`, partes fecham) ✅ 02h45 |
 
+### Trilha A′ — agente do Zenon no lugar do Milan (desde 18/10 03h22)
+> O agente do Milan ficou sem tokens. A pedido do Zenon, **o agente do Zenon assume a Trilha A** (back, MCP real e
+> integração no `ccr`). Quando o agente do Milan voltar: ler esta tabela, o "Registro de execução" (linhas "A′") e o
+> `docs/comunicacao.md` (Z16) e retomar daqui. O agente do Thales segue só nos testes (`docs/testes/para-o-thales.md`).
+> Origem: relatório de pesquisa + auditoria do agente do Zenon (18/10 03h05): sem mudar de ideia; corrigir o
+> **"pedido completo"** (bug "1 item por pessoa": "uma pizza e uma coca" virava pizza + açaí de outra loja).
+
+| ID | Tarefa (aprovada pelo Zenon 03h20) | Arquivos | Pronto quando | Status |
+|---|---|---|---|---|
+| A′0 | Integrar `zenon/b4-cartao-modo-real` (bug 27) e `zenon/b8-textos-b9b` (Z11) | — | build ok | ✅ 03h25 (`a61cfe4`, `7df6599`) |
+| A′F2 | Bebida pela marca ("coca", "guaraná", "pepsi"… → também busca "refrigerante"; juiz deixa bebida entrar) + aviso sem contradição ("Não achei X" e "X ficou de fora: não cabe no orçamento" juntos) | `match/interprete.py`, `juiz.py`, `motor.py`, testes | "uma pizza e uma coca" → pizza + refrigerante da mesma pizzaria | 🔄 |
+| A′F1 | 2º item da pessoa **na mesma loja**: `searchOffers` com `refinements.merchantId` nas melhores lojas do item principal (e nas lojas do grupo). É o caminho que o `getMerchant` real indica (`catalogSummary.navigationHint`) | `match/busca.py`, `motor.py`, `ifood_mcp/demo_server.py`, testes | "combo de hambúrguer com refri" sem 2ª loja | ⬜ |
+| A′F4 | Taxa de entrega e pedido mínimo da busca (`merchant.deliveryMethod.fee`) no custo do otimizador ("taxa estimada; confirmada no carrinho") | `match/busca.py`, `motor.py`, `demo_server.py` | explicação mostra custo com taxa | ⬜ |
+| A′F5 | **Só eu além de restaurante**: lista de compras de mercado/farmácia/pet/bebidas vira itens na categoria certa (`merchantType`); 1 loja por categoria quando der; carrinho real. Sem juntar entregas de lojas diferentes | `match/interprete.py`, `busca.py`, `juiz.py`, `dados_demo_match.json`, testes | "preciso de ração, shampoo e pilha" monta carrinho | ⬜ |
+| A′F3 | Combos: combo que cobre 2+ itens da pessoa vira opção dela no otimizador (preço 1×); nunca combo + avulsos repetidos | `match/otimizador.py`, `modelos.py`, `busca.py`, testes | "hambúrguer com batata e refri" → combo **ou** avulsos | ⬜ **sai se não estiver estável às 08h** |
+| A′9 | Docs: `feedback-mcp.md` (busca na loja, taxa na busca), `tecnico.md`, P8 no `para-o-thales.md` (reteste no real) | docs | — | ⬜ |
+
+Decidido pelo Zenon (03h20): multicategoria e consolidação de entrega **não** viram código em grupo (só slide de
+visão); a frase do pitch ("cada um fala o que quer; o IBits monta o pedido completo de cada um na menor quantidade de
+lojas, divide a conta e pede pelo iFood") vai para o Thales decidir (pitch é dele, Z2). **Pendente de decisão:** envio
+real (`submitOrder`) na conta de teste com o Cartão de Teste (P8 do plano antigo / bug 28) — ninguém faz sem o ok do
+Zenon e do Thales.
+
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
 > **Zenon trabalha de casa (remoto); Milan e Thales estão no evento.** Toda tarefa do Zenon tem que ser feita só com o
 > git: nada que dependa do PC do Thales, do `.env` ou de ensaio presencial. O que exige o PC do Thales (confirmar as
@@ -74,6 +97,7 @@
   12h30 (B2/B3) e ajustes de texto do pitch quando Milan/Thales registrarem no quadro o que mudou.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
+- **03h22 → agora (agente do Zenon no lugar do Milan, Trilha A′):** F2 → F1 → F4 → F5 → F3 (até 08h) → P8 do Thales (reteste no MCP real) → congelar 10h30 → PR `ccr` → `main` → PDF 11h30. Modelo: **Opus** (otimizador/busca); sem `/clear` (o contexto está nesta sessão). Agente do Milan ao voltar: ler a Trilha A′ e o Z16.
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
@@ -85,6 +109,7 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 03h25 — A′0 (agente do Zenon no lugar do Milan): integrados `zenon/b4-cartao-modo-real` (bug 27) e `zenon/b8-textos-b9b` (Z11). Build ok. Auditoria: 474 testes no `ccr`. Bug "1 item por pessoa" reproduzido no demo: "uma pizza e uma coca" → pizza + açaí de outra loja; "pizza e um guaraná" → guaraná de fora com 2 avisos que se contradizem; "combo de hambúrguer com refri" → refri de outra loja; "hambúrguer com batata e refri" → lanche + batata + combo (que já tem os dois). Causas: bebida pela marca não reconhecida; busca de cada item na cidade toda (nunca dentro da loja do item principal); combo ignorado.
 - 18/10 02h40 — Integrado `zenon/b8-textos-b9` (`0d3ea5e`, `racional-ux.md`/`tecnico.md` sem deck). Z11 respondido: Zenon corrige Patrocinado/título da avaliação/"Enviar sem deslizar" depois do B7. P7 para o Thales (reteste com bug 25, envio desligado; P8 `submitOrder` só com ok do Milan). 474 testes, typecheck e build ok. Sem subagente (rodada só de integração).
 - 18/10 02h45 — Bug 25 (dev-mcp-ifood, Opus): `_ler_totais` aceita desconto/benefício/voucher do `summary` e, sem campo, deriva desconto = subtotal + taxa − total (`desconto_derivado: true`); o rateio que já existia passa a fechar as partes. Busca não mudou (promoção é aplicada no total). 474 testes. A confirmar no real: nome do campo, desconto sobre a taxa, total do `getCart` = cobrado no `submitOrder`. Opus adequado (poderia ser Sonnet).
 - 18/10 02h35 — Integrados `zenon/b4-pix-sem-chave` (`b8f2254`) e o P6b + roteiro sem deck do Thales (`dcdb1fa`); limpas as linhas duplicadas pelo merge no quadro/bugs. 471 testes, typecheck e build ok. P6b: bug 21 ✅, 24 ✅; novo bug 25 (total do carrinho com desconto não lido → partes não fecham) → dev-mcp-ifood (Opus).

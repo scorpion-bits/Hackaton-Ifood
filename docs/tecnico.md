@@ -224,10 +224,10 @@ Como funciona:
   nota do juiz em cada slot da loja; fala por template a partir dos números. Rede de segurança: um slot que tinha
   opção válida nunca fica sem oferta (se todos os agentes o esqueceram, entra o top 2 por template).
 - **Garantia:** com `LLM_PROVIDER=mock` o resultado do roteiro da demo não muda (`test_leilao.py`).
-- **Roteiro exibido:** abertura do IBits, até 2 passes, até 5 lances (o Patrocinado primeiro, o mais forte por
-  último; toda vencedora tem o lance mostrado), a réplica da vencedora que agrupa mais pessoas e o fechamento do
-  IBits ("N de M bem atendidos"; com mais de 1 loja, "São N pedidos, e as taxas aparecem no carrinho antes do seu
-  ok"). A taxa de entrega **não** aparece nas falas: ela só existe no carrinho.
+- **Roteiro exibido:** abertura do IBits, até 2 passes, até 5 lances (o Patrocinado primeiro, quando houver; o mais
+  forte por último; toda vencedora tem o lance mostrado), a réplica da vencedora que agrupa mais pessoas e o
+  fechamento do IBits ("N de M bem atendidos"; com mais de 1 loja, "São N pedidos, e as taxas aparecem no carrinho
+  antes do seu ok"). A taxa de entrega **não** aparece nas falas: ela só existe no carrinho.
 - **Medições** no bloco `leilao.medicoes`: `ms_total`, `ms_por_loja` e `chamadas_llm` (só conta resposta JSON
   válida). `leilao.llm` só é `true` se ao menos uma resposta do LLM foi usada. Na tela, cada fala diz a origem:
   "agente da loja (IA)" ou "texto conferido".
@@ -235,14 +235,15 @@ Como funciona:
 
 **Patrocinado = só visibilidade.** A loja patrocinada tem o lance **mostrado primeiro** entre os lances e o rótulo
 "Patrocinado" (em texto). Não garante vaga entre as lojas consultadas no leilão e **nunca** muda nota, filtro ou
-escolha do otimizador. No demo, 1 loja patrocinada (`loja-demo-poke`) que não vence: mostra que pagar não compra o
-pedido. No modo real nenhuma loja é patrocinada. Configuração em `match/politica_lojas.json`.
+escolha do otimizador. Desligado desde 18/10: hoje nenhuma loja é patrocinada, nem na demo nem no modo real; o
+mecanismo segue coberto por `test_leilao.py`. Configuração em `match/politica_lojas.json`.
 
 No front:
-- `telas/Leilao.tsx` — "A disputa pelo seu pedido": falas uma a uma (~0,8 s cada, até 6 na tela; se o roteiro for
-  maior, ficam abertura, vencedoras e patrocinada, 1 réplica e o fechamento, sem mudar texto nem número), botão
-  **Pular** sempre visível, legenda do Patrocinado, origem de cada fala e o tempo da disputa (`medicoes`). No aparelho
-  do organizador a tela não avança sozinha (ele narra); no do convidado avança cerca de 4 s depois do fechamento.
+- `telas/Leilao.tsx` — "Como o IBits avaliou cada loja": falas uma a uma (~0,8 s cada, até 6 na tela; se o roteiro for
+  maior, ficam abertura, vencedoras (e patrocinada, quando houver), 1 réplica e o fechamento, sem mudar texto nem
+  número), botão **Pular** sempre visível, origem de cada fala e o tempo da avaliação (`medicoes`); no fim, "Ver o
+  pedido". No aparelho do organizador a tela não avança sozinha (ele narra); no do convidado avança cerca de 4 s
+  depois do fechamento.
 - `telas/Deck.tsx` (o nome ficou da versão com deck) — "O pedido do grupo": só a melhor combinação, num cartão sem gesto:
   afinidade, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo. "Ajustar com o IBits" logo
   abaixo; "Confirmar pedido" fixo no rodapé leva a "Como pagar?" (`Resultado.tsx`; com 1 pessoa, monta o carrinho

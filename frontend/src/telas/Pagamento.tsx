@@ -101,6 +101,8 @@ function MinhaParte({
   const pix = pag?.pix ?? pixLocal;
   // Sem chave do organizador o servidor recusa o Pix (409); a opção já aparece desabilitada. Sem o campo, nada muda.
   const semChavePix = sala.tem_chave_pix === false;
+  // O cartão simulado só existe no modo de demonstração; no modo real o servidor recusa (409, bug 27).
+  const semCartao = !sala.demonstracao;
 
   async function pagar(escolhida: FormaPagamento) {
     setOcupado(true);
@@ -168,8 +170,8 @@ function MinhaParte({
           <button
             type="button"
             className="forma"
-            disabled={ocupado}
-            aria-expanded={cartaoAberto}
+            disabled={ocupado || semCartao}
+            aria-expanded={cartaoAberto && !semCartao}
             onClick={() => setCartaoAberto((v) => !v)}
           >
             <span className="forma-ico" aria-hidden>
@@ -179,10 +181,10 @@ function MinhaParte({
               <strong>
                 Cartão <span className="mini-selo">DEMONSTRAÇÃO</span>
               </strong>
-              <small>Simulado: nenhuma cobrança real</small>
+              <small>{semCartao ? "Só no modo de demonstração: use Pix ou dinheiro" : "Simulado: nenhuma cobrança real"}</small>
             </span>
           </button>
-          {cartaoAberto && (
+          {cartaoAberto && !semCartao && (
             <div className="aviso">
               <p>Isto é uma simulação de demonstração. Nenhuma cobrança real será feita.</p>
               <button type="button" className="primario" disabled={ocupado} onClick={() => pagar("cartao_simulado")}>
