@@ -671,7 +671,7 @@ class _ComNovaTentativa:
 def _erro_da_loja(loja_id: str, nome: str, e: ErroMCP) -> ErroCheckout:
     if getattr(e, "codigo", None) == "ITEM-001":
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
-                                     f"complementos que o iFood não informou ({e}). Escolha outra combinação.",
+                                     f"complementos que o iFood não informou ({e}). Troque o item com 'Ajustar com o IBits'.",
                             codigo="complemento_obrigatorio")
     else:
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {e}")

@@ -175,7 +175,7 @@ def test_escolher_com_uma_loja_falhando_devolve_200_com_aviso(c, monkeypatch, to
     aviso = loja["aviso"]
     assert aviso.startswith(f"Não consegui montar o carrinho em {loja['loja_nome']} (o iFood respondeu {erro[1]})")
     assert all(nomes[pid] in aviso for pid in _donos(comb, fora))
-    assert "Ajustar com o IBits" in aviso
+    assert "o pedido segue com as outras lojas" in aviso
     assert aviso in dados["avisos"]
 
     estado = s.estado()

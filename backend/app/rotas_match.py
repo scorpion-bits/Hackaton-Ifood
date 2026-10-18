@@ -524,8 +524,8 @@ def _loja_fora(falha: dict, nomes: dict[str, str]) -> dict:
     motivo = (f"o iFood respondeu {falha['codigo_ifood']}" if falha.get("codigo_ifood")
               else "o iFood respondeu com erro")
     aviso = (f"{PREFIXO_LOJA_FORA}{falha['loja_nome']} ({motivo}); "
-             f"os itens de {quem} ({itens}) ficaram de fora — "
-             "use 'Ajustar com o IBits' ou escolha outra combinação.")
+             f"os itens de {quem} ({itens}) ficaram de fora; "
+             "o pedido segue com as outras lojas.")
     return {
         "loja_id": falha["loja_id"], "loja_nome": falha["loja_nome"], "codigo_ifood": falha.get("codigo_ifood"),
         "erro": oauth.sem_segredos(falha["erro"]),
