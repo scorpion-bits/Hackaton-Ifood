@@ -195,6 +195,8 @@ def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], tet
         cobertos = {s for c in escolhidos for s in c.cobre}
         if any(c is not None and s in cobertos for s, c in zip(com_opcao, combo)):
             continue
+        if sum(len(c.cobre) for c in escolhidos) != len(cobertos):
+            continue  # 2 combos cobrindo o mesmo slot: redundante (e inflaria a nota; achado M2 do Milan)
         preco = round(sum(c.preco for c in escolhidos), 2)
         if teto is not None and preco > teto + 1e-9:
             continue

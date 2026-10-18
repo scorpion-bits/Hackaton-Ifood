@@ -84,6 +84,9 @@ class Linha:
     partes_ok: bool | None = None
     taxa_busca_x_carrinho: list[str] = field(default_factory=list)
     estimado_x_carrinho: tuple[float, float] | None = None  # (custo com taxa da busca, itens + entrega do carrinho)
+    indisponivel: bool = False  # iFood respondeu 503 (fora do ar): fica fora das métricas
+    ms_mcp: int = 0  # tempo somado das chamadas MCP do /rodar (o resto é IA + nosso código)
+    por_tool: dict[str, int] = field(default_factory=dict)
     falhas: list[str] = field(default_factory=list)
     avisos: list[str] = field(default_factory=list)
 
@@ -147,6 +150,12 @@ def _rodar_caso(cliente, caso: Caso, real: bool) -> Linha:
     linha.ms = int((time.perf_counter() - inicio) * 1000)
     linha.status = resp.status_code
     corpo = resp.json()
+    if resp.status_code == 503:  # iFood fora do ar: o app avisou certo; não é falha nossa, o caso fica de fora
+        linha.indisponivel = True
+        linha.avisos = [str(corpo.get("detail", ""))]
+        if "{" in linha.avisos[0] or "INTERNAL" in linha.avisos[0]:
+            linha.falhas.append("mensagem do 503 mostra o erro cru do iFood")
+        return linha
     if resp.status_code != 200:
         linha.avisos = [str(corpo.get("detail", ""))]
         if not caso.sem_resultado:
@@ -154,7 +163,11 @@ def _rodar_caso(cliente, caso: Caso, real: bool) -> Linha:
         elif "aumentar o orçamento" in linha.avisos[0] and "orçamento" not in caso.nome:
             linha.falhas.append("pedido fora do cardápio sugere aumentar o orçamento")
         return linha
-    linha.chamadas_mcp = len(corpo.get("rastro") or [])
+    rastro = corpo.get("rastro") or []
+    linha.chamadas_mcp = len(rastro)
+    linha.ms_mcp = sum(int(c.get("ms") or 0) for c in rastro)
+    for c in rastro:
+        linha.por_tool[c["tool"]] = linha.por_tool.get(c["tool"], 0) + 1
     _checar_resultado(caso, corpo, linha, real)
     if caso.sem_resultado:
         linha.falhas.append("devia avisar que não achou, mas montou combinação")
@@ -201,6 +214,8 @@ def _relatorio(linhas: list[Linha], modo: str, provedor: str, agora: datetime) -
     multi_uma = sum(l.pessoas_multi_uma_loja for l in linhas)
     ok_partes = [l for l in linhas if l.partes_ok is not None]
     tempos = sorted(l.ms for l in linhas if l.status == 200)
+    fora_do_ar = [l.caso for l in linhas if l.indisponivel]
+    medidos = [l for l in linhas if l.status == 200]
     falhas = [(l.caso, f) for l in linhas for f in l.falhas]
     def pct(a, b):
         return f"{a}/{b} ({round(100 * a / b)}%)" if b else "—"
@@ -219,7 +234,13 @@ def _relatorio(linhas: list[Linha], modo: str, provedor: str, agora: datetime) -
         f"- Partes da vaquinha = total dos carrinhos (ao centavo): {pct(sum(l.partes_ok for l in ok_partes), len(ok_partes))}",
         f"- Tempo do Match (/rodar): mediana {tempos[len(tempos) // 2] / 1000:.1f} s, máximo {tempos[-1] / 1000:.1f} s"
         if tempos else "- Tempo do Match: —",
-        f"- Chamadas MCP por Match (média): {round(sum(l.chamadas_mcp for l in linhas) / max(1, len(linhas)), 1)}",
+        f"- Casos com o iFood fora do ar (503, mensagem honesta; fora das métricas): {len(fora_do_ar)}"
+        + (f" — {', '.join(fora_do_ar)}" if fora_do_ar else ""),
+        f"- Chamadas MCP por Match (média): {round(sum(l.chamadas_mcp for l in medidos) / max(1, len(medidos)), 1)}",
+        "- Onde vai o tempo do Match: " + ("; ".join(
+            f"{l.caso} {l.ms / 1000:.1f} s = MCP {l.ms_mcp / 1000:.1f} s ({l.chamadas_mcp} chamadas: "
+            + ", ".join(f"{t} {n}" for t, n in sorted(l.por_tool.items(), key=lambda x: -x[1])) + ") + IA/código "
+            f"{max(0, l.ms - l.ms_mcp) / 1000:.1f} s" for l in medidos if l.ms >= 3000) or "todos abaixo de 3 s"),
         "- Custo estimado na escolha (itens + taxa da busca) × carrinho (itens + entrega): "
         + (", ".join(f"{l.caso} R$ {a:.2f} × R$ {b:.2f}" for l in linhas if l.estimado_x_carrinho
                      for a, b in [l.estimado_x_carrinho] if abs(a - b) >= 0.01) or "iguais em todos os casos"),
@@ -229,7 +250,7 @@ def _relatorio(linhas: list[Linha], modo: str, provedor: str, agora: datetime) -
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for l in linhas:
-        out.append(f"| {l.caso} | {l.status} | {l.ms / 1000:.1f} s | {l.itens_atendidos}/{l.itens_pedidos} | {l.lojas} | "
+        out.append(f"| {l.caso} | {l.status}{' ⚠️ iFood fora' if l.indisponivel else ''} | {l.ms / 1000:.1f} s | {l.itens_atendidos}/{l.itens_pedidos} | {l.lojas} | "
                    f"{l.combos} | {l.carrinhos} | {'—' if l.partes_ok is None else ('✅' if l.partes_ok else '❌')} | "
                    f"{'; '.join(l.falhas) or '✅'} |")
     out += ["", "## Avisos e taxas por caso"]

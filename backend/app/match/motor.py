@@ -43,6 +43,14 @@ MSG_IFOOD_FORA = ("O iFood não respondeu à busca agora (erro do servidor do iF
 _TOOLS_DE_BUSCA = {"searchOffers", "browseOffers", "getMerchant"}
 
 
+def _erro_curto(erro: str) -> str:
+    """Bug 33: erro do iFood para a tela — sem o JSON cru em inglês (ele fica no rastro). INTERNAL e afins viram
+    "o iFood está instável agora"; mensagem já legível passa como está (até 120 caracteres)."""
+    if "INTERNAL" in erro or "upstream" in erro or erro.lstrip().startswith("{") or "{\"" in erro:
+        return "o iFood está instável agora"
+    return erro[:120]
+
+
 def _ifood_fora(cliente: ClienteIFood) -> bool:
     """Bug 31: houve busca e TODAS as chamadas de busca falharam (ex.: `INTERNAL` do iFood)."""
     buscas = [c for c in cliente.rastro_como_dicts() if c["tool"] in _TOOLS_DE_BUSCA]
@@ -322,10 +330,10 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     if endereco is None and (mock := endereco_mock(cfg)):
         # lista vazia (ADR-2001 no createAddress) ou listAddresses fora do ar (bug 23): usa o mock do .env
         endereco = mock
-        avisos.append(f"Não consegui ler os endereços no iFood ({falha_enderecos}); usando o endereço de teste."
-                      if falha_enderecos else MSG_ENDERECO_MOCK)
+        avisos.append(f"Não consegui ler os endereços no iFood ({_erro_curto(falha_enderecos)}); usando o endereço "
+                      "de teste." if falha_enderecos else MSG_ENDERECO_MOCK)
     elif falha_enderecos:
-        avisos.append(f"Não consegui ler os endereços no iFood: {falha_enderecos}")
+        avisos.append(f"Não consegui ler os endereços no iFood: {_erro_curto(falha_enderecos)}")
     if endereco is None:
         if not avisos:
             avisos.append(MSG_SEM_ENDERECO)

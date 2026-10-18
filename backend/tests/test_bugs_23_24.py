@@ -56,7 +56,8 @@ async def test_listaddresses_falha_com_mock_roda_com_aviso(monkeypatch):
     r = await _rodar(DESEJOS, "INTERNAL: tente de novo")
     assert "problema" not in r and r["combinacoes"]
     assert r["endereco"]["id"] == motor_mod.ID_ENDERECO_MOCK
-    assert ("Não consegui ler os endereços no iFood (INTERNAL: tente de novo); usando o endereço de teste."
+    # bug 33: sem o erro cru do iFood na tela (ele fica no rastro)
+    assert ("Não consegui ler os endereços no iFood (o iFood está instável agora); usando o endereço de teste."
             in r["avisos"])
     assert motor_mod.MSG_ENDERECO_MOCK not in r["avisos"]  # uma mensagem só
 
@@ -65,7 +66,7 @@ async def test_listaddresses_falha_sem_mock_comporta_como_antes(monkeypatch):
     monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "")
     r = await _rodar(DESEJOS, "INTERNAL")
     assert r["problema"] == "endereco" and r["combinacoes"] == []
-    assert r["avisos"] == ["Não consegui ler os endereços no iFood: INTERNAL"]
+    assert r["avisos"] == ["Não consegui ler os endereços no iFood: o iFood está instável agora"]
 
 
 async def test_listaddresses_401_continua_subindo(monkeypatch):
