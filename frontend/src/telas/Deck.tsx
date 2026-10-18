@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { Candidato, Combinacao, EstadoSala } from "../tipos";
 import { brl } from "../componentes/CartaoPessoa";
 import { IconeFaisca, IconeX, Rosto, corPessoa, emojiLoja, gradienteLoja } from "../componentes/leilao/visual";
@@ -63,7 +63,7 @@ function Linhas({
         return juntarIguais(itens).map((i: Candidato, k) => {
           const novo = !!antes && !antes.has(chaveItem(pid, i));
           return (
-          <li key={`${pid}-${i.item_id}-${k}`} className={novo ? "novo" : undefined}>
+          <LinhaItem key={`${pid}-${i.item_id}-${k}`} novo={novo} foto={i.imagem_url}>
             <Rosto nome={nomeDe(pid)} cor={corDe(pid)} classe="ld-face-p" />
             <div>
               <b>
@@ -79,11 +79,27 @@ function Linhas({
               )}
             </div>
             <strong>{brl(i.preco)}</strong>
-          </li>
+          </LinhaItem>
           );
         });
       })}
     </ul>
+  );
+}
+
+/** Linha de um item; com foto do prato do MCP real (M9), mostra a miniatura depois do rosto. Sem foto, ou se ela
+ * não carregar, a linha fica como antes. */
+function LinhaItem({ novo, foto, children }: { novo: boolean; foto?: string | null; children: ReactNode[] }) {
+  const [falhou, setFalhou] = useState(false);
+  const comFoto = !!foto && !falhou;
+  const classe = [novo ? "novo" : "", comFoto ? "com-foto" : ""].filter(Boolean).join(" ") || undefined;
+  const [rosto, ...resto] = children;
+  return (
+    <li className={classe}>
+      {rosto}
+      {comFoto && <img className="ld-miniatura" src={foto!} alt="" loading="lazy" onError={() => setFalhou(true)} />}
+      {resto}
+    </li>
   );
 }
 

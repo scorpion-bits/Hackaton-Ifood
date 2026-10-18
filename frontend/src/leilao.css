@@ -102,6 +102,9 @@
 .ld-why .it { display: block; font-size: 13px; line-height: 1.2; overflow-wrap: anywhere; }
 .ld-why strong { font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ld-why li.sem { opacity: 0.7; }
+/* M9: foto do prato do MCP real ao lado do item */
+.ld-why li.com-foto { grid-template-columns: auto 44px 1fr auto; }
+.ld-miniatura { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: var(--ld-linha); }
 .ld-motivo { display: block; font-style: normal; font-size: 12px; color: var(--marca-escura); font-weight: 700; margin-top: 2px; }
 .ld-aprox { color: var(--ld-aviso); background: var(--ld-aviso-bg); border-radius: 6px; padding: 3px 6px; }
 .ld-aviso-mini { display: block; font-size: 11px; color: var(--ld-aviso); font-weight: 700; margin-top: 2px; }

@@ -49,6 +49,8 @@ class Candidato:
     motivo: str = ""
     viola: list[str] = field(default_factory=list)  # restrições duras violadas (não vazio → descartado)
     cobre: list[str] = field(default_factory=list)  # combo (A′F3): outros slots da mesma pessoa que este item atende
+    imagem_url: str | None = None  # foto do prato (MCP real `itemImageUrl`; só static.ifood-static.com.br) — M9
+    loja_logo_url: str | None = None  # logo da loja (MCP real `merchantLogoUrl`; mesmo filtro) — M9
 
 
 @dataclass

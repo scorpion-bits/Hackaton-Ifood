@@ -12,6 +12,9 @@ export interface Candidato {
   nota: number;
   motivo: string;
   viola: string[];
+  /** Foto do prato e logo da loja vindas do MCP real (M9); no modo demonstração vêm vazias. */
+  imagem_url?: string | null;
+  loja_logo_url?: string | null;
 }
 
 export interface Combinacao {

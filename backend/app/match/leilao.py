@@ -601,7 +601,8 @@ async def rodar_leilao(cfg: Config, slots: list[tuple[Desejo, Intencao]], candid
         lojas[loja_id] = {
             "loja_id": loja_id, "loja_nome": exemplos[0].loja_nome, "vertical": exemplos[0].vertical or None,
             "eta_min": min(etas) if etas else None, "avaliacao": avaliacoes[0] if avaliacoes else None,
-            "imagem_url": None, "patrocinado": bool(politica.get(loja_id, {}).get("patrocinado")),
+            "imagem_url": next((c.loja_logo_url for c in exemplos if c.loja_logo_url), None),  # logo do MCP (M9)
+            "patrocinado": bool(politica.get(loja_id, {}).get("patrocinado")),
             "passou": False, "ofertas": [], "atende": 0, "afinidade": 0, "fala": "", "fonte_fala": "modelo",
             "fonte_ofertas": "modelo", "agrupa": None, "vencedora": False,
         }
