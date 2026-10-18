@@ -81,10 +81,10 @@ def filtrar_validos(
 
 
 def _sem_repetidos(lista: list[Candidato]) -> list[Candidato]:
-    vistos: set[tuple[str, str]] = set()
+    vistos: set[tuple] = set()
     saida = []
     for c in lista:
-        chave = (c.loja_id, c.item_id)
+        chave = (c.loja_id, c.item_id, tuple(c.cobre))  # o combo (cobre 2+ slots) não é o mesmo que o item avulso
         if chave not in vistos:
             vistos.add(chave)
             saida.append(c)
@@ -184,14 +184,19 @@ def _opcoes_da_pessoa(slots: list[str], validos: dict[str, list[Candidato]], tet
             continue
         if len({(c.loja_id, c.item_id) for c in escolhidos}) < len(escolhidos):
             continue  # o mesmo item não vale por dois slots
+        # combo (A′F3): os slots que ele cobre não levam outro item (nada de "lanche + combo com lanche")
+        cobertos = {s for c in escolhidos for s in c.cobre}
+        if any(c is not None and s in cobertos for s, c in zip(com_opcao, combo)):
+            continue
         preco = round(sum(c.preco for c in escolhidos), 2)
         if teto is not None and preco > teto + 1e-9:
             continue
-        fora = [s for s, c in zip(com_opcao, combo) if c is None]
+        fora = [s for s, c in zip(com_opcao, combo) if c is None and s not in cobertos]
         penal = sum(PENAL_SLOT_PRINCIPAL_FORA if s == principal else PENAL_SLOT_EXTRA_FORA for s in fora)
         opcoes.append(_OpcaoPessoa(
             escolhidos=escolhidos, n_fora=len(fora), penal=penal, preco=preco,
-            sat=sum(c.nota for c in escolhidos) / len(escolhidos),
+            # o combo conta a nota dele para cada slot que atende
+            sat=sum(c.nota * (1 + len(c.cobre)) for c in escolhidos) / (len(escolhidos) + len(cobertos)),
             lojas=frozenset(c.loja_id for c in escolhidos),
             mascara=sum({bits[c.loja_id] for c in escolhidos}),
             eta_max=max((c.eta_min for c in escolhidos if c.eta_min is not None), default=0),
@@ -370,6 +375,7 @@ def _pontuar(escolha, ativas, escolhidos, lojas, chave, pesos, taxas, orcamento_
     }
     combinacao = Combinacao(
         escolhas={c.participante_id: c for c in escolhidos},
+        cobertos={s: c.participante_id for c in escolhidos for s in c.cobre},
         lojas=lojas,
         score=round(score, 4),
         componentes=componentes,

@@ -551,3 +551,23 @@ async def test_produto_que_nao_existe_no_varejo_nao_vira_opcao_aproximada():
     assert "Não achei areia de praia para Ana." in r["avisos"]
     assert not any("opção mais próxima" in a for a in r["avisos"])
     assert "browseOffers" not in [c["tool"] for c in r["rastro"]]
+
+
+# ---------- combos (A′F3) ----------
+@pytest.mark.parametrize("texto", ["hambúrguer com batata e refri", "quero um combo de hambúrguer com refri"])
+async def test_combo_da_loja_atende_varios_itens_da_pessoa_com_um_item_so(texto):
+    """Regressão: "hambúrguer com batata e refri" virava lanche + batata + combo (que já tinha os dois); "combo de
+    hambúrguer com refri" trazia o refri de outra loja."""
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert [e["item_id"] for e in melhor["escolhas"].values()] == ["bg-combo"]
+    assert set(melhor["cobertos"]) == {s for s in ("ana#2", "ana#3") if s in {i["participante_id"] for i in r["intencoes"]}}
+    assert melhor["componentes"]["slots_fora"] == 0 and melhor["afinidade"] > 0
+    assert melhor["escolhas"]["ana"]["motivo"].startswith("Combo com ")
+    assert not any("ficou de fora" in a or "Não achei" in a for a in r["avisos"])
+
+
+async def test_sem_combo_na_loja_os_itens_continuam_avulsos():
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["cobertos"] == {} and len(melhor["escolhas"]) == 2

@@ -544,3 +544,13 @@ def test_lista_da_farmacia_monta_o_carrinho_na_drogaria(c):
     carrinhos = s.estado()["carrinhos"]
     assert len(carrinhos) == 1
     assert carrinhos[0]["subtotal"] == round(6.49 + 39.90, 2) and carrinhos[0]["taxa"] == 5.90
+
+
+def test_combo_escolhido_vai_uma_vez_so_ao_carrinho(c):
+    s = Sala(c)
+    s.convidar({"Ana": {"texto": "hambúrguer com batata e refri"}})
+    assert s.rodar().status_code == 200
+    r = s.escolher("junto")
+    assert r.status_code == 200, r.text
+    carrinhos = s.estado()["carrinhos"]
+    assert len(carrinhos) == 1 and carrinhos[0]["subtotal"] == 42.90

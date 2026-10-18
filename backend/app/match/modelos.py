@@ -48,6 +48,7 @@ class Candidato:
     nota: float = 0.0  # aderência ao desejo, 0–1
     motivo: str = ""
     viola: list[str] = field(default_factory=list)  # restrições duras violadas (não vazio → descartado)
+    cobre: list[str] = field(default_factory=list)  # combo (A′F3): outros slots da mesma pessoa que este item atende
 
 
 @dataclass
@@ -71,6 +72,7 @@ class Combinacao:
     componentes: dict[str, float]
     taxa_conhecida: bool
     explicacao: str = ""
+    cobertos: dict[str, str] = field(default_factory=dict)  # slot atendido por combo → slot onde o combo está
 
 
 @dataclass

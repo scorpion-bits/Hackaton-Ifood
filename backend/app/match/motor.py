@@ -16,7 +16,7 @@ from ..config import Config
 from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, buscar_na_loja, ler_endereco
 from .interprete import CONSULTA_RESTRICAO, MAX_SLOTS, aplicar_quantidades, interpretar, itens_alem_do_limite
-from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
+from .juiz import ROTULO_RESTRICAO, acertos, avaliar, bebida_sem_pedir
 from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
@@ -114,6 +114,47 @@ def _sem_irrelevantes(candidatos: list[Candidato]) -> list[Candidato]:
     return bons if bons else candidatos
 
 
+# item que se apresenta como combo/kit (nome ou seção do cardápio): "Combo smash + batata + refri", "Kit escova"
+_RE_COMBO = re.compile(r"\bcombos?\b|\bkits?\b|\+|\bacompanha\b", re.IGNORECASE)
+
+
+def _montar_combos(slots: list[tuple[Desejo, Intencao]], candidatos: dict[str, list[Candidato]],
+                   detalhes: dict[tuple[str, str], dict]) -> None:
+    """Combos (A′F3, etapa 05): um combo/kit da loja que cita 2+ itens da mesma pessoa vira UM candidato que cobre
+    esses itens (`cobre`), com o preço contado uma vez. O otimizador compara "combo" com "itens avulsos" e nunca
+    escolhe os dois juntos. O item-combo deixa de valer como avulso nesses slots ("hambúrguer, batata e refri" não
+    vira lanche + batata + combo). Altera `candidatos` no lugar."""
+    por_pessoa: dict[str, list[Intencao]] = {}
+    for desejo, intencao in slots:
+        por_pessoa.setdefault(desejo.participante_id, []).append(intencao)
+    for intencoes in por_pessoa.values():
+        if len(intencoes) < 2:
+            continue
+        itens: dict[tuple[str, str], Candidato] = {}
+        for i in intencoes:
+            for c in candidatos.get(i.participante_id, []):
+                if not c.cobre and not c.viola:
+                    itens.setdefault((c.loja_id, c.item_id), c)
+        for chave, c in itens.items():
+            det = detalhes.get(chave, {})
+            if not (_RE_COMBO.search(c.item_nome) or _RE_COMBO.search(str(det.get("categoria", "")))):
+                continue
+            atende = [i for i in intencoes if acertos(i, c, det)]
+            if len(atende) < 2:
+                continue
+            notas = [x.nota for i in atende for x in candidatos.get(i.participante_id, [])
+                     if (x.loja_id, x.item_id) == chave]
+            rotulos = [r for r in (_rotulo(i) for i in atende) if r]
+            combo = dataclasses.replace(
+                c, participante_id=atende[0].participante_id, cobre=[i.participante_id for i in atende[1:]],
+                nota=max(notas or [c.nota]),
+                motivo=("Combo com " + " + ".join(rotulos) + ": 1 item só, preço do combo")[:MAX_MOTIVO])
+            for i in atende:
+                candidatos[i.participante_id] = [x for x in candidatos.get(i.participante_id, [])
+                                                 if (x.loja_id, x.item_id) != chave]
+            candidatos[atende[0].participante_id].append(combo)
+
+
 MARGEM_VAREJO = 0.15  # no varejo, só concorrem itens com nota até isto abaixo do melhor (A′F5)
 
 
@@ -197,7 +238,7 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     `ja_avisados`: slots que já têm "Não achei X" (não ganham um 2º motivo que contradiz o 1º)."""
     avisos: list[str] = []
     fora: list[str] = []
-    presentes = {pessoa_de[s] for s in melhor.escolhas}
+    presentes = {pessoa_de[s] for s in [*melhor.escolhas, *melhor.cobertos]}
     gasto: dict[str, float] = {}
     for slot, c in melhor.escolhas.items():
         gasto[pessoa_de[slot]] = gasto.get(pessoa_de[slot], 0.0) + c.preco
@@ -205,7 +246,7 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     limite_atingido = len(melhor.lojas) >= MAX_LOJAS
     for desejo, intencao in slots:
         slot, pid = intencao.participante_id, desejo.participante_id
-        if slot in melhor.escolhas or not validos[slot] or slot in (ja_avisados or set()):
+        if slot in melhor.escolhas or slot in melhor.cobertos or not validos[slot] or slot in (ja_avisados or set()):
             continue
         fora.append(slot)
         if pid not in presentes:
@@ -364,6 +405,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         candidatos, leilao = await rodar_leilao(cfg, slots, candidatos, detalhes_todos, nomes, politica)
         leilao["demonstracao"] = demonstracao
         validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
+    detalhes_combo = {chave: det for _, detalhes in buscas for chave, det in detalhes.items()}
+    _montar_combos(slots, candidatos, detalhes_combo)
+    validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
     if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
         combos = []
         # a pergunta vai uma vez só, no fim; sem combinação, "a opção mais próxima" contradiz o aviso final (bug 14)
@@ -397,7 +441,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
                            and com_mais[0].escolhas[s].nota >= c.nota - 0.1
                            for s, c in melhor.escolhas.items() if pessoa_de[s] == pid)
 
-            ganhos = [s for s in fora if com_mais and s in com_mais[0].escolhas and mantem(pessoa_de[s])]
+            ganhos = [s for s in fora if com_mais and (s in com_mais[0].escolhas or s in com_mais[0].cobertos)
+                      and mantem(pessoa_de[s])]
             if ganhos:
                 rotulos = {i.participante_id: (_rotulo(i) or "item") for _, i in slots}
                 lista = ", ".join(f"{rotulos[s]} de {nomes[pessoa_de[s]]}" for s in ganhos)

@@ -720,8 +720,9 @@ def afinidade_e_felizes(combinacao: dict, pessoas: list[str], pessoa_de: dict[st
     orçamento) conta 0. Assim "3 de 3 bem atendidos" nunca aparece com o sorvete de alguém cortado."""
     notas: dict[str, list[float]] = {p: [] for p in pessoas}
     escolhas = combinacao.get("escolhas", {})
+    cobertos = combinacao.get("cobertos") or {}  # slot atendido por combo (A′F3) não conta como de fora
     for slot, pid in pessoa_de.items():
-        if slot not in escolhas:
+        if slot not in escolhas and slot not in cobertos:
             notas.setdefault(pid, []).append(0.0)
     for slot, escolha in escolhas.items():
         notas.setdefault(pessoa_de.get(slot, slot), []).append(float(escolha.get("nota", 0.0)))
