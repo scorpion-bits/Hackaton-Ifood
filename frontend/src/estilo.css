@@ -1,7 +1,7 @@
 /* ============================================================
    Match · visual de app de delivery (protótipo de hackathon, não afiliado ao iFood)
    Tokens existentes preservados; os novos só foram acrescentados.
-   Tema claro por padrão; escuro por prefers-color-scheme ou [data-theme="dark"].
+   Tema claro por padrão; escuro só com [data-theme="dark"] (automático desligado, ver abaixo).
    ============================================================ */
 :root {
   --marca: #ea1d2c;
@@ -40,8 +40,10 @@
   --altura-topo: 64px;
   color-scheme: light;
 }
+/* Escuro automático desligado: a disputa e o deck ainda usam cores fixas (e o app do iFood é claro).
+   Para ligar, ponha data-tema-auto="sim" no <html>. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root[data-tema-auto="sim"]:not([data-theme="light"]) {
     --marca: #ff4150;
     --marca-escura: #ff8a93;
     --marca-suave: #3a1f22;

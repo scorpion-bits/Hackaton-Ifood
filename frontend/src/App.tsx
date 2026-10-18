@@ -118,7 +118,7 @@ function TelaSala({ rota }: { rota: Extract<Rota, { tipo: "convidado" | "org" }>
           {sala.estado === "coletando" && sala.rastro.length > 0 && <Rastro itens={sala.rastro} />}
         </>
       )}
-      <p className="rodape">Protótipo de hackathon · não é o app oficial do iFood</p>
+      <p className="rodape">Protótipo de hackathon · não afiliado ao iFood</p>
     </div>
   );
 }
