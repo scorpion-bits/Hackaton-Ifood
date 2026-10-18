@@ -166,14 +166,14 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
 - Novas tarefas do jurado: nota "substituída por D9" no §8 da 01b (T14), slide do rastro real com ms (T14), seção
   "avaliar em 5 min" no README (T15), orçamento de tempo do roteiro v2 (T14).
 
-- 18/10 ~00h30 — **Rodada 1 fechada e integrada** (T0–T7) + T9, T12 adiantadas. 228 testes; build ok; fluxo inteiro no
+- 17/10 ~22h45 (BRT) — **Rodada 1 fechada e integrada** (T0–T7) + T9, T12 adiantadas. 228 testes; build ok; fluxo inteiro no
   Chromium 390×780 sem erro no console (início → sala/QR com `ip_local` → convidado → rodar → disputa → deck →
   "É um Match!" → escolha → vaquinha). Ajustes do engenheiro: `medicoes` do front alinhadas ao T1; "felizes" → "bem
   atendidos" no fechamento; tema escuro automático desligado (cores fixas no leilão); rodapé "não afiliado";
   `match/fix-polimento-leilao` (arena 4 por linha, "É um Match!" cabe em 390 px, sem "disputa em 0,0 s").
   Rodada 2 em execução: T11 (QA) e T14 (pitch v2, primeira passada; a versão final espera T8/T13). T8 espera 👥 amostras.
 
-- 18/10 ~01h30 — T11 ✅ (QA: 0 bloqueios no roteiro; 8 importantes). Correções: `match/fix-front-qa` (toque no deck,
+- 17/10 ~23h05 (BRT) — T11 ✅ (QA: 0 bloqueios no roteiro; 8 importantes). Correções: `match/fix-front-qa` (toque no deck,
   disputa espera o organizador, Pix demo "não pague", foco, contagem, home real) + `match/fix-back-qa` (validação
   semântica das falas, item cortado conta 0, endereço sem coordenadas/id, envio real travado → 409 +
   `envio_real_permitido`, rastro com argumentos descartados, quantidades) + `match/fix-docs-qa`. T14 v1 ✅ (12
