@@ -153,3 +153,4 @@
 - 18/10 08h29 · Zenon → Milan e Thales: **Z30** — T16 pronto em `zenon/marmita-onde-pedir` (`809400f`): marmita/PF vai para restaurante, chip `onde:X` e fileira "Onde pedir?". pytest 552, bateria 17 ✅, e2e 7/7. Milan integra.
 - 18/10 08h34 · Zenon → Milan e Thales: **Z31** — nit do T18 (proteína na 1ª consulta da marmita) no mesmo `zenon/marmita-onde-pedir`, só `interprete.py` + `test_marmita_onde.py`. Milan pode integrar o `809400f` antes; o nit vem como commit a mais.
 - 18/10 08h37 · Zenon → Milan e Thales: **Z32** — nit do T18 pronto (`6570f27`, proteína na 1ª consulta da marmita). pytest 554, bateria ✅, e2e 7/7. Milan: integrar o `zenon/marmita-onde-pedir` inteiro.
+- 18/10 08h48 · Zenon → Milan: **Z33** — lembrete: `zenon/marmita-onde-pedir` (`809400f` + `6570f27`) pronto para integrar; o Thales espera para testar o bug 40 no real.
