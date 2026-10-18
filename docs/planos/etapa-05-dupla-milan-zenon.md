@@ -31,6 +31,9 @@
 | A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador (recado do Zenon 23h38) ✅ `65b4aeb` |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
+> **Zenon trabalha de casa (remoto); Milan e Thales estão no evento.** Toda tarefa do Zenon tem que ser feita só com o
+> git: nada que dependa do PC do Thales, do `.env` ou de ensaio presencial. O que exige o PC do Thales (confirmar as
+> frases do pedido real, ensaios cronometrados) passou para Milan + Thales no evento. Recados ao Zenon só pelo quadro.
 | ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
 |---|---|---|---|---|
 | B1 | C14 front: campo "Ajustar com o IBits" no deck, bolhas da conversa, disputa curta, aviso ao convidado | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `frontend/src/componentes/leilao/*`, `frontend/src/leilao.css`, `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/App.tsx` | build ok; fluxo funciona contra a rota da A2 (antes dela: contra um mock local no próprio front) | ✅ integrado (Zenon testou no navegador contra a A2); B4 forma de pagamento na tela ✅ integrado |
@@ -55,9 +58,15 @@
 - Commit com autor humano (`--author="Nome <email>"` + `Responsável: Nome`).
 
 ## 👥 Agora
-- **O `.env` está no PC Windows do Thales.** 17/10 23h53: ele está fazendo login (Conectar iFood no app) e vai rodar `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` e dar push de `docs/mcp-real/` (destrava A1).
-- Chave Groq/Gemini no `.env` + `python listar_modelos.py` (destrava A3).
-- Thales: `iniciar.bat` no PC dele e o roteiro de testes.
+- **O `.env` está no PC Windows do Thales** (MCP + chave Groq já lá). Milan e Thales juntos no evento:
+  1. A1: `cd backend` → `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` → push de `docs/mcp-real/`.
+  2. A3: no `.env`, `LLM_PROVIDER=groq` + `GROQ_API_KEY` → `.venv\Scripts\python.exe -m app.agente.listar_modelos`
+     → escolher `LLM_MODEL` → `.venv\Scripts\python.exe -m app.match.testar_ia` → salvar a saída (sem a chave) em
+     `docs/testes/ia-real.txt` e dar push. Linha de base sem IA (fallback) abaixo, no registro de 00h50.
+  3. Thales: `iniciar.bat` e o roteiro de testes; confirmar as frases marcadas do pitch (`CONFIRMAR NO PC DO THALES`)
+     e 3 ensaios cronometrados (antes eram do Zenon).
+- **Zenon (remoto):** bugs de front que o Thales registrar no `bugs.md` (B4), regerar o PDF da entrega/pitch perto das
+  12h30 (B2/B3) e ajustes de texto do pitch quando Milan/Thales registrarem no quadro o que mudou.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
 - **Agora:** PR #6 já está **mergeado em `main`** (18/10 00h37 BRT; `cc5413f`). 378 testes + typecheck ok. Falta só
@@ -65,9 +74,13 @@
   Groq/Gemini (destrava A3). Sem isso, a demo vai no modo demonstração (já estável). Congelar código às 10h30.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
-- **Zenon:** B4 (mostrar "Pagamento: Dinheiro na entrega" + bugs do Thales) → Sonnet; B3 pitch final → Opus.
+- **Zenon (remoto, só git):** B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) → Haiku.
 
 ## Registro de execução
+- 18/10 00h50 — Zenon passa a ser remoto: trilha B só com git; confirmação de frases e ensaios → Milan + Thales.
+  A3: novo `backend/app/match/testar_ia.py` (roteiro + 5 frases livres, conta chamadas ao LLM ok × fallback). Linha de
+  base sem IA: roteiro ok (todos bem atendidos); fallback erra em "pizza… não como carne" (põe um burger extra), "lanche
+  caprichado" (2 burgers), "doce qualquer" (poke junto) e não acha "marmita". É isso que a Groq tem que melhorar.
 - 18/10 00h37 — A4: PR #6 confirmado mergeado em `main` (`6bc3fa0`). 378 testes ok. `docs/mcp-real/` ainda não chegou → A1/T8 e A3 seguem bloqueadas por 👥.
 - 18/10 00h30 — A4: integrados `zenon/b3-pitch-final` (pitch final) e `zenon/b4-fix-bolha-ajustar`. 377 testes, build ok. Smoke no navegador (qa-testador, Sonnet) em andamento; depois merge do PR #6 → `main`.
 - 17/10 ~23h27 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
