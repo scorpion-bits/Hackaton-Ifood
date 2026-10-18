@@ -33,7 +33,7 @@
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
 | ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
 |---|---|---|---|---|
-| B1 | C14 front: campo "Ajustar com o IBits" no deck, bolhas da conversa, disputa curta, aviso ao convidado | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `frontend/src/componentes/leilao/*`, `frontend/src/leilao.css`, `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/App.tsx` | build ok; fluxo funciona contra a rota da A2 (antes dela: contra um mock local no próprio front) | ✅ integrado 23h39; falta teste no navegador contra a A2 e mostrar "Pagamento: Dinheiro na entrega" (campo `pagamento` já vem do back) |
+| B1 | C14 front: campo "Ajustar com o IBits" no deck, bolhas da conversa, disputa curta, aviso ao convidado | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `frontend/src/componentes/leilao/*`, `frontend/src/leilao.css`, `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/App.tsx` | build ok; fluxo funciona contra a rota da A2 (antes dela: contra um mock local no próprio front) | ✅ integrado (Zenon testou no navegador contra a A2); B4 forma de pagamento na tela ✅ integrado |
 | B2 | Pacote de entrega (T22): `docs/ENTREGA.md` + PDF único dos 6 entregáveis | `docs/ENTREGA.md`, `docs/entrega/*` | PDF gerado com os 6 entregáveis e capturas | ✅ integrado 23h39; gerar o PDF de novo antes das 12h30 |
 | B3 | Pitch final (T24): ~5 min, palavras do regulamento, MCP real, Ajustar | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | PDF do pitch; roteiro cronometrado com o Thales | ⬜ (depois de A1/A2) |
 | B4 | Bugs de front vindos do Thales | conforme o bug (só `frontend/`) | bug fechado no `docs/testes/bugs.md` | ⬜ |
@@ -76,3 +76,5 @@
 - 17/10 23h39 — A4: integrados `match/03-pedido-real`, `match/04-ajustar-back`, `match/04-ajustar-front`,
   `match/05-pacote-entrega` (todos do Zenon) sem conflito. **375 testes**, typecheck e build ok. Sem teste no navegador
   ainda. Trava extra do Zenon (modo real só envia com `pagamento.offline` confirmado) mantida: protege a conta de teste.
+- 17/10 23h42 — integrados também `037e64e` (Ajustar front) e `zenon/b4-pagamento-na-tela` (forma de pagamento na tela). 375
+  testes, build ok. Pushed no `ccr-4c429dbb-lp7btg`.
