@@ -1,6 +1,7 @@
 """Motor do Match (contrato C5): desejos do grupo → top 3 combinações, com avisos e rastro das tools MCP.
 
-Fluxo: listAddresses → interpretar (slots) → buscar (searchOffers…) → julgar (nota/motivo) → otimizar.
+Fluxo: listAddresses → interpretar (slots) → buscar (searchOffers…) → julgar (nota/motivo) → leilão das lojas
+(`leilao.py`, C11/C12; `MATCH_LEILAO=off` desliga) → otimizar (só o que foi ofertado).
 Preço, prazo e loja vêm só das tools (via `busca.py`); o LLM só interpreta e dá nota. Sem LLM, tudo roda no
 fallback determinístico.
 """
@@ -16,6 +17,7 @@ from ..ifood_mcp.cliente import ClienteIFood, ErroMCP
 from .busca import CONFIRMA, buscar_detalhado, ler_endereco
 from .interprete import CONSULTA_RESTRICAO, interpretar
 from .juiz import ROTULO_RESTRICAO, avaliar, bebida_sem_pedir
+from .leilao import afinidade_e_felizes, carregar_politica, fechar_leilao, rodar_leilao
 from .modelos import Candidato, Combinacao, Desejo, Intencao, para_dict
 from .otimizador import otimizar, pesos_por_perfil
 
@@ -212,6 +214,16 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
 
     orcamentos = {d.participante_id: lista[0].orcamento_max for d, lista in zip(desejos, interpretacoes)}
     pesos = pesos_por_perfil([lista[0].perfil for lista in interpretacoes])
+
+    # leilão: cada loja oferta só o que quer vender; o otimizador (e a mediação) só enxerga o ofertado
+    leilao = None
+    if getattr(cfg, "match_leilao", True):
+        detalhes_todos = {chave: det for _, detalhes in buscas for chave, det in detalhes.items()}
+        demonstracao = getattr(cliente, "modo", "demo") == "demo"
+        politica = carregar_politica() if demonstracao else {}  # no modo real nenhuma loja é patrocinada
+        candidatos, leilao = await rodar_leilao(cfg, slots, candidatos, detalhes_todos, nomes, politica)
+        leilao["demonstracao"] = demonstracao
+        validos = {slot: _validos(i, candidatos[slot]) for slot, i in ((i.participante_id, i) for _, i in slots)}
     if nada_relevante:  # ninguém tem um item que passe do limiar: sem combinação (a API devolve 409 legível)
         combos = []
         avisos[:] = [a.removesuffix(" Quer mudar o pedido?") for a in avisos]  # a pergunta vai uma vez só, no fim
@@ -253,7 +265,10 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     combinacoes = [para_dict(c) for c in combos]
     for c in combinacoes:
         c["explicacao"] = _nomes_na_explicacao(c["explicacao"], nomes)
+        c["afinidade"], c["felizes"] = afinidade_e_felizes(c, list(nomes), pessoa_de)
     resultado["combinacoes"] = combinacoes
+    if leilao is not None:
+        resultado["leilao"] = fechar_leilao(leilao, combinacoes, slots, pessoa_de, nomes)
     resultado["intencoes"] = [para_dict(i) for _, i in slots]
     resultado["pessoas"] = [
         {"participante_id": d.participante_id, "nome": d.nome,
