@@ -209,7 +209,7 @@ def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
 
 async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Desejo, Intencao]],
                                    buscas: list[tuple[list[Candidato], dict]], julgados: list[list[Candidato]],
-                                   endereco: dict) -> list[list[Candidato]]:
+                                   endereco: dict, vez: asyncio.Semaphore | None = None) -> list[list[Candidato]]:
     """Pedido completo (A′F1, etapa 05): o 2º item em diante de cada pessoa também é procurado DENTRO das lojas
     mais prováveis do 1º item dela (`searchOffers` + `refinements.merchantId`). Sem isso, "pizza e um refri" buscava
     refri na cidade toda e o refri vinha de outra loja (+1 taxa, +1 entrega) ou ficava de fora.
@@ -234,11 +234,13 @@ async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Dese
         for k in indices[1:]:
             desejo, intencao = slots[k]
             detalhes = buscas[k][1]
-            for loja_id in lojas:
-                if any(c.loja_id == loja_id and not c.viola for c in julgados[k]):
-                    continue  # a busca normal já achou o item nessa loja
-                novos, det_novos = await buscar_na_loja(cliente, intencao, endereco, loja_id,
-                                                        melhor_da_loja[loja_id][2])
+            alvos = [l for l in lojas if not any(c.loja_id == l and not c.viola for c in julgados[k])]
+
+            async def na_loja(loja_id: str, intencao: Intencao = intencao):
+                async with (vez or asyncio.Semaphore(1)):
+                    return await buscar_na_loja(cliente, intencao, endereco, loja_id, melhor_da_loja[loja_id][2])
+
+            for novos, det_novos in await asyncio.gather(*(na_loja(l) for l in alvos)):  # lojas ao mesmo tempo
                 vistos = {(c.loja_id, c.item_id) for c in julgados[k]}
                 novos = [c for c in novos if (c.loja_id, c.item_id) not in vistos]
                 if not novos:
@@ -361,11 +363,16 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     slots: list[tuple[Desejo, Intencao]] = [(d, i) for d, lista in zip(desejos, interpretacoes) for i in lista]
     pessoa_de = {i.participante_id: d.participante_id for d, i in slots}
 
-    buscas = []
     fechadas: dict[str, list[str]] = {}  # slot → lojas que tinham o item, mas estão fechadas agora (bug 32)
     acima: dict[str, float] = {}  # slot → menor preço achado acima do orçamento da pessoa
-    for _, intencao in slots:  # em sequência: o rastro fica na ordem em que as tools foram chamadas
-        buscas.append(await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas, acima=acima))
+    # buscas dos slots ao mesmo tempo, no máximo MATCH_BUSCAS_PARALELAS (no real, 30 buscas em sequência ≈ 30 s)
+    vez = asyncio.Semaphore(getattr(cfg, "match_buscas_paralelas", 4))
+
+    async def buscar_slot(intencao: Intencao):
+        async with vez:
+            return await buscar_detalhado(cliente, intencao, endereco, fechadas=fechadas, acima=acima)
+
+    buscas = list(await asyncio.gather(*(buscar_slot(i) for _, i in slots)))
     if not any(cands for cands, _ in buscas) and _ifood_fora(cliente):
         # bug 31: todas as buscas deram erro do iFood — não é o pedido nem o orçamento da pessoa
         avisos[:] = [a for a in avisos if "endereço de teste" in a or "endereços no iFood" in a] + [MSG_IFOOD_FORA]
@@ -381,7 +388,7 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     julgados = await asyncio.gather(*(
         avaliar(cfg, d, i, cands, det) for (d, i), (cands, det) in zip(slots, buscas)
     ))
-    julgados = await _completar_na_mesma_loja(cliente, slots, buscas, list(julgados), endereco)
+    julgados = await _completar_na_mesma_loja(cliente, slots, buscas, list(julgados), endereco, vez)
     candidatos = {i.participante_id: (_so_os_melhores(_sem_irrelevantes(lista)) if _de_varejo(i)
                                       else _sem_irrelevantes(lista))
                   for (_, i), lista in zip(slots, julgados)}
