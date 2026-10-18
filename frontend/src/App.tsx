@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { api, lerLocal, ultimaSalaOrg } from "./api";
 import type { EstadoSala } from "./tipos";
 import StatusIfood from "./componentes/StatusIfood";
@@ -11,7 +11,11 @@ import Resultado from "./telas/Resultado";
 import Pagamento from "./telas/Pagamento";
 import Pedidos from "./telas/Pedidos";
 
+// Fixture do leilão: só existe em desenvolvimento (fica fora do pacote de produção).
+const PaginaExemplo = import.meta.env.DEV ? lazy(() => import("./componentes/leilao/PaginaExemplo")) : null;
+
 type Rota =
+  | { tipo: "exemplo"; organizador: boolean }
   | { tipo: "inicio" }
   | { tipo: "conectado"; erro: string }
   | { tipo: "convidado"; id: string }
@@ -20,6 +24,9 @@ type Rota =
 function lerRota(): Rota {
   const h0 = window.location.hash.replace(/^#/, "");
   const [h, consulta = ""] = h0.split("?");
+  if (import.meta.env.DEV && /^\/leilao-exemplo(\/convidado)?\/?$/.test(h)) {
+    return { tipo: "exemplo", organizador: !/convidado/.test(h) };
+  }
   if (/^\/conectado\/?$/.test(h)) return { tipo: "conectado", erro: new URLSearchParams(consulta).get("erro") ?? "" };
   const m = h.match(/^\/s\/([^/]+)(\/org)?\/?$/);
   if (m) return m[2] ? { tipo: "org", id: decodeURIComponent(m[1]) } : { tipo: "convidado", id: decodeURIComponent(m[1]) };
@@ -147,7 +154,13 @@ export default function App() {
   const rota = useRota();
   return (
     <div className="app">
-      {rota.tipo === "inicio" ? (
+      {rota.tipo === "exemplo" ? (
+        PaginaExemplo && (
+          <Suspense fallback={null}>
+            <PaginaExemplo organizador={rota.organizador} />
+          </Suspense>
+        )
+      ) : rota.tipo === "inicio" ? (
         <Inicio />
       ) : rota.tipo === "conectado" ? (
         <Conectado erro={rota.erro} />
