@@ -1,0 +1,22 @@
+{
+  "tool": "getUser",
+  "chamadas": [
+    {
+      "rotulo": "getUser",
+      "args": {},
+      "ok": true,
+      "resposta": {
+        "success": true,
+        "data": {
+          "fullName": "***",
+          "email": "***",
+          "phone": "***"
+        },
+        "agentHints": {
+          "suggestedNextAction": "***"
+        }
+      },
+      "ms": 2669
+    }
+  ]
+}

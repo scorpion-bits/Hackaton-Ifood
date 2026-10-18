@@ -1,0 +1,76 @@
+{
+  "tool": "getItem",
+  "chamadas": [
+    {
+      "rotulo": "getItem",
+      "args": {
+        "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+        "itemId": "269eae27-aee2-4224-a89b-7c6bce57f53e",
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": true,
+      "resposta": {
+        "agentHints": {
+          "nextStep": "Add this item to the active cart with the chosen quantity and any selected options."
+        },
+        "appDeeplink": "ifood://dish-details/54615ed7-5697-413b-a508-9156e3f5ec70/269eae27-aee2-4224-a89b-7c6bce57f53e",
+        "itemDescription": "Confete, Brigadeiro e Sensação .",
+        "itemId": "269eae27-aee2-4224-a89b-7c6bce57f53e",
+        "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f4f017a1-b25a-46dd-b829-9ca7b6824f30/202106281308_3G3V_i.jpg",
+        "itemName": "Pizzas Doces Grandes",
+        "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70",
+        "merchantMinimumOrderAmount": 20,
+        "merchantName": "Ponto da Esfiha São Carlos",
+        "optionGroups": [
+          {
+            "maxSelections": 1,
+            "minSelections": 1,
+            "name": "Sabores",
+            "optionGroupId": "c75654a1-debd-4fc0-8f88-0f92ce36e90a",
+            "options": [
+              {
+                "additionalPrice": 75.99,
+                "name": "Pizza Doce de Confete",
+                "optionId": "e45c1772-a63d-475c-bddf-9280cb2e6b4d"
+              },
+              {
+                "additionalPrice": 75.99,
+                "name": "Pizza Doce de Brigadeiro",
+                "optionId": "f23c2d59-100d-4be0-887a-932e557bc860"
+              },
+              {
+                "additionalPrice": 75.99,
+                "name": "Pizza Romeu e Julieta",
+                "optionId": "3231f702-7dd5-498f-a94a-31b20fd3198d"
+              },
+              {
+                "additionalPrice": 75.99,
+                "name": "Pizza Beijinho",
+                "optionId": "3c669432-c0a4-4fb0-a0e0-39844b056c4c"
+              }
+            ]
+          },
+          {
+            "maxSelections": 1,
+            "minSelections": 0,
+            "name": "Adicional de Frutas",
+            "optionGroupId": "4777e70b-84ec-435f-a489-547db11e06de",
+            "options": [
+              {
+                "additionalPrice": 12.99,
+                "name": "Adicional Frutas",
+                "optionId": "c8a744ee-659b-4695-bbcc-11aa24326534"
+              }
+            ]
+          }
+        ],
+        "promotionalUnitPrice": 75.99,
+        "unitPrice": 75.99
+      },
+      "ms": 1214
+    }
+  ]
+}

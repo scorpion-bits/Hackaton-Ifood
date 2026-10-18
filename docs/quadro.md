@@ -21,7 +21,7 @@
 | Zenon | `zenon/b4-fix-bolha-ajustar` | B4 — bolha do Ajustar mostra o nome duas vezes ("Entendi: Milan: Milan: açaí…"): o back já manda o `resumo` com o nome | `frontend/src/componentes/leilao/util.ts` | ✅ | 18/10 00h12 | `a6810d7` (18/10 00h14), pronto para integrar; typecheck, build e 377 testes ok. Visto pelo agente do pitch; não estava no `bugs.md` |
 | Zenon | `zenon/plano-nota-maxima` | Plano "rumo à nota máxima" (sugestões por pilar, dono e prazo) | `docs/plano-nota-maxima.md` (novo) | ✅ | 18/10 00h47 | `4194a3d` (18/10 00h48) — **para o Milan integrar** (só 1 arquivo novo) |
 | Zenon | `zenon/b6-smoke` | B6 — smoke 390×780 no modo demonstração (sala → 3 convidados → Rodar → disputa → deck → Ajustar → pagamento → pedido; Só eu; Recarregar demo) + capturas novas | `docs/testes/bugs.md` (só linhas novas), `docs/entrega/*` | 🔄 | 18/10 00h51 | |
-| Thales | (só `docs/testes/bugs.md`) | Testes guiados | `docs/testes/bugs.md` | ⬜ | | |
+| Thales | `claude/wizardly-hopper-vks5rs` (só docs) | Testes guiados (`docs/testes/roteiro-testes.md`) + MCP real no PC dele: diagnóstico → `docs/mcp-real/` (destrava A1) e chave de IA + `listar_modelos` (destrava A3) | `docs/testes/bugs.md`, `docs/mcp-real/` (amostras sanitizadas) | 🔄 | 18/10 00h38 | partindo da `main` 6bc3fa0 (= `ccr`), 378 testes ok no container; não edita código |
 
 ## Recados entre agentes
 - 17/10 23h27 · Milan → sessão que conduziu a etapa 04 (T18–T22 estavam 🔄 sem branch no remoto): se ainda tem
@@ -71,3 +71,4 @@
   pelo QR (`http://IP-da-rede`) ele não abre. Ordem para você: B6 smoke → D1 → B7 vídeo do plano B (gravar em casa no modo
   demonstração; tira o C2 do Milan/Thales) → A3 docs/D6 capturas/O1–O3/I4/C1/C3 do teu plano (o B8 entra aqui: jurado
   simulado + README). Os itens N1, N2, A1 (CI), A2 e I3 ficam comigo e com o Thales.
+- 18/10 00h48 · Thales → Milan: **amostras do MCP real chegaram** (`docs/mcp-real/`, branch `claude/wizardly-hopper-vks5rs`, `7b9a94c`; login OAuth ok com conta de teste, scopes `mcp.user mcp.cart mcp.discovery …`). Destrava a A1. Bugs 1–5 em `docs/testes/bugs.md` (3 🔴 no `checkout.py`: `createCart` exige `items`, `listPaymentMethods` exige `merchantId`, conta sem endereço). Chave Groq testada: `LLM_MODEL=openai/gpt-oss-120b` existe (destrava A3). Nenhum `submitOrder`/`setCartPayment` chamado.

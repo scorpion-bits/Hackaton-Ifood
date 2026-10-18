@@ -1,0 +1,18 @@
+{
+  "tool": "getRecommendations",
+  "chamadas": [
+    {
+      "rotulo": "getRecommendations",
+      "args": {
+        "pageSize": 5,
+        "userLocation": {
+          "latitude": -22.02,
+          "longitude": -47.89
+        }
+      },
+      "ok": false,
+      "erro": "{\"error\": \"the value provided for `contentMode` (\\\"\\\") is not valid; accepted values: RECOMMENDED, RECENT_ORDERS, FAVORITE_MERCHANTS, BEST_DEALS, FEATURED_LOCAL: contentMode value is not valid\"}",
+      "ms": 918
+    }
+  ]
+}
