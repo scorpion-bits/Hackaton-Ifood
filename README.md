@@ -1,5 +1,7 @@
 # Match — pedido em grupo com agentes no MCP do iFood
 
+[![CI](https://github.com/scorpion-bits/Hackaton-Ifood/actions/workflows/ci.yml/badge.svg)](https://github.com/scorpion-bits/Hackaton-Ifood/actions/workflows/ci.yml)
+
 > Protótipo do Hackathon SEMCOMP 29 × iFood ("Vendendo com Agentes"), São Carlos, out/2026.
 > **Não é afiliado ao iFood** e não é o app oficial. Dados simulados aparecem com o selo **DEMONSTRAÇÃO**.
 
