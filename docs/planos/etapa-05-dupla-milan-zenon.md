@@ -28,7 +28,7 @@
 | A2 | C14 backend: `match/ajuste.py` + `POST /api/salas/{id}/ajustar` + campo `ajustes` | `backend/app/match/ajuste.py`, `backend/app/rotas_match.py`, `backend/app/match/salas.py`, `backend/tests/test_ajuste.py` | contrato C14 coberto por teste (200, 422, 409 mantém resultado) | ✅ (Zenon, `match/04-ajustar-back`, integrado 23h39) |
 | A3 | T13: prompts com IA real (intérprete, juiz, agentes de loja) | `backend/app/match/interprete.py`, `juiz.py`, `leilao.py`, `llm.py` | roteiro + 5 frases livres coerentes com chave real | ✅ 01h44 integrado (`8aa7eae`): reserva de modelo no 429, intérprete 1 chamada/grupo, tokens ~26k→13k por Match, bugs 12–14; 👥 confirmar no P5 |
 | A4 | Integração: `fix-*` dos testes, branch de integração, PR → `main`, `CLAUDE.md`, planos | `CLAUDE.md`, `docs/planos/*`, `docs/decisions.md` | suíte + build verdes; PR mergeado | 🔄 |
-| A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37 (402 testes + typecheck/build locais; falta ver o 1º run no GitHub) |
+| A6 | CI no GitHub (A1 do `plano-nota-maxima`): pytest + typecheck/build do front a cada push/PR; selo no README | `.github/workflows/*`, `README.md` (só a linha do selo) | workflow verde no `ccr` | ✅ 01h37; runs verdes no GitHub (run 18, 01h55) |
 | A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador (recado do Zenon 23h38) ✅ `65b4aeb` |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
@@ -77,7 +77,7 @@
 - **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
-- **01h50:** A3, A6 (CI) e bugs 12–20 ✅. Esperando o Thales: **P5** (IA com reserva) e **P6** (carrinho real com Cartão de
+- **01h58:** P5 ✅ (roteiro 9/9 com IA, 0 × 429); "doce" da IA agora busca também "sobremesa". Esperando o Thales: **P6** (carrinho real com Cartão de
   Teste, sem enviar). Com o P6 ok → P7: `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**.
   Zenon: B9 (Z1) até 05h → integrar e smoke (qa-testador, Sonnet). Depois: PR `ccr` → `main`.
 - **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
@@ -86,6 +86,9 @@
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 01h58 — P5 do Thales integrado (`ia-real-3.txt`: roteiro 9 ok/0 fallback/0 × 429; frases livres na reserva). Achado no
+  log: IA devolve só "doce" e a demo não acha nada → consulta genérica ganha "sobremesa" (`interprete.py`, 1 teste). 455 testes.
+  CI do GitHub verde. Sem subagente nesta rodada (correção de 10 linhas).
 - 18/10 01h50 — Bugs 17–20 (dev-mcp-ifood, Opus): opção obrigatória preenchida com a mais barata via `getItem` no checkout
   (`options` = `[{optionId, quantity}]` do schema real), adicional < R$ 2,50/seção de extras não vira prato, carrinho com
   taxa/total mesmo sem forma aceitável (escolher 200, enviar 409), Cartão de Teste (nome com "teste", nunca Pix) libera a

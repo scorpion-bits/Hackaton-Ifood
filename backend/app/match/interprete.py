@@ -486,7 +486,7 @@ def validar_resposta_llm(dados: dict | None, desejo: Desejo) -> list[Intencao] |
     for item in itens[:MAX_SLOTS]:
         if not isinstance(item, dict):
             continue
-        consultas = _lista_de_textos(item.get("consultas"), 3) or termos_restricao[:1]
+        consultas = _completar_consultas(_lista_de_textos(item.get("consultas"), 3)) or termos_restricao[:1]
         verticais = [v for v in _lista_de_textos(item.get("verticais"), 3) if v in VERTICAIS] or ["RESTAURANT"]
         vontades = _lista_de_textos(item.get("vontades"), 8)
         if itens[1:] and _item_vazio(consultas, vontades):
@@ -497,6 +497,17 @@ def validar_resposta_llm(dados: dict | None, desejo: Desejo) -> list[Intencao] |
             orcamento_max=orcamento, perfil=perfil,
         ))
     return intencoes or None
+
+
+# termo genérico que a IA às vezes devolve sozinho e quase não aparece em nome de prato (ia-real-3: "doce" → nada)
+_CONSULTA_DO_GENERICO = {"doce": "sobremesa", "docinho": "sobremesa", "doces": "sobremesa"}
+
+
+def _completar_consultas(consultas: list[str]) -> list[str]:
+    """Consulta genérica da IA ganha a da categoria ("doce" → + "sobremesa"), até 3 termos."""
+    extras = [_CONSULTA_DO_GENERICO[normalizar(c).strip()] for c in consultas
+              if normalizar(c).strip() in _CONSULTA_DO_GENERICO]
+    return _dedup(consultas + extras)[:3]
 
 
 def _entrada_pessoa(d: Desejo) -> dict:
