@@ -72,13 +72,15 @@
   12h30 (B2/B3) e ajustes de texto do pitch quando Milan/Thales registrarem no quadro o que mudou.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
-- **Agora:** PR #6 já está **mergeado em `main`** (18/10 00h37 BRT; `cc5413f`). 378 testes + typecheck ok. Falta só
-  👥: Thales rodar o `diagnostico --carrinho` no PC e dar push de `docs/mcp-real/` (destrava A1/T8) e criar chave
-  Groq/Gemini (destrava A3). Sem isso, a demo vai no modo demonstração (já estável). Congelar código às 10h30.
-- **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
-  A3 (prompts com IA real) quando houver chave → **Sonnet**.
-- **Zenon (remoto, só git):** B6 smoke no navegador → Sonnet; B7 vídeo do plano B (👥); B8 jurado + README → Opus;
-  B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) perto das 12h30 → Haiku.
+- **Toda rodada (Milan):** `git fetch` → ver `docs/testes/para-o-thales.md` (P1 endereço, P2 IA real, P3/P4 carrinho
+  real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
+  nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
+- **Sem retorno do Thales:** fazer o A1 do `docs/plano-nota-maxima.md` (CI no GitHub: pytest + build a cada push,
+  selo no README) → **Sonnet**.
+- **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
+  `leilao.py`, `ajuste.py`), comparar com a linha de base do registro de 00h41 → **Sonnet**; depois I3 (custo/tempo).
+- **Quando chegar o P4 (amostras de carrinho com sucesso):** ajuste fino do `checkout.py` → **Opus**.
+- **Zenon (remoto):** bugs 8 e 11 (front) → D1 modo palco (prazo 03h, sai às 07h) → B7 vídeo → itens de texto.
 
 ## Registro de execução
 - 18/10 01h04 — A1 (dev-mcp-ifood, Opus): bugs 1/2/3/5 do MCP real com as amostras do Thales. createCart com items,
