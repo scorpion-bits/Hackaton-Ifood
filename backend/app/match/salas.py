@@ -210,6 +210,7 @@ def publica(sala: dict) -> dict:
         "id": sala["id"],
         "estado": sala["estado"],
         "demonstracao": sala["demonstracao"],
+        "conta_teste": not sala["demonstracao"],  # modo real só roda com as contas de teste do Portal
         "link_convite": f"#/s/{sala['id']}",
         "organizador_id": sala["organizador_id"],
         "tem_chave_pix": bool(sala["chave_pix"]),

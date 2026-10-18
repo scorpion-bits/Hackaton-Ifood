@@ -1,7 +1,7 @@
 """Configuração lida do .env (na raiz do repositório). Lida a cada chamada para facilitar testes."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,18 +25,18 @@ PROVEDORES = ["mock", "anthropic", *PRESETS_OPENAI]
 class Config:
     llm_provedor: str
     llm_modelo: str
-    llm_chave: str
+    llm_chave: str = field(repr=False)
     llm_base_url: str | None
     llm_esforco: str
     ifood_modo: str
     ifood_base_url: str
     ifood_client_id: str
-    ifood_client_secret: str
+    ifood_client_secret: str = field(repr=False)
     db_path: Path
-    # MCP do consumidor do iFood (Match): "demo" = servidor de demonstração em processo; "real" = etapa 03.
+    # MCP do consumidor do iFood (Match): "demo" = servidor de demonstração em processo; "real" = MCP oficial com OAuth.
     ifood_mcp_modo: str = "demo"
     ifood_mcp_client_id: str = ""
-    ifood_mcp_client_secret: str = ""
+    ifood_mcp_client_secret: str = field(default="", repr=False)
     # OAuth do MCP real: redirect cadastrada no Portal e scopes (vazio = não envia scope).
     ifood_mcp_redirect: str = "http://localhost:8000/oauth/callback"
     ifood_mcp_scope: str = ""

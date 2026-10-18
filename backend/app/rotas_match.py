@@ -85,9 +85,9 @@ def _erro_do_ifood(bruto: BaseException) -> ErroSala:
         return e
     if isinstance(e, checkout.ErroCheckout):
         return ErroSala(502, e.mensagem)
-    if isinstance(e, NotImplementedError):
-        return ErroSala(501, "O modo real do MCP do iFood ainda não está disponível nesta versão (etapa 03).")
     if isinstance(e, ErroMCP):
+        if str(e).startswith("Conecte o iFood"):
+            return ErroSala(401, str(e))
         return ErroSala(502, f"O iFood respondeu com erro: {e}")
     return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {e}")
 
