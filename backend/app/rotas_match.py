@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from . import config
 from .ifood_mcp.cliente import MSG_ENVIO_DESLIGADO, ErroMCP, abrir_cliente
 from .match import checkout, motor, salas
+from .match.ajuste import interpretar_ajuste
 from .match.acerto import calcular_partes, centavos, prazo_pagamento_min
 from .match.modelos import Candidato, Desejo, para_dict
 from .match.pix import gerar_pix_copia_e_cola
@@ -72,6 +73,10 @@ class CorpoPagamento(BaseModel):
 
 class CorpoResolver(BaseModel):
     acao: str | None = None
+
+
+class CorpoAjuste(BaseModel):
+    texto: str = ""
 
 
 # ---------- utilidades ----------
@@ -313,30 +318,50 @@ def registrar_desejo(sala_id: str, pid: str, corpo: CorpoDesejo):
 
 
 # ---------- Match ----------
+MSG_AJUSTE_NAO_ENTENDIDO = 'Não entendi quem ou o quê. Ex.: "troca o sorvete do Milan por açaí"'
+MAX_TEXTO_AJUSTE = 200
+
+
+def _desejos_da_sala(sala: dict) -> list[Desejo]:
+    return [
+        Desejo(p["id"], p["nome"], p["desejo"]["texto"], p["desejo"]["orcamento_max"], list(p["desejo"]["chips"]))
+        for p in sala["participantes"] if p["respondeu"] and p["desejo"]
+    ]
+
+
+async def _rodar_motor(sala_id: str, desejos: list[Desejo]) -> dict:
+    """Roda o Match (leilão incluído) com o MCP e valida o resultado. Não grava nada na sala além do rastro:
+    sem endereço ou sem combinação → `ErroSala` 409 legível; erro do iFood → o mesmo tratamento de sempre."""
+    async def operacao(cfg, cliente):
+        return await motor.rodar_match(cfg, cliente, desejos)
+
+    resultado = await _usar_cliente(sala_id, operacao)
+    resultado.pop("rastro", None)  # o rastro vai acumulado na sala
+
+    if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
+        raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
+    if not resultado.get("combinacoes"):
+        avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
+        raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+    return resultado
+
+
+def _resultado_com_rastro(sala_id: str) -> dict:
+    pub = salas.publica(salas.obter(sala_id))
+    return {**pub["resultado"], "rastro": pub["rastro"]}
+
+
 @router.post("/salas/{sala_id}/rodar")
 async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
     async with _trava(sala_id):
         sala = salas.obter(sala_id)
         salas.exigir_organizador(sala, x_organizador)
         salas.exigir_estado(sala, COLETANDO, MATCH_PRONTO, acao="rodar o Match")
-        desejos = [
-            Desejo(p["id"], p["nome"], p["desejo"]["texto"], p["desejo"]["orcamento_max"], list(p["desejo"]["chips"]))
-            for p in sala["participantes"] if p["respondeu"] and p["desejo"]
-        ]
+        desejos = _desejos_da_sala(sala)
         if not desejos:
             raise ErroSala(409, "Ninguém respondeu ainda. Peça para o grupo escrever o que quer pedir.")
 
-        async def operacao(cfg, cliente):
-            return await motor.rodar_match(cfg, cliente, desejos)
-
-        resultado = await _usar_cliente(sala_id, operacao)
-        resultado.pop("rastro", None)  # o rastro vai acumulado na sala
-
-        if resultado.get("problema") == "endereco":  # sem endereço/sem coordenadas: mensagem própria e acionável
-            raise ErroSala(409, " ".join(resultado.get("avisos") or []) or motor.MSG_SEM_ENDERECO)
-        if not resultado.get("combinacoes"):
-            avisos = " ".join(resultado.get("avisos") or []) or "Nenhuma combinação coube nas regras."
-            raise ErroSala(409, f"O Match não encontrou um pedido que sirva para todos. {avisos}")
+        resultado = await _rodar_motor(sala_id, desejos)
 
         def gravar(s: dict) -> None:
             salas.exigir_estado(s, COLETANDO, MATCH_PRONTO, acao="rodar o Match")
@@ -344,8 +369,59 @@ async def rodar(sala_id: str, x_organizador: str | None = Header(default=None)):
             salas.transicionar(s, MATCH_PRONTO)
 
         salas.atualizar(sala_id, gravar)
-        pub = salas.publica(salas.obter(sala_id))
-        return {**pub["resultado"], "rastro": pub["rastro"]}
+        return _resultado_com_rastro(sala_id)
+
+
+@router.post("/salas/{sala_id}/ajustar")
+async def ajustar(sala_id: str, corpo: CorpoAjuste, x_organizador: str | None = Header(default=None)):
+    """"Ajustar com o IBits" (C14): frase do organizador → mudanças nos desejos → Match de novo.
+
+    Transação: os desejos novos só são gravados junto com o resultado novo. Se o Match não achar combinação (ou o
+    iFood falhar), a sala continua com os desejos e o resultado anteriores."""
+    async with _trava(sala_id):
+        sala = salas.obter(sala_id)
+        salas.exigir_organizador(sala, x_organizador)
+        salas.exigir_estado(sala, MATCH_PRONTO, acao="ajustar o pedido")
+        texto = _texto_limpo(corpo.texto, "o que você quer ajustar", MAX_TEXTO_AJUSTE)
+        participantes = [
+            {"id": p["id"], "nome": p["nome"], "organizador": p["id"] == sala["organizador_id"],
+             "respondeu": bool(p["respondeu"] and p["desejo"]),
+             "texto": (p["desejo"] or {}).get("texto") if p["respondeu"] else None,
+             "orcamento_max": (p["desejo"] or {}).get("orcamento_max"),
+             "chips": list((p["desejo"] or {}).get("chips") or [])}
+            for p in sala["participantes"]
+        ]
+        mudancas = await interpretar_ajuste(config.carregar(), texto, participantes)
+        if not mudancas:
+            raise ErroSala(422, MSG_AJUSTE_NAO_ENTENDIDO)
+
+        por_id = {m.participante_id: m for m in mudancas}
+        nomes = {p["id"]: p["nome"] for p in sala["participantes"]}
+        desejos = []
+        for d in _desejos_da_sala(sala):
+            m = por_id.get(d.participante_id)
+            if m is not None:
+                d = Desejo(d.participante_id, d.nome, m.novo_texto,
+                           m.novo_orcamento if m.novo_orcamento is not None else d.orcamento_max, d.chips)
+            desejos.append(d)
+        entendido = [{"participante_id": m.participante_id, "nome": nomes[m.participante_id], "resumo": m.resumo}
+                     for m in mudancas]
+
+        resultado = await _rodar_motor(sala_id, desejos)  # 409/502 aqui: nada dos desejos novos foi gravado
+
+        def gravar(s: dict) -> None:
+            salas.exigir_estado(s, MATCH_PRONTO, acao="ajustar o pedido")
+            for p in s["participantes"]:
+                m = por_id.get(p["id"])
+                if m is not None and p["desejo"]:
+                    p["desejo"]["texto"] = m.novo_texto
+                    if m.novo_orcamento is not None:
+                        p["desejo"]["orcamento_max"] = m.novo_orcamento
+            s["resultado"] = resultado
+            salas.registrar_ajuste(s, texto, entendido)
+
+        salas.atualizar(sala_id, gravar)
+        return {"entendido": entendido, "resultado": _resultado_com_rastro(sala_id)}
 
 
 @router.post("/salas/{sala_id}/escolher")
