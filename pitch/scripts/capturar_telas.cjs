@@ -1,11 +1,14 @@
-// Capturas do pitch (persona Ana): app em modo demonstração, celular 390×844, 2× (nítido no projetor).
-// Rodar: bash pitch/scripts/capturar_telas.sh  →  grava pitch/img/app/*.png
+// Capturas do pitch (persona Ana), celular 390×844, 2× (nítido no projetor).
+// Rodar: bash pitch/scripts/capturar_telas.sh  →  grava pitch/img/app/*.png (modo demonstração)
+//        REAL=1: captura do app já rodando no MCP real (lojas, preços e fotos de verdade; nada colado por cima).
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
 const URL = process.env.E2E_URL || 'http://localhost:8000/';
 const SAIDA = process.env.SAIDA || path.join(__dirname, '..', 'img', 'app');
+const REAL = process.env.REAL === '1';
+const ESPERA = REAL ? 240000 : 40000; // o MCP real (busca + IA + carrinho) leva de 15 s a 1 min por passo
 // Fotos e logos: o modo demonstração não traz imagem; aqui entram URLs reais do MCP do iFood (amostras de docs/mcp-real)
 // por cima das respostas da API, só para a captura. Dados (lojas, preços) continuam os da demonstração.
 const IMG = require('./imagens-mcp-real.json');
@@ -47,7 +50,7 @@ const CONVIDADOS = [
   const novo = async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'pt-BR' });
     const pg = await ctx.newPage();
-    await comImagens(pg);
+    if (!REAL) await comImagens(pg);
     return pg;
   };
   const foto = async (p, nome) => { await p.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(400); return p.screenshot({ path: path.join(SAIDA, `${nome}.png`) }); };
@@ -79,10 +82,10 @@ const CONVIDADOS = [
   await foto(org, '02-sala');
 
   await org.getByRole('button', { name: 'Rodar Match' }).click();
-  await org.waitForSelector('.ld-sala, .ld-resultado', { timeout: 40000 });
+  await org.waitForSelector('.ld-sala, .ld-resultado', { timeout: ESPERA });
   await org.waitForTimeout(3500);
   await foto(org, '04-avaliacao');
-  if (await org.locator('.ld-sala').count()) await org.getByRole('button', { name: /Ver o pedido/ }).click({ timeout: 40000 });
+  if (await org.locator('.ld-sala').count()) await org.getByRole('button', { name: /Ver o pedido/ }).click({ timeout: ESPERA });
   await org.waitForSelector('.ld-resultado', { timeout: 15000 });
   await org.waitForTimeout(800);
   await foto(org, '05-pedido');
@@ -92,14 +95,15 @@ const CONVIDADOS = [
   await campo.scrollIntoViewIfNeeded();
   await campo.fill('troca o sorvete de Bruno por açaí');
   await org.getByRole('button', { name: 'Enviar ajuste ao IBits' }).click();
-  await org.waitForTimeout(6000);
+  await org.waitForTimeout(REAL ? 2000 : 6000);
+  if (REAL) await org.waitForSelector('.ld-atualizado', { timeout: ESPERA }).catch(() => {});
   await org.locator('.aj').evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await foto(org, '06-ajustar');
 
   await org.getByRole('button', { name: 'Confirmar pedido' }).click();
   await org.getByText('Cada um paga a sua parte (vaquinha)').click();
   await org.getByRole('button', { name: 'Montar pedido' }).click();
-  await org.waitForSelector('text=Confira antes do ok', { timeout: 20000 });
+  await org.waitForSelector('text=Confira antes do ok', { timeout: ESPERA });
   await org.waitForTimeout(800);
   await foto(org, '07-confira');
 
