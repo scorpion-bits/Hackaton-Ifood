@@ -199,6 +199,20 @@ def _eta_loja(r: dict) -> int | None:
     return _eta(metodo.get("estimatedMinutes"))
 
 
+def _taxa_loja(r: dict) -> float | None:
+    """Taxa de entrega da loja na busca (A′F4): `deliveryMethod.promotionalFee`/`fee` (MCP real, conferido em
+    docs/mcp-real/searchOffers.json) ou `deliveryFee` (demo). Estimativa: o valor final é o do `getCart`."""
+    metodo = r.get("deliveryMethod")
+    if not isinstance(metodo, dict):
+        metodos = [m for m in (r.get("deliveryMethods") or []) if isinstance(m, dict)]
+        metodo = metodos[0] if metodos else {}
+    for valor in (metodo.get("promotionalFee"), metodo.get("fee"), r.get("deliveryFee")):
+        numero = _numero(valor)
+        if numero is not None and numero >= 0:
+            return numero
+    return None
+
+
 def _ler_loja(r: dict) -> dict:
     """Loja de um resultado MERCHANT, do getMerchant ou (MCP real) do `merchant{}` aninhado num resultado ITEM."""
     if isinstance(r.get("merchant"), dict):
@@ -211,6 +225,9 @@ def _ler_loja(r: dict) -> dict:
         "categorias": [str(c) for c in (r.get("categories") or []) if c],
         "avaliacao": _numero(r.get("rating") if r.get("rating") is not None else r.get("reviewRating")),
         "aberta": r.get("isOpen"),
+        "taxa": _taxa_loja(r),
+        "pedido_minimo": _numero(r.get("minimumOrderAmount") if r.get("minimumOrderAmount") is not None
+                                 else r.get("minimumOrder")),
     }
 
 
@@ -297,6 +314,8 @@ def _ler_item(r: dict, loja: dict | None = None) -> dict | None:
         "perecivel": bool(perecivel),
         "tags": _tags(r.get("tags")),
         "avaliacao": _numero(r.get("rating")) if r.get("rating") is not None else loja.get("avaliacao"),
+        "taxa_entrega": loja.get("taxa"),
+        "pedido_minimo": loja.get("pedido_minimo"),
     }
 
 

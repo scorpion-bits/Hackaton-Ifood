@@ -155,7 +155,8 @@ def _endereco(address_id: str) -> dict:
 
 # ---------- formatos de saída ----------
 def _loja_resumo(loja: dict) -> dict:
-    """Loja como aparece nas listas (sem taxa de entrega, como no real)."""
+    """Loja como aparece nas listas. Com taxa de entrega e pedido mínimo, como o `merchant{}` do searchOffers real
+    (docs/mcp-real/searchOffers.json: `deliveryMethod.fee`, `minimumOrderAmount`)."""
     return {
         "merchantId": loja["id"],
         "name": loja["nome"],
@@ -164,6 +165,8 @@ def _loja_resumo(loja: dict) -> dict:
         "rating": loja["rating"],
         "distance": loja["distancia_km"],
         "deliveryTime": loja["tempo_entrega_min"],
+        "deliveryFee": loja["taxa_entrega"],
+        "minimumOrderAmount": loja.get("pedido_minimo"),
     }
 
 
@@ -182,6 +185,8 @@ def _item_resumo(loja: dict, item: dict) -> dict:
         "rating": loja["rating"],
         "distance": loja["distancia_km"],
         "deliveryTime": loja["tempo_entrega_min"],
+        "deliveryFee": loja["taxa_entrega"],
+        "minimumOrderAmount": loja.get("pedido_minimo"),
     }
 
 
@@ -417,7 +422,7 @@ def criar_servidor_demo() -> MCPServer:
     @mcp.tool(name="getMerchant", annotations=LEITURA)
     @_erros_legiveis
     def obter_loja(merchantId: str, latitude: float | None = None, longitude: float | None = None) -> dict:
-        """Detalhes da loja com cardápio completo (itemId, nome, preço). Não mostra a taxa de entrega."""
+        """Detalhes da loja com cardápio completo (itemId, nome, preço), taxa de entrega e pedido mínimo."""
         loja = _loja(merchantId)
         categorias: dict[str, list[dict]] = {}
         for item in loja["itens"]:

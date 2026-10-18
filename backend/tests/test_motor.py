@@ -517,3 +517,14 @@ async def test_segundo_item_e_procurado_na_loja_do_primeiro(monkeypatch):
     assert melhor["lojas"] == ["loja-demo-pizza"]
     assert melhor["escolhas"]["ana#2"]["item_id"] == "pz-refri"
     assert any(c["tool"] == "searchOffers" and "merchantId" in json.dumps(c, ensure_ascii=False) for c in r["rastro"])
+
+
+async def test_taxa_da_busca_entra_no_custo_e_avisa_que_e_estimada():
+    """A′F4: a taxa de entrega que o searchOffers devolve entra no custo antes do carrinho."""
+    r = await _rodar([Desejo("ana", "Ana", "uma pizza e um refri")])
+    melhor = r["combinacoes"][0]
+    assert melhor["taxa_conhecida"] is True
+    assert melhor["componentes"]["custo_total"] == round(24.90 + 14.90 + 8.99, 2)
+    assert "com taxa" in melhor["explicacao"]
+    assert any("taxa de entrega veio da busca do iFood (estimada)" in a for a in r["avisos"])
+    assert not any("só aparece no carrinho" in a for a in r["avisos"])

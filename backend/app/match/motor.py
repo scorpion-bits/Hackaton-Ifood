@@ -154,6 +154,26 @@ async def _completar_na_mesma_loja(cliente: ClienteIFood, slots: list[tuple[Dese
                 detalhes.update(det_novos)
 
 
+def _economia_de_taxa(melhor: Combinacao, validos: dict[str, list[Candidato]], taxas: dict[str, float]) -> str:
+    """"Juntando em 2 lojas (em vez de 3), o grupo economiza R$ 7,50 de taxa": compara com cada item vindo da loja
+    do item de maior nota (o que cada um escolheria sozinho). Vazio se não economiza ou se falta alguma taxa."""
+    sozinho: list[str] = []
+    for slot in melhor.escolhas:
+        if not validos.get(slot):
+            continue
+        preferido = max(validos[slot], key=lambda c: (c.nota, -c.preco))
+        if preferido.loja_id not in sozinho:
+            sozinho.append(preferido.loja_id)
+    if len(sozinho) <= len(melhor.lojas) or any(l not in taxas for l in [*sozinho, *melhor.lojas]):
+        return ""
+    diferenca = round(sum(taxas[l] for l in sozinho) - sum(taxas[l] for l in melhor.lojas), 2)
+    if diferenca < 0.01:
+        return ""
+    n = len(melhor.lojas)
+    return (f"Juntando os itens em {n} loja{'s' if n != 1 else ''}, o pedido paga {_reais(diferenca)} a menos de taxa "
+            f"de entrega do que se cada item viesse da loja com a melhor nota ({len(sozinho)} lojas).")
+
+
 def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], validos: dict[str, list[Candidato]],
                       pessoa_de: dict[str, str], nomes: dict[str, str],
                       ja_avisados: set[str] | None = None) -> tuple[list[str], list[str]]:
@@ -307,6 +327,9 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
     nada_relevante = bool(fracos or descartados) and not any(
         validos[i.participante_id] and i.participante_id not in ids_fracos for _, i in slots)
 
+    # A′F4: taxa de entrega de cada loja como veio na busca (estimativa; o valor final é o do getCart)
+    taxas = {loja: det["taxa_entrega"] for _, detalhes in buscas for (loja, _), det in detalhes.items()
+             if det.get("taxa_entrega") is not None}
     orcamentos = {d.participante_id: lista[0].orcamento_max for d, lista in zip(desejos, interpretacoes)}
     pesos = pesos_por_perfil([lista[0].perfil for lista in interpretacoes])
 
@@ -327,7 +350,7 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         avisos.append("Nada do que foi pedido está nos cardápios das lojas. Quer mudar o pedido?")
     else:
         combos = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS, top=TOP, orcamentos=orcamentos,
-                          pessoa_de=pessoa_de)
+                          pessoa_de=pessoa_de, taxas=taxas)
 
     if nada_relevante:
         pass  # já avisado acima
@@ -346,7 +369,7 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         avisos.extend(extras)
         if fora:  # mediação: mostra o que daria para incluir com mais uma loja (sempre com confirmação humana)
             com_mais = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS + 1, top=1, orcamentos=orcamentos,
-                                pessoa_de=pessoa_de)
+                                pessoa_de=pessoa_de, taxas=taxas)
             def mantem(pid: str) -> bool:  # a pessoa ganha o item sem piorar o que já tinha
                 return all(com_mais[0].escolhas.get(s) is not None
                            and com_mais[0].escolhas[s].nota >= c.nota - 0.1
@@ -362,7 +385,13 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
         if n > 1:
             avisos.append(f"{n} lojas = {n} pedidos, {n} taxas de entrega e {n} entregas (podem chegar em "
                           "horários diferentes).")
-        if not melhor.taxa_conhecida:
+        if melhor.taxa_conhecida:
+            economia = _economia_de_taxa(melhor, validos, taxas)
+            if economia:
+                avisos.append(economia)
+            avisos.append("A taxa de entrega veio da busca do iFood (estimada); o valor final aparece no carrinho, "
+                          "antes de você confirmar.")
+        else:
             avisos.append("A taxa de entrega de cada loja só aparece no carrinho, antes de você confirmar.")
 
     combinacoes = [para_dict(c) for c in combos]
