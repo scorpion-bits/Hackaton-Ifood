@@ -25,7 +25,8 @@ function exemplosDa(nomes: string[], solo: boolean): string[] {
   if (solo) return ["troca o sorvete por açaí", "mais barato", "sem glúten"];
   const n = (i: number) => nomes[i % Math.max(nomes.length, 1)];
   if (nomes.length === 0) return EXEMPLOS_PADRAO;
-  return [`troca o sorvete do ${n(0)} por açaí`, `mais barato pro ${n(1)}`, `sem glúten pra ${n(2)}`];
+  // "de"/"para" servem para qualquer nome (o smoke achou "do Ana"); o Ajustar do back entende os dois
+  return [`troca o sorvete de ${n(0)} por açaí`, `mais barato para ${n(1)}`, `sem glúten para ${n(2)}`];
 }
 
 /** Bolha do IBits (esquerda) ou do organizador (direita). */
