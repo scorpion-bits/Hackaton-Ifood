@@ -694,13 +694,20 @@ class _ComNovaTentativa:
         return await self._cliente.chamar(tool, **args)
 
 
+def _erro_curto(erro: str) -> str:
+    """Bug 34 (igual ao 33 no motor): INTERNAL/JSON cru do iFood não vai para a tela; o erro inteiro fica no rastro."""
+    if "INTERNAL" in erro or "upstream" in erro or erro.lstrip().startswith("{") or "{\"" in erro:
+        return "o iFood está instável agora; tente de novo em instantes"
+    return erro
+
+
 def _erro_da_loja(loja_id: str, nome: str, e: ErroMCP) -> ErroCheckout:
     if getattr(e, "codigo", None) == "ITEM-001":
         erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: um item exige escolher "
                                      f"complementos que o iFood não informou ({e}). Troque o item com 'Ajustar com o IBits'.",
                             codigo="complemento_obrigatorio")
     else:
-        erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {e}")
+        erro = ErroCheckout(loja_id, f"Não deu para montar o carrinho de {nome}: {_erro_curto(str(e))}")
     erro.__cause__ = e
     return erro
 
