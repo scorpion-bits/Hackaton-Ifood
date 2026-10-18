@@ -63,7 +63,7 @@ flowchart LR
 
 | Componente | Arquivo | Papel |
 |---|---|---|
-| Frontend | `frontend/src/` | React 19 + TypeScript (Vite). Rotas por hash: `#/` (início estilo app), `#/s/{id}` (convidado), `#/s/{id}/org` (organizador), `#/conectado` (volta do login). Polling de 2 s em `GET /api/salas/{id}`. Compilado e servido pelo próprio FastAPI (uma URL na demo). Telas do Match: `telas/Leilao.tsx` (disputa) e `telas/Deck.tsx` (deck de combinações), com peças em `componentes/leilao/` (seção 5). |
+| Frontend | `frontend/src/` | React 19 + TypeScript (Vite). Rotas por hash: `#/` (início estilo app), `#/s/{id}` (convidado), `#/s/{id}/org` (organizador), `#/conectado` (volta do login). Polling de 2 s em `GET /api/salas/{id}`. Compilado e servido pelo próprio FastAPI (uma URL na demo). Telas do Match: `telas/Leilao.tsx` (disputa) e `telas/Deck.tsx` (o pedido escolhido pelo IBits), com peças em `componentes/leilao/` (seção 5). |
 | API da sala | `backend/app/rotas_match.py` | Criar sala, entrar, desejo, rodar, escolher, pagar, enviar, acompanhar. Ações do organizador exigem o header `X-Organizador`. |
 | Sala | `backend/app/match/salas.py` | Estado inteiro da sala em JSON numa tabela SQLite própria. Escrita atômica (trava + transação). Chamadas ao MCP ficam fora da trava de gravação e o estado é revalidado depois. |
 | Motor | `match/motor.py` | `listAddresses` → interpretar (+ quantidades) → buscar → julgar → leilão → otimizar → fechar o leilão → avisos. `MATCH_LEILAO=off` no `.env` pula o leilão (o otimizador volta a ver todos os candidatos). |
@@ -243,9 +243,10 @@ No front:
   maior, ficam abertura, vencedoras e patrocinada, 1 réplica e o fechamento, sem mudar texto nem número), botão
   **Pular** sempre visível, legenda do Patrocinado, origem de cada fala e o tempo da disputa (`medicoes`). No aparelho
   do organizador a tela não avança sozinha (ele narra); no do convidado avança cerca de 4 s depois do fechamento.
-- `telas/Deck.tsx` — até 3 combinações em cartões: afinidade, "N de M bem atendidos", lojas e, por pessoa, item ·
-  loja · preço · motivo. Deslizar ou botões equivalentes ("Ver próxima" / "Dar match"); depois "É um Match!"
-  (`componentes/leilao/EhUmMatch.tsx`, com confete que respeita "reduzir movimento"). Convidado vê o deck só leitura.
+- `telas/Deck.tsx` (o nome ficou da versão com deck) — "O pedido do grupo": só a melhor combinação, num cartão sem gesto:
+  afinidade, "N de M bem atendidos", lojas e, por pessoa, item · loja · preço · motivo. "Ajustar com o IBits" logo
+  abaixo; "Confirmar pedido" fixo no rodapé leva a "Como pagar?" (`Resultado.tsx`; com 1 pessoa, monta o carrinho
+  direto). O `escolher` continua recebendo o índice da combinação, sempre 0. Convidado vê só a própria parte, em leitura.
 
 ## 6. Otimizador
 
