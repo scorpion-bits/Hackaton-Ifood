@@ -1,0 +1,17 @@
+{
+  "tool": "listAddresses",
+  "chamadas": [
+    {
+      "rotulo": "listAddresses",
+      "args": {},
+      "ok": true,
+      "resposta": {
+        "results": [],
+        "agentHints": {
+          "noResultsGuidance": "No saved addresses found. Ask the user for their delivery address as a free-form string (e.g., '***, São Paulo, SP'), then save it on the user's account."
+        }
+      },
+      "ms": 1369
+    }
+  ]
+}

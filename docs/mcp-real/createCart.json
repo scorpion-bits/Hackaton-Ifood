@@ -1,0 +1,41 @@
+{
+  "tool": "createCart",
+  "chamadas": [
+    {
+      "rotulo": "createCart",
+      "args": {
+        "merchantId": "54615ed7-5697-413b-a508-9156e3f5ec70"
+      },
+      "ok": true,
+      "resposta": {
+        "error": {
+          "code": "MISSING_REQUIRED_FIELDS",
+          "message": "addressId, merchantId, and items are required when orderId is absent.",
+          "userFriendlyMessage": "***"
+        },
+        "agentHints": {
+          "wrongRequestPayload": "You sent an invalid value for 'addressId, merchantId, items'. Fix it to the expected type, double-check all other fields in the request match their expected types, and call this tool again."
+        }
+      },
+      "ms": 1571
+    },
+    {
+      "rotulo": "createCart",
+      "args": {
+        "merchantId": "2adbc0ca-0e80-44e7-bc45-b1d06d522f9c"
+      },
+      "ok": true,
+      "resposta": {
+        "error": {
+          "code": "MISSING_REQUIRED_FIELDS",
+          "message": "addressId, merchantId, and items are required when orderId is absent.",
+          "userFriendlyMessage": "***"
+        },
+        "agentHints": {
+          "wrongRequestPayload": "You sent an invalid value for 'addressId, merchantId, items'. Fix it to the expected type, double-check all other fields in the request match their expected types, and call this tool again."
+        }
+      },
+      "ms": 1509
+    }
+  ]
+}

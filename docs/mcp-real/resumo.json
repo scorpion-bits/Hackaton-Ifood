@@ -1,0 +1,228 @@
+{
+  "total_tools": 23,
+  "tools": [
+    "createAddress",
+    "getUser",
+    "listAddresses",
+    "browseOffers",
+    "getItem",
+    "getMerchant",
+    "getRecommendations",
+    "searchOffers",
+    "addItemToCart",
+    "createCart",
+    "getCart",
+    "getCartDeliveryMethods",
+    "listPaymentMethods",
+    "listVouchers",
+    "removeItemFromCart",
+    "removeVoucher",
+    "setCartDelivery",
+    "setCartPayment",
+    "setVoucher",
+    "submitOrder",
+    "updateCartItem",
+    "getOrder",
+    "trackOrder"
+  ],
+  "faltando_vs_doc": [
+    "listItemTaxonomy"
+  ],
+  "sobrando_vs_doc": [],
+  "schemas": {
+    "searchOffers": {
+      "obrigatorios": [
+        "userLocation",
+        "query"
+      ],
+      "opcionais": [
+        "experiment",
+        "includeFacets",
+        "intention",
+        "merchantType",
+        "nextPageToken",
+        "pageSize",
+        "refinements",
+        "resultKind"
+      ],
+      "objetos": {
+        "refinements": {
+          "obrigatorios": [],
+          "propriedades": [
+            "itemRestrictions",
+            "itemTaxonomy",
+            "maxDeliveryFee",
+            "maxDeliveryTimeMinutes",
+            "maxDistanceKm",
+            "maxItemPrice",
+            "maxMinimumOrderAmount",
+            "merchantId",
+            "minRating",
+            "onlyOpen",
+            "onlyWithPromotion",
+            "sort"
+          ]
+        },
+        "userLocation": {
+          "obrigatorios": [],
+          "propriedades": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      }
+    },
+    "getRecommendations": {
+      "obrigatorios": [
+        "userLocation",
+        "contentMode"
+      ],
+      "opcionais": [
+        "merchantType",
+        "nextPageToken",
+        "pageSize",
+        "refinements",
+        "resultKind"
+      ],
+      "objetos": {
+        "refinements": {
+          "obrigatorios": [],
+          "propriedades": [
+            "itemRestrictions",
+            "itemTaxonomy",
+            "maxDeliveryFee",
+            "maxDeliveryTimeMinutes",
+            "maxDistanceKm",
+            "maxItemPrice",
+            "maxMinimumOrderAmount",
+            "minRating",
+            "onlyOpen",
+            "onlyWithPromotion",
+            "sort"
+          ]
+        },
+        "userLocation": {
+          "obrigatorios": [],
+          "propriedades": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      }
+    },
+    "getMerchant": {
+      "obrigatorios": [
+        "userLocation",
+        "merchantId"
+      ],
+      "opcionais": [],
+      "objetos": {
+        "userLocation": {
+          "obrigatorios": [],
+          "propriedades": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      }
+    },
+    "getItem": {
+      "obrigatorios": [
+        "userLocation",
+        "merchantId",
+        "itemId"
+      ],
+      "opcionais": [],
+      "objetos": {
+        "userLocation": {
+          "obrigatorios": [],
+          "propriedades": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      }
+    },
+    "createCart": {
+      "obrigatorios": [],
+      "opcionais": [
+        "orderId",
+        "addressId",
+        "merchantId",
+        "items",
+        "deliveryMethod",
+        "paymentMethod"
+      ],
+      "objetos": {
+        "deliveryMethod": {
+          "obrigatorios": [
+            "deliveryMethodId"
+          ],
+          "propriedades": [
+            "deliveryMethodId",
+            "selectedTimeSlotId"
+          ]
+        },
+        "paymentMethod": {
+          "obrigatorios": [
+            "paymentMethodId"
+          ],
+          "propriedades": [
+            "cardTokenId",
+            "paymentMethodId"
+          ]
+        }
+      }
+    },
+    "addItemToCart": {
+      "obrigatorios": [
+        "cartId",
+        "itemId",
+        "quantity"
+      ],
+      "opcionais": [
+        "customerNote",
+        "options"
+      ]
+    }
+  },
+  "localizacao_encontrada": true,
+  "campos_de_preco_ou_taxa": {
+    "searchOffers": [
+      "results[].deliveryMethod.fee",
+      "results[].deliveryMethod.promotionalFee",
+      "results[].merchant.deliveryMethod.fee",
+      "results[].merchant.deliveryMethod.promotionalFee",
+      "results[].merchant.minimumOrderAmount",
+      "results[].minimumOrderAmount",
+      "results[].promotionalUnitPrice",
+      "results[].unitPrice"
+    ],
+    "getMerchant": [
+      "catalogSummary.totalItems",
+      "deliveryMethods[].fee",
+      "deliveryMethods[].promotionalFee",
+      "featuredItems[].promotionalUnitPrice",
+      "featuredItems[].unitPrice",
+      "minimumOrderAmount"
+    ],
+    "getItem": [
+      "merchantMinimumOrderAmount",
+      "optionGroups[].options[].additionalPrice",
+      "promotionalUnitPrice",
+      "unitPrice"
+    ]
+  },
+  "erros": {
+    "getRecommendations": [
+      "{\"error\": \"the value provided for `contentMode` (\\\"\\\") is not valid; accepted values: RECOMMENDED, RECENT_ORDERS, FAVORITE_MERCHANTS, BEST_DEALS, FEATURED_LOCAL: contentMode value is not valid\"}"
+    ]
+  },
+  "carrinho": {
+    "lojas_tentadas": 2,
+    "carrinhos_criados": 0,
+    "getCart_ok_por_carrinho": [],
+    "dois_carrinhos_abertos": false
+  },
+  "avisos": []
+}
