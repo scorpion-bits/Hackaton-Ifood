@@ -190,6 +190,8 @@ export interface EstadoSala {
   pedidos?: Record<string, unknown>[];
   /** C14 (opcional): ajustes já feitos com o IBits, do mais antigo ao mais novo. */
   ajustes?: AjusteSala[];
+  /** Bug 21 (opcional): avisos gravados ao montar os carrinhos (ex.: loja que o iFood recusou e saiu do pedido). */
+  avisos?: string[];
   rastro: ChamadaRastro[];
 }
 
