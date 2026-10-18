@@ -9,9 +9,11 @@
 3. Com `--carrinho`: `createCart` em 2 lojas diferentes, `addItemToCart`, `getCartDeliveryMethods`,
    `listPaymentMethods`, `getCart`. **Nunca chama `submitOrder`** (nem `setCartPayment`/`setCartDelivery`).
 
-Tudo é SANITIZADO antes de gravar (nome de pessoa, e-mail, telefone, CPF, endereço textual, últimos dígitos,
-qualquer campo com "token"; coordenadas com 2 casas). Confira os arquivos antes do commit mesmo assim.
+Tudo é SANITIZADO antes de gravar, inclusive as mensagens de erro (regras na seção "sanitização": getUser
+inteiro mascarado, listPaymentMethods por lista branca, endereço só bairro/cidade, chaves por pedaço do nome,
+coordenadas com 2 casas). Confira getUser/listAddresses/listPaymentMethods/getCart antes do commit mesmo assim.
 `--demo` roda contra o servidor de demonstração (útil para testar o próprio diagnóstico, sem rede).
+`--args-busca '{"campo": valor}'` mescla argumentos extras em cada searchOffers (se todas as buscas vierem vazias).
 """
 
 from __future__ import annotations
@@ -44,59 +46,84 @@ PROIBIDAS = {"submitOrder", "setCartPayment", "setCartDelivery", "createAddress"
 BUSCAS = ["pizza", "sorvete", "hambúrguer"]
 
 # ---------- sanitização ----------
+# Regras (chave normalizada = minúsculas, sem "_", "-" e espaço):
+# - getUser: o arquivo inteiro é pessoal → todo valor vira "***" (a forma do JSON fica).
+# - listPaymentMethods (e chaves paymentMethod*/card*): lista branca → só id/type/brand/method/status e
+#   name/description (com o filtro de texto); todo o resto vira "***".
+# - listAddresses (e chaves com "address"/"endereco"): só bairro/cidade/estado/país/ids ficam.
+# - Em qualquer lugar: chaves que CONTÊM name/phone/mail/holder/digits/street/zip/postal/cpf/document/token/...
+#   são mascaradas; location/coordinate/latitude/longitude são arredondadas a 2 casas (inclusive "lat,lng").
+# - Texto livre: e-mail, CPF, telefone, JWT, Bearer, "final 1234"/"terminado em 1234", coordenadas.
 MASCARA = "***"
-# Chaves sempre mascaradas (comparação sem caixa e sem "_"/"-").
+# Chaves sempre mascaradas (nome exato).
 _SEMPRE = {
-    "fullname", "firstname", "lastname", "displayname", "nickname", "socialname", "email", "emails", "phone",
-    "phones", "phonenumber", "mobilephone", "cellphone", "taxpayeridentificationnumber", "cpf", "cnpj",
-    "document", "documentnumber", "documents", "birthdate", "birthday", "lastdigits", "last4", "bin",
-    "cardnumber", "maskedcardnumber", "holdername", "cardholdername", "street", "streetname", "streetnumber",
-    "number", "complement", "formattedaddress", "addressline", "addressline1", "addressline2", "zipcode",
-    "postalcode", "cep", "reference", "landmark", "userid", "customerid", "accountid", "consumerid", "ip",
+    "email", "emails", "phone", "phones", "cpf", "cnpj", "birthdate", "birthday", "last4", "bin",
+    "cardnumber", "maskedcardnumber", "complement", "cep", "reference", "landmark", "userid", "customerid",
+    "accountid", "consumerid", "ip", "jwt", "nick", "alias", "expiration", "expirationdate", "expiry", "cvv",
 }
-# Contextos: dentro de chaves "pessoais", `name`/`alias`/`label`... também são mascarados; dentro de chaves de
-# endereço, TODO texto é mascarado exceto bairro/cidade/estado/país e ids. Formas de pagamento não são contexto
-# pessoal: o nome "Pix"/"Crédito" importa para a pergunta 1 (os dígitos do cartão caem em `_SEMPRE`/filtro de texto).
+# Chaves mascaradas se CONTÊM um destes pedaços.
+_PEDACOS_SENSIVEIS = (
+    "name", "nome", "phone", "telefone", "celular", "mail", "holder", "digits", "street", "logradouro", "zip",
+    "postal", "cpf", "cnpj", "document", "taxpayer", "recipient", "receiver", "refresh", "auth", "session",
+    "credential", "token", "secret", "password", "senha", "observation", "observacao", "comment", "instruction",
+    "note", "birth", "contact", "contato",
+)
+# `name` puro é tratado pelo contexto (loja/item ficam; pessoa/pagamento seguem as regras do contexto).
+_NOMES_SEGUROS = {
+    "name", "merchantname", "itemname", "productname", "categoryname", "storename", "optionname", "groupname",
+    "sectionname", "brandname", "tradename", "fantasyname", "offername", "dishname", "garnishname",
+}
+_PEDACOS_COORDENADA = ("location", "coordinate", "latitude", "longitude")
+_COORDENADAS = {"lat", "lng", "lon", "long", "geo"}
 _CONTEXTO_PESSOAL = {
-    "user", "customer", "consumer", "account", "profile", "recipient", "contact", "holder", "owner", "buyer",
-    "person", "me",
+    "user", "customer", "consumer", "account", "profile", "contact", "contacts", "owner", "buyer", "person",
+    "me", "usuario", "cliente",
 }
-_CONTEXTO_ENDERECO = {
-    "address", "addresses", "deliveryaddress", "useraddress", "shippingaddress", "billingaddress", "candidates",
-}
-_NOME_EM_CONTEXTO = {"name", "alias", "title", "label", "description", "nick"}
 _TEXTO_SEGURO_ENDERECO = {
     "neighborhood", "district", "city", "cityname", "state", "statecode", "uf", "country", "countrycode",
-    "id", "addressid", "candidateid", "type", "kind", "category", "status",
+    "bairro", "cidade", "estado", "id", "addressid", "candidateid", "type", "kind", "category", "status",
 }
+_LISTA_BRANCA_PAGAMENTO = {"id", "type", "brand", "method", "status"}
+_TEXTO_PAGAMENTO = {"name", "description"}
 _SEM_CONTEXTO = {"agenthints", "hints", "_meta", "meta"}  # dicas do agente: texto técnico, fica legível
+_PEDACOS_TEMPO = ("timestamp", "epoch", "createdat", "updatedat", "expiresat", "time", "date")
 # Contexto da resposta inteira, por tool.
-CONTEXTO_POR_TOOL = {"getUser": "pessoal", "listAddresses": "endereco", "createAddress": "endereco"}
-_COORDENADAS = {"latitude", "longitude", "lat", "lng", "lon", "long"}
+CONTEXTO_POR_TOOL = {
+    "getUser": "pessoal", "listAddresses": "endereco", "createAddress": "endereco",
+    "listPaymentMethods": "pagamento",
+}
 
 _RE_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
-_RE_CPF = re.compile(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b")
+_RE_CPF = re.compile(r"(?<!\d)\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}(?!\d)")
 _RE_JWT = re.compile(r"\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]*")
 _RE_BEARER = re.compile(r"(?i)bearer\s+[\w.~+/=-]{8,}")
-_RE_CARTAO = re.compile(r"(?:[*•xX]{2,}[\s.-]*\d{4}\b)|(?i:\bfinal\s*\d{4}\b)")
+_RE_CARTAO = re.compile(
+    r"(?:[*•xX]{2,}[\s.-]*\d{4}\b)|(?i:\b(?:terminad[oa]|termina|final)\s*(?:em\s+)?\d{4}\b)")
 _RE_TELEFONE = re.compile(r"(?<![\w.])\+?(?:55\s?)?\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}(?![\w.])")
+_RE_PAR_COORD = re.compile(r"(-?\d{1,3}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})")
+_RE_PAR_TEXTO = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
 
 
 def _norm(chave: str) -> str:
     return re.sub(r"[_\-\s]", "", str(chave)).lower()
 
 
+def _arredondar_par(m: re.Match) -> str:
+    return f"{round(float(m.group(1)), 2)},{round(float(m.group(2)), 2)}"
+
+
 def _limpar_texto(texto: str) -> str:
     texto = _RE_JWT.sub(MASCARA, texto)
     texto = _RE_BEARER.sub("Bearer " + MASCARA, texto)
     texto = _RE_EMAIL.sub(MASCARA, texto)
-    texto = _RE_CPF.sub(MASCARA, texto)
+    texto = _RE_PAR_COORD.sub(_arredondar_par, texto)
     texto = _RE_CARTAO.sub(MASCARA, texto)
+    texto = _RE_CPF.sub(MASCARA, texto)
     return _RE_TELEFONE.sub(MASCARA, texto)
 
 
 def _arredondar(valor: Any) -> Any:
-    if isinstance(valor, bool):
+    if valor is None or isinstance(valor, bool):
         return valor
     if isinstance(valor, (int, float)):
         return round(float(valor), 2)
@@ -104,7 +131,8 @@ def _arredondar(valor: Any) -> Any:
         try:
             return round(float(valor), 2)
         except ValueError:
-            return MASCARA
+            par = _RE_PAR_TEXTO.match(valor)
+            return _arredondar_par(par) if par else MASCARA
     if isinstance(valor, list):
         return [_arredondar(v) for v in valor]
     if isinstance(valor, dict):
@@ -123,35 +151,104 @@ def _mascarar(valor: Any) -> Any:
     return MASCARA
 
 
-def sanitizar(dados: Any, contexto: str | None = None) -> Any:
-    """Cópia sem dados pessoais. `contexto`: None, "pessoal" (dados da pessoa) ou "endereco" (só bairro/cidade)."""
+def _chave_sensivel(n: str) -> bool:
+    if n in _SEMPRE:
+        return True
+    if n in _NOMES_SEGUROS:
+        return False
+    return any(p in n for p in _PEDACOS_SENSIVEIS)
+
+
+def _chave_de_coordenada(n: str) -> bool:
+    return n in _COORDENADAS or any(p in n for p in _PEDACOS_COORDENADA)
+
+
+def _chave_de_endereco(n: str) -> bool:
+    return ("address" in n or "endereco" in n) and not n.endswith(("id", "ids"))
+
+
+def _chave_de_pagamento(n: str) -> bool:
+    return "paymentmethod" in n or "wallet" in n or (n.startswith(("card", "creditcard")) and "cardapio" not in n)
+
+
+def _chave_de_id_ou_tempo(n: str) -> bool:
+    return n == "id" or n.endswith(("id", "ids")) or any(p in n for p in _PEDACOS_TEMPO)
+
+
+def _sanitizar_pagamento(dados: Any, chave_ok: bool = False) -> Any:
+    """Lista branca: só tipo/bandeira/status/id e nome/descrição (com filtro de texto) passam."""
     if isinstance(dados, dict):
         saida = {}
         for chave, valor in dados.items():
             n = _norm(chave)
-            if "token" in n or "secret" in n or "password" in n or n in _SEMPRE:
+            if (n not in _TEXTO_PAGAMENTO and _chave_sensivel(n)) or n in _CONTEXTO_PESSOAL \
+                    or _chave_de_endereco(n):
                 saida[chave] = _mascarar(valor)
-            elif n in _COORDENADAS or n == "coordinates":
+            else:
+                saida[chave] = _sanitizar_pagamento(valor, n in _LISTA_BRANCA_PAGAMENTO or n in _TEXTO_PAGAMENTO)
+        return saida
+    if isinstance(dados, list):
+        return [_sanitizar_pagamento(v, chave_ok) for v in dados]
+    if dados is None or isinstance(dados, bool):
+        return dados
+    if not chave_ok:
+        return MASCARA
+    return _limpar_texto(dados) if isinstance(dados, str) else dados
+
+
+def sanitizar(dados: Any, contexto: str | None = None) -> Any:
+    """Cópia sem dados pessoais. `contexto`: None, "pessoal" (tudo mascarado), "endereco" (só bairro/cidade/ids)
+    ou "pagamento" (lista branca)."""
+    if contexto == "pessoal":
+        return _mascarar(dados)
+    if contexto == "pagamento":
+        return _sanitizar_pagamento(dados)
+    if isinstance(dados, dict):
+        saida = {}
+        for chave, valor in dados.items():
+            n = _norm(chave)
+            if _chave_sensivel(n) or n in _CONTEXTO_PESSOAL:
+                saida[chave] = _mascarar(valor)
+            elif _chave_de_coordenada(n):
                 saida[chave] = _arredondar(valor)
             elif n in _SEM_CONTEXTO:
                 saida[chave] = sanitizar(valor, None)
-            elif n in _CONTEXTO_ENDERECO or contexto == "endereco":
+            elif _chave_de_pagamento(n):
+                saida[chave] = _sanitizar_pagamento(valor)
+            elif _chave_de_endereco(n) or contexto == "endereco":
                 if isinstance(valor, (dict, list)):
                     saida[chave] = sanitizar(valor, "endereco")
-                elif isinstance(valor, str) and not (contexto == "endereco" and n in _TEXTO_SEGURO_ENDERECO):
-                    saida[chave] = MASCARA
+                elif contexto == "endereco" and (n in _TEXTO_SEGURO_ENDERECO or n.endswith("id")):
+                    saida[chave] = _limpar_texto(valor) if isinstance(valor, str) else valor
                 else:
-                    saida[chave] = sanitizar(valor, "endereco")
-            elif contexto == "pessoal" and n in _NOME_EM_CONTEXTO and not isinstance(valor, (dict, list)):
-                saida[chave] = _mascarar(valor)
+                    saida[chave] = _mascarar(valor)
+            elif isinstance(valor, str) and _chave_de_id_ou_tempo(n) and re.fullmatch(r"\d+", valor):
+                saida[chave] = valor  # id/epoch só de dígitos não é telefone nem CPF
             else:
-                saida[chave] = sanitizar(valor, "pessoal" if n in _CONTEXTO_PESSOAL else contexto)
+                saida[chave] = sanitizar(valor, contexto)
         return saida
     if isinstance(dados, list):
         return [sanitizar(v, contexto) for v in dados]
     if isinstance(dados, str):
-        return _limpar_texto(dados)
+        return MASCARA if contexto == "endereco" else _limpar_texto(dados)
+    if contexto == "endereco" and isinstance(dados, (int, float)) and not isinstance(dados, bool):
+        return MASCARA
     return dados
+
+
+def limpar_erro(mensagem: str, contexto: str | None = None) -> str:
+    """Mensagem de erro com a mesma limpeza: JSON embutido passa por `sanitizar`, o texto pelo filtro."""
+    mensagem = str(mensagem)
+    inicio, fim = mensagem.find("{"), mensagem.rfind("}")
+    if 0 <= inicio < fim:
+        try:
+            embutido = json.loads(mensagem[inicio:fim + 1])
+        except ValueError:
+            pass
+        else:
+            limpo = json.dumps(sanitizar(embutido, contexto), ensure_ascii=False)
+            mensagem = mensagem[:inicio] + limpo + mensagem[fim + 1:]
+    return _limpar_texto(mensagem)
 
 
 # ---------- utilidades ----------
@@ -217,10 +314,11 @@ class Diagnostico:
             args = {k: v for k, v in args.items() if k in props}
         return args
 
-    async def chamar(self, tool: str, rotulo: str | None = None, **candidatos: Any) -> Any:
+    async def chamar(self, tool: str, rotulo: str | None = None, _extras: dict[str, Any] | None = None,
+                     **candidatos: Any) -> Any:
         if tool in PROIBIDAS:
             raise RuntimeError(f"O diagnóstico não chama {tool}.")
-        args = self.args_para(tool, candidatos)
+        args = self.args_para(tool, candidatos) | (_extras or {})  # extras (--args-busca) vão como vieram
         inicio = time.perf_counter()
         registro: dict[str, Any] = {"rotulo": rotulo or tool, "args": sanitizar(args)}
         try:
@@ -228,7 +326,7 @@ class Diagnostico:
             registro |= {"ok": True, "resposta": sanitizar(resposta, CONTEXTO_POR_TOOL.get(tool))}
         except ErroMCP as e:
             resposta = None
-            registro |= {"ok": False, "erro": _limpar_texto(str(e))}
+            registro |= {"ok": False, "erro": limpar_erro(str(e), CONTEXTO_POR_TOOL.get(tool))}
         registro["ms"] = int((time.perf_counter() - inicio) * 1000)
         self.registros.setdefault(tool, []).append(registro)
         estado = "ok" if registro["ok"] else f"ERRO: {registro['erro'][:100]}"
@@ -242,12 +340,24 @@ class Diagnostico:
                 json.dumps({"tool": tool, "chamadas": chamadas}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-async def executar(cliente: ClienteIFood, saida: Path, carrinho: bool = False) -> dict:
+AVISO_BUSCA = "searchOffers sem resultado: confira o input_schema em docs/mcp-real/tools.json"
+LEMBRETE = ("Antes do git add, abra getUser.json, listAddresses.json, listPaymentMethods.json e getCart.json "
+            "e confira que não há dado pessoal.")
+
+
+async def executar(cliente: ClienteIFood, saida: Path, carrinho: bool = False,
+                   args_busca: dict[str, Any] | None = None) -> dict:
     d = Diagnostico(cliente, saida)
     saida.mkdir(parents=True, exist_ok=True)
+    avisos: list[str] = []
 
     print("list_tools…")
-    tools = await cliente.listar_tools()
+    try:
+        tools = await cliente.listar_tools()
+    except Exception as e:  # segue sem schemas (os argumentos vão sem filtro)
+        tools = []
+        avisos.append(f"list_tools falhou ({type(_desembrulhar(e)).__name__}): {limpar_erro(str(_desembrulhar(e)))}")
+        print(f"  ERRO: {avisos[-1][:150]}")
     d.schemas = {t["name"]: t.get("input_schema") or {} for t in tools}
     (saida / "tools.json").write_text(json.dumps(tools, ensure_ascii=False, indent=2), encoding="utf-8")
     nomes = [t["name"] for t in tools]
@@ -267,9 +377,12 @@ async def executar(cliente: ClienteIFood, saida: Path, carrinho: bool = False) -
     lojas: list[dict] = []
     for consulta in BUSCAS:
         for tipo in ("ITEM", "MERCHANT"):
-            r = await d.chamar("searchOffers", rotulo=f"searchOffers {consulta} {tipo}", query=consulta,
-                               resultKind=tipo, limit=5, **geo)
+            r = await d.chamar("searchOffers", rotulo=f"searchOffers {consulta} {tipo}", _extras=args_busca,
+                               query=consulta, resultKind=tipo, limit=5, **geo)
             (itens if tipo == "ITEM" else lojas).extend(_lista_resultados(r))
+    if not itens and not lojas:
+        avisos.append(AVISO_BUSCA)
+        print(f"  AVISO: {AVISO_BUSCA} (e tente --args-busca '{{...}}')")
 
     primeiro = itens[0] if itens else None
     merchant_id = _achar(primeiro, ("merchantId",)) if primeiro else None
@@ -287,7 +400,7 @@ async def executar(cliente: ClienteIFood, saida: Path, carrinho: bool = False) -
         resultado_carrinho = await _testar_carrinhos(d, itens, endereco_id, geo)
 
     d.gravar()
-    resumo = _resumo(nomes, d, resultado_carrinho)
+    resumo = _resumo(nomes, d, resultado_carrinho) | {"avisos": avisos}
     (saida / "resumo.json").write_text(json.dumps(resumo, ensure_ascii=False, indent=2), encoding="utf-8")
     return resumo
 
@@ -344,6 +457,22 @@ def _resumo(nomes: list[str], d: Diagnostico, carrinho: dict | None) -> dict:
     }
 
 
+def _desembrulhar(erro: BaseException) -> BaseException:
+    while isinstance(erro, BaseExceptionGroup) and len(erro.exceptions) == 1:
+        erro = erro.exceptions[0]
+    return erro
+
+
+def _json_objeto(texto: str) -> dict[str, Any]:
+    try:
+        valor = json.loads(texto)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(f"JSON inválido ({e.msg}). Ex.: '{{\"sortBy\": \"RELEVANCE\"}}'") from None
+    if not isinstance(valor, dict):
+        raise argparse.ArgumentTypeError("--args-busca precisa ser um objeto JSON, ex.: '{\"x\": 1}'")
+    return valor
+
+
 def _imprimir(resumo: dict, saida: Path) -> None:
     print("\n===== RESUMO =====")
     print(f"Tools no servidor: {resumo['total_tools']} (doc: {len(TOOLS_DA_DOC)})")
@@ -356,10 +485,13 @@ def _imprimir(resumo: dict, saida: Path) -> None:
         print("Erros:")
         for tool, msgs in resumo["erros"].items():
             print(f"  {tool}: {msgs[0][:150]}")
+    for aviso in resumo.get("avisos", []):
+        print(f"AVISO: {aviso}")
     if resumo["carrinho"] is not None:
         print(f"2 carrinhos abertos ao mesmo tempo? {resumo['carrinho']['dois_carrinhos_abertos']} "
               f"({resumo['carrinho']})")
-    print(f"\nArquivos em {saida}. CONFIRA que não há dado pessoal antes de: git add docs/mcp-real")
+    print(f"\nArquivos em {saida}.")
+    print(LEMBRETE)
 
 
 async def principal(argv: list[str] | None = None) -> int:
@@ -367,13 +499,16 @@ async def principal(argv: list[str] | None = None) -> int:
     p.add_argument("--carrinho", action="store_true", help="também cria 2 carrinhos (sem enviar pedido)")
     p.add_argument("--demo", action="store_true", help="usa o servidor de demonstração (teste do diagnóstico)")
     p.add_argument("--saida", type=Path, default=SAIDA_PADRAO, help="pasta de saída (padrão docs/mcp-real)")
+    p.add_argument("--args-busca", type=_json_objeto, default=None, metavar="JSON",
+                   help="argumentos extras (objeto JSON) mesclados em cada searchOffers")
     args = p.parse_args(argv)
-    cfg = replace(carregar(), ifood_mcp_modo="demo" if args.demo else "real")
     try:
+        cfg = replace(carregar(), ifood_mcp_modo="demo" if args.demo else "real")
         async with abrir_cliente(cfg) as cliente:
-            resumo = await executar(cliente, args.saida, carrinho=args.carrinho)
-    except ErroMCP as e:
-        print(f"ERRO: {e}", file=sys.stderr)
+            resumo = await executar(cliente, args.saida, carrinho=args.carrinho, args_busca=args.args_busca)
+    except Exception as bruto:  # inclusive ExceptionGroup do SDK; nada de traceback (pode ter dado pessoal)
+        e = _desembrulhar(bruto)
+        print(f"ERRO: {type(e).__name__}: {limpar_erro(str(e))}", file=sys.stderr)
         return 1
     _imprimir(resumo, args.saida)
     return 0

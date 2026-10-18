@@ -208,7 +208,21 @@ def salvar_tokens(tokens: Tokens) -> None:
         os.chmod(temporario, 0o600)
     except OSError:  # Windows: sem permissões POSIX, segue
         pass
-    os.replace(temporario, caminho)
+    # Windows: antivírus/editor/outro processo segurando o arquivo → PermissionError; tenta de novo 1 vez.
+    for tentativa in range(2):
+        try:
+            os.replace(temporario, caminho)
+            return
+        except PermissionError:
+            if tentativa == 0:
+                time.sleep(0.1)
+    try:
+        temporario.unlink()
+    except OSError:
+        pass
+    raise ErroOAuth(
+        f"Não consegui gravar o login do iFood em {caminho.name}: o arquivo está em uso. "
+        f"Feche o arquivo {caminho.name} (editor, antivírus ou outra janela do app) e conecte o iFood de novo.")
 
 
 def apagar_tokens() -> None:

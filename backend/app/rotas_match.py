@@ -80,14 +80,21 @@ def _desembrulhar(erro: BaseException) -> BaseException:
 
 
 def _erro_do_ifood(bruto: BaseException) -> ErroSala:
+    from .ifood_mcp import oauth
+    from .ifood_mcp.cliente import MSG_401
+
+    mensagens_de_login = {oauth.MSG_SEM_TOKEN, oauth.MSG_SEM_CREDENCIAIS, oauth.MSG_SESSAO_EXPIRADA, MSG_401}
     e = _desembrulhar(bruto)
     if isinstance(e, ErroSala):
         return e
     if isinstance(e, checkout.ErroCheckout):
         return ErroSala(502, e.mensagem)
+    # Login/credencial (sem login, sem client_id/secret, sessão expirada, 401 após renovar) → 401, sem prefixo.
+    # O cliente embrulha o ErroOAuth num ErroMCP (`from None`), então a origem fica em __cause__/__context__.
+    if any(isinstance(x, (oauth.SemToken, oauth.SemCredenciais)) for x in (e, e.__cause__, e.__context__)) \
+            or (isinstance(e, ErroMCP) and str(e) in mensagens_de_login):
+        return ErroSala(401, str(e))
     if isinstance(e, ErroMCP):
-        if str(e).startswith("Conecte o iFood"):
-            return ErroSala(401, str(e))
         return ErroSala(502, f"O iFood respondeu com erro: {e}")
     return ErroSala(502, f"Falha ao falar com o iFood ({type(e).__name__}): {e}")
 

@@ -393,8 +393,9 @@ def test_sanitizacao_remove_dados_pessoais_e_arredonda_coordenadas():
 
 
 def test_getuser_inteiro_e_tratado_como_pessoal():
+    # getUser: TODA string é mascarada (inclusive id e dicas), a forma do JSON continua.
     limpo = sanitizar({"name": "Maria", "id": "u-1", "agentHints": {"next": "listAddresses"}}, "pessoal")
-    assert limpo["name"] == MASCARA and limpo["agentHints"]["next"] == "listAddresses"
+    assert limpo == {"name": MASCARA, "id": MASCARA, "agentHints": {"next": MASCARA}}
 
 
 async def test_diagnostico_no_demo_grava_amostras_sanitizadas_e_nunca_envia_pedido(tmp_path):
