@@ -772,7 +772,29 @@ def validar_resposta_llm(dados: dict | None, desejo: Desejo) -> list[Intencao] |
             consultas=consultas, verticais=verticais, restricoes=list(restricoes), vontades=vontades,
             orcamento_max=orcamento, perfil=perfil,
         ))
+    if _consultas_juntas(intencoes):
+        return None  # bug 42: a IA (no limite, 429) juntou os itens da pessoa; o fallback separa certo
     return intencoes or None
+
+
+def _consultas_juntas(intencoes: list[Intencao]) -> bool:
+    """Bug 42: 2+ itens da pessoa com as MESMAS consultas, e elas citam coisas diferentes ("sushi e um sorvete" →
+    os 2 itens = [sushi, sorvete]). Item repetido de verdade ("2 cocas" → [coca, refrigerante] 2×) não conta."""
+    vezes: dict[tuple[str, ...], int] = {}
+    for i in intencoes:
+        chave = tuple(sorted({normalizar(c).strip() for c in i.consultas if c.strip()}))
+        vezes[chave] = vezes.get(chave, 0) + 1
+    for chave, n in vezes.items():
+        if n < 2 or len(chave) < 2:
+            continue
+        cats = {c["nome"] for t in chave for c, _ in categorias_do_trecho(t)}
+        if len(cats) >= 2:
+            return True
+        if not cats:  # fora do dicionário: "coxinha" e "esfiha" sem palavra em comum são 2 pedidos
+            palavras = [set(re.findall(r"[a-z]+", t)) - _CONECTIVOS for t in chave]
+            if all(not (a & b) for k, a in enumerate(palavras) for b in palavras[k + 1:]):
+                return True
+    return False
 
 
 # termo genérico que a IA às vezes devolve sozinho e quase não aparece em nome de prato (ia-real-3: "doce" → nada)
