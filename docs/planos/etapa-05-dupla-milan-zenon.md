@@ -78,12 +78,14 @@
   real), `docs/testes/bugs.md` e o quadro (branches novas do Zenon: integrar no `ccr`). Pedido novo ao Thales = linha P
   nova nesse arquivo (nunca chamar). Testes sempre num worktree separado se houver subagente editando.
 - **02h09:** B9 integrado (resultado direto, sem deck) + reteste P6 do Thales (iFood com `INTERNAL` intermitente e `MERCH-007` em loja aberta → 2 linhas no `feedback-mcp.md`). 471 testes, build ok. Esperando: **P6b** do Thales (quando o iFood estabilizar) → P7 `submitOrder` real na conta de teste (`IFOOD_MCP_PERMITIR_ENVIO=true`) → **Opus**. Zenon: B4 `lojas_fora` ✅; agora Pix sem chave (B4) → integrar. Depois: PR `ccr` → `main` (A4, Sonnet basta).
+- **02h40:** esperando P7 do Thales (iFood estável). Com P7 ok → Milan decide o **P8** (`submitOrder` real na conta de teste, Cartão de Teste, `IFOOD_MCP_PERMITIR_ENVIO=true`) → ajuste fino do `checkout.py` com o JSON do desconto → **Opus**. PR `ccr` → `main` perto do congelamento (10h30), **Sonnet**.
 - **Quando chegar o P2 (`docs/testes/ia-real.txt`):** A3 — prompts com a IA real (`interprete.py`, `juiz.py`,
   `leilao.py`, `ajuste.py`), comparar com a linha de base do registro de 00h41 → **Sonnet**; depois I3 (custo/tempo).
 - **Quando chegar o P4 (amostras de carrinho com sucesso):** ajuste fino do `checkout.py` → **Opus**.
 - **Zenon (remoto):** B9 (Z1, prazo 05h) → bugs de front → README (B8 sem pitch) → PDF às ~11h30. D1 modo palco **saiu** (01h36, nada novo). Pitch/roteiros = Thales (Z2).
 
 ## Registro de execução
+- 18/10 02h40 — Integrado `zenon/b8-textos-b9` (`0d3ea5e`, `racional-ux.md`/`tecnico.md` sem deck). Z11 respondido: Zenon corrige Patrocinado/título da avaliação/"Enviar sem deslizar" depois do B7. P7 para o Thales (reteste com bug 25, envio desligado; P8 `submitOrder` só com ok do Milan). 474 testes, typecheck e build ok. Sem subagente (rodada só de integração).
 - 18/10 02h45 — Bug 25 (dev-mcp-ifood, Opus): `_ler_totais` aceita desconto/benefício/voucher do `summary` e, sem campo, deriva desconto = subtotal + taxa − total (`desconto_derivado: true`); o rateio que já existia passa a fechar as partes. Busca não mudou (promoção é aplicada no total). 474 testes. A confirmar no real: nome do campo, desconto sobre a taxa, total do `getCart` = cobrado no `submitOrder`. Opus adequado (poderia ser Sonnet).
 - 18/10 02h35 — Integrados `zenon/b4-pix-sem-chave` (`b8f2254`) e o P6b + roteiro sem deck do Thales (`dcdb1fa`); limpas as linhas duplicadas pelo merge no quadro/bugs. 471 testes, typecheck e build ok. P6b: bug 21 ✅, 24 ✅; novo bug 25 (total do carrinho com desconto não lido → partes não fecham) → dev-mcp-ifood (Opus).
 - 18/10 02h30 — Integrado `zenon/b4-lojas-fora` (`f855c80`: faixa amarela em `Pagamento.tsx` + "X ficou sem pedido", parte de front do bug 26). Conflito só em `quadro.md`/`comunicacao.md` (mantidas as duas linhas). 471 testes, typecheck e build ok.
