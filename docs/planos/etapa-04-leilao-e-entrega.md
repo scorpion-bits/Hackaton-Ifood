@@ -179,7 +179,7 @@ pedido real na conta de teste, "Ajustar com o IBits", "Só eu" e pacote de entre
 |---|---|---|---|---|---|---|---|
 | T18 | `match/04-ajustar-back` | C14 backend | dev-backend | opus | high | `match/ajuste.py` (novo), `rotas_match.py` (rota nova), `match/salas.py` (campo `ajustes`), testes | 🔄 |
 | T19 | `match/04-ajustar-front` | C14 front + deck | dev-frontend | sonnet | high | `telas/Deck.tsx`, `telas/Resultado.tsx`, `componentes/leilao/*`, `leilao.css`, `api.ts`, `tipos.ts`, `App.tsx` | 🔄 |
-| T20 | `match/04-so-eu` | C15 | dev-frontend | sonnet | high | `telas/Inicio.tsx`, `telas/Organizador.tsx`, `telas/Convidado.tsx`, `telas/SoEu.tsx` (novo), `componentes/Folha.tsx`, `estilo.css` | 🔄 |
+| T20 | `match/04-so-eu` | C15 | dev-frontend | sonnet | high | `telas/Inicio.tsx`, `telas/Organizador.tsx`, `telas/Convidado.tsx`, `telas/SoEu.tsx` (novo), `componentes/Folha.tsx`, `estilo.css` | ✅ |
 | T21 | `match/03-pedido-real` | C16 | dev-mcp-ifood | opus | high | `match/checkout.py`, `match/busca.py`, testes | 🔄 |
 | T22 | `match/05-pacote-entrega` | `docs/ENTREGA.md` + gerador do PDF único dos 6 entregáveis (Mermaid renderizado, galeria de telas) | arquiteto | opus | medium | `docs/ENTREGA.md`, `docs/entrega/*` | 🔄 |
 | T23 | `match/04-polimento-ui` | Passada de design em todas as telas (nível app do iFood) com capturas | dev-frontend | opus | high | front inteiro | ⬜ (depois de T19/T20) |
