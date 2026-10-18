@@ -86,6 +86,8 @@ em { font-style: normal; color: var(--marca); }
 .capa .comidas { position: absolute; right: 90px; top: 50%; transform: translateY(-50%); font-size: 120px; display: grid;
   grid-template-columns: 1fr 1fr; gap: 28px; }
 .capa .comidas span { animation: flutua 5s ease-in-out infinite; }
+.capa .comidas img { display: block; width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 7px solid #fff;
+  box-shadow: 0 18px 40px rgba(80,0,0,.35); }
 .capa .comidas span:nth-child(2) { animation-delay: -1.2s; } .capa .comidas span:nth-child(3) { animation-delay: -2.4s; }
 .capa .comidas span:nth-child(4) { animation-delay: -3.6s; }
 .equipe { font-size: 22px; opacity: .9; margin-top: 46px; }
@@ -106,7 +108,24 @@ em { font-style: normal; color: var(--marca); }
 /* ---------- dores ---------- */
 .dores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; margin-top: 10px; }
 .dor { background: var(--card); border-radius: 26px; padding: 34px 28px; box-shadow: var(--sombra); border-top: 6px solid var(--marca); }
-.dor .ico { font-size: 54px; margin-bottom: 16px; }
+.dor .ico, .ganho .ico { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 16px;
+  background: var(--marca-suave); color: var(--marca); }
+.ico .ic { width: 40px; height: 40px; }
+.ico .ifood { width: 52px; fill: var(--marca); }
+/* ícones de traço (no lugar dos emojis) e a logo do iFood, que segue a cor do texto */
+.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -0.14em; flex: none; }
+.ic.cheio { fill: currentColor; stroke: none; }
+.ic.verde { color: #1a9c4b; }
+.caixa h3 .ic { color: var(--marca); width: 30px; height: 30px; }
+.ifood { fill: currentColor; height: 1em; width: auto; }
+.rotulo.com-logo { display: flex; align-items: center; gap: 12px; }
+.rotulo .ifood.no-rotulo { height: 30px; margin-top: -4px; }
+.caixa h3 .ifood.no-titulo { height: 30px; fill: var(--marca); }
+.avatar.letra { background: var(--marca); color: #fff; font: 800 50px/1 inherit; }
+.logo.parceria { display: flex; align-items: center; gap: 28px; }
+.logo.parceria .x { color: #fff; font-size: 64px; font-weight: 300; opacity: .85; }
+.logo.parceria .ifood { height: 108px; fill: #fff; }
 .dor p { font-size: 22px; color: var(--suave); }
 .faixa { margin-top: 40px; padding: 24px 30px; border-radius: 20px; background: var(--marca-suave); font-size: 26px; }
 
@@ -193,12 +212,12 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
 
   <!-- 1 · CAPA -->
   <section class="slide capa" data-titulo="Capa" data-tempo="0:15">
-    <div class="rotulo a">Hackathon SEMCOMP × iFood · Vendendo com Agentes</div>
+    <div class="rotulo a com-logo">Hackathon SEMCOMP × <svg class="ifood no-rotulo" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg> · Vendendo com Agentes</div>
     <div class="logo a" style="--d:.15s"><img src="img/match-branca.png" alt="Match"></div>
     <h2 class="a" style="--d:.35s; margin-top: 30px; font-size: 54px; max-width: 900px;">Ninguém mais vira <em>o gerente do pedido</em>.</h2>
     <p class="a" style="--d:.55s; max-width: 860px; opacity: .92;">Pedido em grupo montado por um agente que opera o MCP do iFood.</p>
     <p class="equipe a" style="--d:.75s">Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
-    <div class="comidas" aria-hidden="true"><span>🍣</span><span>🍔</span><span>🍦</span><span>🥗</span></div>
+    <div class="comidas" aria-hidden="true"><span><img src="img/pratos/pizza.jpg" alt=""></span><span><img src="img/pratos/hamburguer.jpg" alt=""></span><span><img src="img/pratos/acai.jpg" alt=""></span><span><img src="img/pratos/sanduiche.jpg" alt=""></span></div>
     <aside class="nota">"Boa tarde! Nós somos o time do Match." (pausa) → avance.</aside>
   </section>
 
@@ -208,20 +227,20 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
       <div>
         <div class="rotulo a">Sexta, 21h · república em São Carlos</div>
         <div class="persona a" style="--d:.15s">
-          <div class="avatar">👩🏽‍🎓</div>
+          <div class="avatar letra">A</div>
           <div><h2 style="margin:0">Essa é a Ana.</h2><p class="suave">21 anos, mora com 3 amigos.</p></div>
         </div>
         <p class="a" style="--d:.3s">A turma decidiu pedir comida.<br>Ela abriu o grupo para perguntar o que cada um queria…</p>
         <p class="a destaque" style="--d:4.2s; margin-top: 26px; font-weight: 700; font-size: 32px;">…e virou a gerente do pedido.</p>
       </div>
       <div class="zap a lado" style="--d:.2s">
-        <div class="topo">🏠 Rep do Campus <small>Ana, Bruno, Carla, Diego</small></div>
-        <div class="bolha eu a" style="--d:.7s">bora pedir? o que vcs querem? 🍽️</div>
-        <div class="bolha a" style="--d:1.3s"><b>Bruno</b>japa!! e um sorvete 🍣🍦</div>
-        <div class="bolha a" style="--d:1.9s"><b>Diego</b>hambúrguer, sem discussão 🍔</div>
-        <div class="bolha a" style="--d:2.5s"><b>Carla</b>sou vegetariana e tô no limite, até 25 😬</div>
+        <div class="topo">Rep do Campus <small>Ana, Bruno, Carla, Diego</small></div>
+        <div class="bolha eu a" style="--d:.7s">bora pedir? o que vcs querem?</div>
+        <div class="bolha a" style="--d:1.3s"><b>Bruno</b>japa!! e um sorvete</div>
+        <div class="bolha a" style="--d:1.9s"><b>Diego</b>hambúrguer, sem discussão</div>
+        <div class="bolha a" style="--d:2.5s"><b>Carla</b>sou vegetariana e tô no limite, até 25</div>
         <div class="bolha eu a" style="--d:3.1s">gente, não tem um lugar que tenha tudo isso…</div>
-        <div class="bolha a" style="--d:3.7s"><b>Bruno</b>faz aí que depois eu te passo o pix 🙏</div>
+        <div class="bolha a" style="--d:3.7s"><b>Bruno</b>faz aí que depois eu te passo o pix</div>
         <div class="bolha digitando a" style="--d:4.3s">•••</div>
       </div>
     </div>
@@ -233,10 +252,10 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
     <div class="rotulo a">O que a Ana passa toda vez</div>
     <h2 class="a" style="--d:.1s">Pedir em grupo dá <em>trabalho</em> para uma pessoa só.</h2>
     <div class="dores">
-      <div class="dor f"><div class="ico">😵‍💫</div><h3>Ninguém decide</h3><p>Ela pergunta um por um no WhatsApp e junta as respostas na mão.</p></div>
-      <div class="dor f"><div class="ico">🍣🍔🥗</div><h3>Cada um quer uma coisa</h3><p>Uma loja só não agrada todo mundo. Alguém sempre cede.</p></div>
-      <div class="dor f"><div class="ico">💸</div><h3>Cada bolso, um limite</h3><p>Um tem R$ 25, outro tem R$ 45. E a taxa de entrega, quem paga?</p></div>
-      <div class="dor f"><div class="ico">🧾</div><h3>A conta fica com ela</h3><p>Ela paga tudo, depois cobra o Pix de cada um. E sempre falta alguém.</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.6"/><path d="M12 16.8h.01"/></svg></div><h3>Ninguém decide</h3><p>Ela pergunta um por um no WhatsApp e junta as respostas na mão.</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2v8a3 3 0 0 0 6 0V2"/><path d="M7 2v20"/><path d="M18 2c-2 2-3 5-3 8h3v12"/></svg></div><h3>Cada um quer uma coisa</h3><p>Uma loja só não agrada todo mundo. Alguém sempre cede.</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3v3a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5"/></svg></div><h3>Cada bolso, um limite</h3><p>Um tem R$ 25, outro tem R$ 45. E a taxa de entrega, quem paga?</p></div>
+      <div class="dor f"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><h3>A conta fica com ela</h3><p>Ela paga tudo, depois cobra o Pix de cada um. E sempre falta alguém.</p></div>
     </div>
     <div class="faixa f">O iFood tem <b>65 milhões</b> de clientes e <b>mais de 180 milhões</b> de pedidos por mês¹. Mas o pedido da turma ainda é montado <b>na mão</b>.</div>
     <div class="fonte">¹ Portal de Dados iFood (institucional.ifood.com.br/portal-de-dados-ifood), 2026.</div>
@@ -246,7 +265,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   <!-- 4 · VIRADA -->
   <section class="slide virada" data-titulo="Virada" data-tempo="1:30">
     <h1 class="a">E se cada um<br>só dissesse <em>o que quer</em>?</h1>
-    <div class="ibits a zoom" style="--d:.6s"><span class="bola">❤</span>O <span class="destaque">IBits</span> faz o resto.</div>
+    <div class="ibits a zoom" style="--d:.6s"><span class="bola"><svg class="ic cheio" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.1 3.2 4.5 6.8 4.5c2 0 3.6 1.1 4.4 2.6.8-1.5 2.4-2.6 4.4-2.6 3.6 0 5.8 3.6 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></span>O <span class="destaque">IBits</span> faz o resto.</div>
     <aside class="nota">"E se cada um só dissesse o que quer… e um agente fizesse o resto? Esse é o Match, com o nosso agente, o IBits."</aside>
   </section>
 
@@ -340,13 +359,13 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
     <div class="rotulo a">Como funciona</div>
     <h2 class="a" style="--d:.1s">A IA conversa. O código calcula. <em>O MCP do iFood executa.</em></h2>
     <div class="fluxo">
-      <div class="caixa ia a" style="--d:.25s"><h3>🧠 Agente IBits</h3><p>a parte que precisa de IA</p>
+      <div class="caixa ia a" style="--d:.25s"><h3><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg> Agente IBits</h3><p>a parte que precisa de IA</p>
         <ul><li>Entende a frase de cada um</li><li>Avalia cada loja</li><li>Entende o "Ajustar"</li></ul></div>
       <div class="seta a" style="--d:.4s">⇄</div>
-      <div class="caixa codigo a" style="--d:.5s"><h3>⚙️ Ferramentas</h3><p>código, sem chute</p>
+      <div class="caixa codigo a" style="--d:.5s"><h3><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg> Ferramentas</h3><p>código, sem chute</p>
         <ul><li>Escolhe a combinação</li><li>Divide a conta ao centavo</li><li>Gera o Pix</li></ul></div>
       <div class="seta a" style="--d:.65s">⇄</div>
-      <div class="caixa mcp a" style="--d:.75s"><h3>🛵 MCP do iFood</h3><p>loja, preço, taxa e carrinho</p>
+      <div class="caixa mcp a" style="--d:.75s"><h3>MCP do <svg class="ifood no-titulo" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></h3><p>loja, preço, taxa e carrinho</p>
         <div class="tools">
           <span style="--i:0">searchOffers</span><span style="--i:1">getMerchant</span><span style="--i:2">getItem</span>
           <span style="--i:3">createCart</span><span style="--i:4">addItemToCart</span><span style="--i:5">setCartDelivery</span><span style="--i:6">getCart</span>
@@ -358,7 +377,7 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
         <div class="cel mini"><div class="tela"><img src="img/app/real-pedido.png" alt="Pedido no MCP real: Big Mac e McFritas no mesmo McDonald's, com as fotos do iFood"></div></div>
         <div class="cel mini"><div class="tela"><img src="img/app/real-prontos.png" alt="Carrinho pronto no iFood, no MCP real"></div></div>
       </div>
-      <div class="prova-txt"><b>✅ No iFood de verdade.</b> MCP real, conta de teste: lojas, logos, fotos, preços e carrinho vêm do iFood.<br>
+      <div class="prova-txt"><b><svg class="ic verde" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l3 3 5-6"/></svg> No iFood de verdade.</b> MCP real, conta de teste: lojas, logos, fotos, preços e carrinho vêm do iFood.<br>
         <span class="suave">"Um hambúrguer e uma batata frita" → Big Mac + McFritas na mesma loja, 1 entrega.</span><br>
         E a conta fecha com o iFood ao centavo (Burger King):<br><span class="conta">39,99 + entrega 9,99 + serviço 1,00 = R$&nbsp;50,98</span></div></div>
     <aside class="nota">"Por baixo: a IA faz o que precisa de IA, entender as frases e avaliar as lojas. A conta é código, sem chute. E tudo que é loja, preço, taxa e carrinho vem do MCP do iFood: nenhum número é inventado pela IA." (clique: aparecem as telas reais) "E isso roda no iFood de verdade: lojas, logos, fotos e preços vêm do MCP real. Pedi um hambúrguer e uma batata frita, e o IBits juntou Big Mac e McFritas no mesmo McDonald's, uma entrega só. E a conta bate com o iFood ao centavo, inclusive a taxa de serviço."</aside>
@@ -369,9 +388,9 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
     <div class="rotulo a">Quem ganha</div>
     <h2 class="a" style="--d:.1s">Um pedido da turma, <em>dentro do iFood</em>.</h2>
     <div class="ganhos">
-      <div class="ganho a" style="--d:.25s"><div class="ico">🧑‍🤝‍🧑</div><h3>A turma</h3><p>Uma frase por pessoa. Ninguém cede, ninguém adianta dinheiro.</p></div>
-      <div class="ganho a" style="--d:.4s"><div class="ico">🏪</div><h3>As lojas</h3><p>Até 3 lojas no mesmo pedido: a sorveteria entra junto com o japonês.</p></div>
-      <div class="ganho a" style="--d:.55s"><div class="ico">❤️</div><h3>O iFood</h3><p>O grupo que hoje se organiza no WhatsApp passa a decidir no app.</p></div>
+      <div class="ganho a" style="--d:.25s"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></div><h3>A turma</h3><p>Uma frase por pessoa. Ninguém cede, ninguém adianta dinheiro.</p></div>
+      <div class="ganho a" style="--d:.4s"><div class="ico"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4.5 9v11h15V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M10 20v-5h4v5"/></svg></div><h3>As lojas</h3><p>Até 3 lojas no mesmo pedido: a sorveteria entra junto com o japonês.</p></div>
+      <div class="ganho a" style="--d:.55s"><div class="ico"><svg class="ifood no-ico" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></div><h3>O iFood</h3><p>O grupo que hoje se organiza no WhatsApp passa a decidir no app.</p></div>
     </div>
     <div class="prox">
       <div class="f"><b>Próximo passo:</b> piloto com repúblicas e turmas de São Carlos, com meta combinada com o iFood.</div>
@@ -381,22 +400,25 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   </section>
 
   <!-- 11 · FECHAMENTO -->
-  <section class="slide capa" data-titulo="Fechamento" data-tempo="4:50">
-    <div class="persona a"><div class="avatar" style="background:rgba(255,255,255,.18)">👩🏽‍🎓</div>
+  <section class="slide capa" data-titulo="Fechamento" data-tempo="4:50" data-som="vinheta">
+    <div class="persona a"><div class="avatar letra" style="background:#fff;color:var(--marca)">A</div>
       <p style="font-size:32px">A Ana voltou a ser só<br><b>mais uma amiga com fome.</b></p></div>
-    <div class="logo a" style="--d:.3s; margin-top: 30px"><img src="img/match-branca.png" alt="Match"></div>
+    <div class="logo a parceria" style="--d:.3s; margin-top: 30px"><img src="img/match-branca.png" alt="Match"><span class="x">×</span><svg class="ifood no-fechamento" viewBox="0 0 1004 530.58" role="img" aria-label="iFood"><path d="M-4,529.31H72.41l42.46-211.2H38.45ZM42.66,292.92h76.73L132,229.73H55.3Zm59.47,295.82h76.42l46.69-228.18h57.31L291,318.11H234.79l2.13-9.55c3.18-18,9.55-38.21,38.2-38.21,17,0,32.91,1.06,48.82,8.49l8.5-44.57a167.8,167.8,0,0,0-55.19-9.56c-61.56,0-104,36.09-119.93,93.4H130.79l-8.49,42.45h26.53Z" transform="translate(4 -224.71)"/><path d="M344.11,533.56c90.21,0,152.83-81.73,152.83-148.59,0-49.88-45.64-71.11-90.21-71.11C308,313.86,253.9,402,253.9,462.45c0,49.88,46.7,71.11,90.21,71.11m242,0c90.21,0,152.83-81.73,152.83-148.59,0-49.88-46.7-71.11-91.28-71.11-98.7,0-152.82,88.09-152.82,148.59,0,49.88,47.76,71.11,91.27,71.11m277-4.25h75.35L1000,229H923.59l-18.05,89.15-31.84-3.18c-74.29,0-142.21,95.51-142.21,163.44,0,27.59,18,55.19,48.82,55.19,43.51,0,74.29-21.23,87-42.46h4.24ZM627.48,687.45a295,295,0,0,1-212.26,66.86c-100.83-6.37-173-83.85-185.73-165.57h4.24c23.35,51,79.6,98.71,148.59,106.13,70,8.49,153.89-23.34,199.52-66.86L530.9,588.74H684.79l-34,163.45-22.29-63.68Z" transform="translate(4 -224.71)"/></svg></div>
     <h2 class="a" style="--d:.5s; margin-top: 24px; font-size: 52px;">Cada um fala o que quer.<br><em>O IBits monta, divide e pede pelo iFood.</em></h2>
     <p class="equipe a" style="--d:.7s">Obrigado! · Thales Miguel Hajes · Milan Bahrami · Zenon · Antonio</p>
-    <div class="comidas" aria-hidden="true"><span>🍦</span><span>🍣</span><span>🥗</span><span>🍔</span></div>
-    <aside class="nota">"E a Ana voltou a ser só mais uma amiga com fome. Match: cada um fala o que quer, o IBits monta, divide e pede pelo iFood. Obrigado!"</aside>
+    <div class="comidas" aria-hidden="true"><span><img src="img/pratos/pizzas.jpg" alt=""></span><span><img src="img/pratos/milkshake.jpg" alt=""></span><span><img src="img/pratos/lanche.jpg" alt=""></span><span><img src="img/pratos/hamburguer.jpg" alt=""></span></div>
+    <aside class="nota">(ao entrar neste slide toca a vinheta "iFood!": espere ela terminar antes de falar) "E a Ana voltou a ser só mais uma amiga com fome. Match: cada um fala o que quer, o IBits monta, divide e pede pelo iFood. Obrigado!"</aside>
   </section>
 
   <div id="progresso"></div>
 </div>
 
+<!-- vinheta do iFood: toca ao AVANÇAR para um slide com data-som="vinheta" (hoje: o Fechamento) -->
+<audio id="vinheta" src="audio/vinheta-ifood.mp3" preload="auto"></audio>
+
 <div id="cantos">
   <button id="bt-tema" type="button" title="Tema claro/escuro (T)">◐ Tema</button>
-  <button id="bt-notas" type="button" title="Janela do apresentador (S)">🗒 Notas</button>
+  <button id="bt-notas" type="button" title="Janela do apresentador (S)">Notas</button>
   <button id="bt-tela" type="button" title="Tela cheia (F)">⛶</button>
 </div>
 
@@ -432,8 +454,16 @@ body.apresentador #notas { display: grid; grid-template-columns: 1fr 340px; gap:
   let atual = 0, passo = 0, inicio = null;
   const passos = (s) => [...s.querySelectorAll('.f')];
 
+  const vinheta = document.getElementById('vinheta');
+  vinheta.volume = 0.8;
   function mostrar(i, p, enviar = true) {
+    const antes = atual;
     atual = Math.max(0, Math.min(slides.length - 1, i));
+    // som só na tela principal (a do apresentador fica muda) e só avançando para o slide (voltar não toca)
+    if (!apresentador && atual > antes && slides[atual].dataset.som === 'vinheta') {
+      vinheta.currentTime = 0;
+      vinheta.play().catch(() => {});
+    }
     const fs = passos(slides[atual]);
     passo = p === 'fim' ? fs.length : Math.max(0, Math.min(fs.length, p));
     slides.forEach((s, k) => { s.classList.toggle('ativo', k === atual); s.classList.toggle('antes', k < atual); });

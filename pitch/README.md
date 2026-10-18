@@ -7,6 +7,15 @@ PDF de reserva: `pitch.pdf` (claro). Telas do app: `img/app/` (visual atual com 
 - `real-avaliacao`, `real-pedido`, `real-prontos`: o app no **MCP real** (conta de teste, endereço em SP, IA Gemini),
   18/10 ~09h: logos, fotos, preços e carrinho do iFood. Aparecem no clique da prova do slide "Como funciona".
 
+## Visual e som
+- Sem emojis: ícones de traço em vermelho iFood, fotos reais de pratos do iFood (`img/pratos/`, do CDN do iFood
+  via amostras do MCP em `docs/mcp-real/`) e a logo do iFood (`img/ifood-logo.svg`, Wikimedia Commons
+  "File:IFood_logo.svg"; embutida no HTML para seguir a cor do slide) na capa, no "Como funciona", no "Quem ganha" e
+  no fechamento ("match × iFood").
+- **Vinheta "iFood!"** (`audio/vinheta-ifood.mp3`, 1,8 s): toca ao **avançar** para o slide que tem
+  `data-som="vinheta"` (hoje o Fechamento). Só na janela principal (a do apresentador fica muda); voltar não toca.
+  Para mudar de slide, mova o atributo `data-som="vinheta"` para outra `<section>`. Confira o volume do PC antes.
+
 ## Teclas
 | Tecla | Ação |
 |---|---|
