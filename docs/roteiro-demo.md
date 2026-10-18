@@ -23,7 +23,7 @@ Regras:
 
 | Tempo | Quem | Faz (clique) | Fala exata do Thales |
 |---|---|---|---|
-| 0:00–0:15 | Thales | Início → banner "Pedir em grupo? Dê um Match" → cria a sala → QR no projetor | "Sexta à noite. Em vez de discutir no WhatsApp, eu abro o Match. Só eu entro no iFood. Meus amigos leem o QR, sem login." |
+| 0:00–0:15 | Thales | Início → banner "match" → botão "Fazer um match" → cria a sala → QR no projetor | "Sexta à noite. Em vez de discutir no WhatsApp, eu abro o Match. Só eu entro no iFood. Meus amigos leem o QR, sem login." |
 | 0:15–0:40 | Milan, Zenon, Antonio | Leem o QR, digitam nome e a frase, tocam em **Enviar meu pedido** | Milan (em voz alta): "Japonês e um sorvete, até 45." · Zenon: "Hambúrguer e sorvete, até 50." · Antonio: "Algo barato e vegetariano, até 25." · Thales, quando os 3 ficam "respondeu": "Cada um escreveu do seu jeito, em segundos." |
 | 0:40–0:43 | Thales | **Rodar Match** | "Agora as lojas vão disputar o nosso pedido." |
 | 0:43–0:53 | Thales | Tela "A disputa pelo seu pedido" toca sozinha. Toca **Pular** se passar de 10 s | **Momento uau, narração do Patrocinado:** "Cada restaurante tem um agente vendedor, que só enxerga o próprio cardápio. Olha quem fala primeiro: o Poke Verde. Ele é **Patrocinado**, pagou para aparecer primeiro… e atende só 1 de 3. A sorveteria decide sozinha: 'fecho 2 sorvetes num pedido só, 1 entrega em vez de 2'. Pagar não compra o pedido." |

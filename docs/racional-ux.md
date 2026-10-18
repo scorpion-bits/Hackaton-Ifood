@@ -76,7 +76,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   por sala.
 
 ### Deck
-- **Decidir entre 3 opções sem tabela.** Cada cartão é uma combinação inteira: afinidade %, "N de M felizes", lojas e,
+- **Decidir entre 3 opções sem tabela.** Cada cartão é uma combinação inteira: afinidade %, "N de M bem atendidos", lojas e,
   por pessoa, item · loja · preço · motivo.
 - **Gesto conhecido.** Deslizar para a direita = Match; para a esquerda = próxima. O padrão já é familiar de apps de
   "match".
@@ -102,7 +102,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
   "Entregar em", verticais e cards de loja. Tokens e fontes estão em `docs/design-ifood.md` §5.
 - **Sem logo, sem fonte proprietária, sem fotos do iFood.** Usamos Inter, emoji neutros por categoria e o nome
   "Match". Por quê: não temos licença para os ativos da marca, e um protótipo não deve se passar pelo app oficial.
-  Rodapé fixo: "Protótipo de hackathon · não é o app oficial do iFood".
+  Rodapé fixo: "Protótipo de hackathon · não afiliado ao iFood".
 - O resto da paleta (vermelho escuro, cinzas, verde) é escolha nossa e está marcado como não oficial no `design-ifood.md`.
 
 ## 7. Acessibilidade
@@ -132,7 +132,7 @@ lojas, e as pessoas só fazem o que só elas podem fazer: dizer o que querem e d
 | IA lenta ou fora | Fallback determinístico em poucos segundos; o leilão toca com falas prontas |
 | Prazo da vaquinha acabou | "O prazo acabou e Fulano não pagou" → **Organizador cobre** (assume a parte) ou **Tirar os itens dessa pessoa** (recalcula) |
 | Total mudou no carrinho | O app para, mostra o novo total e as novas partes e pede novo ok |
-| Loja recusou o pedido | "O iFood recusou este pedido" → o Match sugere outra loja só para essa parte; quem já pagou recebe de volta no acerto |
+| Loja recusou o pedido | "O iFood recusou este pedido" → o Match para, mostra o que saiu e o que não saiu e avisa quem já pagou; o acerto da devolução ainda é feito pelo organizador (no protótipo não há recálculo automático) |
 | Carregando | Mensagem do que está acontecendo ("Montando carrinhos…"), nunca tela parada |
 
 ## 9. O que mediríamos em produção
