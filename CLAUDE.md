@@ -7,6 +7,8 @@
 - Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
 - **Plano vigente: `docs/planos/etapa-05-dupla-milan-zenon.md`** — Milan = back/MCP/integração (só ele integra);
   Zenon = front/entregáveis/pitch; Thales = testes guiados (`docs/testes/roteiro-testes.md`, sem editar código).
+- **Ao fim de cada etapa** (pedido do Milan, para economizar token): registrar em "Próximo passo" do plano vigente e
+  dizer ao humano a próxima etapa, o **modelo recomendado** (Haiku/Sonnet/Opus) e se dá `/clear` ou `/compact`.
 
 ## Evento
 - Hackathon SEMCOMP × iFood "Vendendo com Agentes", São Carlos. Prêmios R$ 4.000 / 2.000 / 1.000.
