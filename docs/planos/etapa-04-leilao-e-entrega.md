@@ -112,7 +112,7 @@ Limites: ≤ 8 lojas no leilão (as de melhor nota), ≤ 2 passes, ≤ 5 lances,
 | T5 | `match/05-pesquisa-impacto` | Pesquisa com fonte: anúncios patrocinados em marketplaces/iFood, comércio entre agentes, números do iFood; formulário da pesquisa da equipe | pesquisador | opus | medium | `docs/pesquisa-mercado.md`, `docs/pesquisa-usuarios.md` (novos) | — | todo fato com link e data; formulário de ≤ 6 perguntas (1 min) || 🔄 |
 | T6 | `match/05-racional-ux` | Racional de UX (entregável 3) | pitch-demo | opus | medium | `docs/racional-ux.md` (novo) | — | princípios, jornada do organizador/convidado, leilão, deck, confiança (consentimento, selo), acessibilidade, o que medimos || 🔄 |
 | T7 | (só leitura) | Avaliação 1 do jurado (produto atual + este plano) | jurado | opus | high | — (o engenheiro grava `docs/avaliacao-jurado.md`) | — | nota por critério + o que tira pontos || 🔄 |
-| T8 | `match/03-formato-real` | 03.5: busca e checkout no formato real; ≤ 8 lojas e concorrência limitada no `getMerchant`; `imagem_url`; feedback do MCP (entregável 6) | dev-mcp-ifood | opus | high | `match/busca.py`, `match/checkout.py`, `match/modelos.py`, `backend/tests/test_formato_real.py`, `docs/feedback-mcp.md`, `docs/mcp-ifood.md` | 👥 03.4 | amostras reais viram fixtures e passam; Match real até `getCart` no PC | ⬜ |
+| T8 | `match/03-formato-real` | 03.5: busca e checkout no formato real; ≤ 8 lojas e concorrência limitada no `getMerchant`; `imagem_url`; feedback do MCP (entregável 6) | dev-mcp-ifood | opus | high | `match/busca.py`, `match/checkout.py`, `match/modelos.py`, `ifood_mcp/demo_server.py`, `backend/tests/test_formato_real.py`, `docs/feedback-mcp.md`, `docs/mcp-ifood.md` | 👥 03.4 | amostras reais viram fixtures e passam; Match real até `getCart` no PC | ⬜ |
 | T9 | `match/04-limpeza-legado` | Remover domínio antigo (vendedor/comprador, Merchant API, `mcp_server.py`, `acoes.py`, `ifood/`, rotas e testes antigos) mantendo `agente/provedores.py` | dev-backend | sonnet | medium | `backend/app/agente/laco.py`, `mcp_server.py`, `mcp_stdio.py`, `acoes.py`, `ifood/`, `main.py`, testes antigos, `dados_demo.json`, `iniciar.*` se citarem | R1 integrada | suíte passa; app sobe; nada importa o legado | ⬜ |
 | T10 | (integração) | Integrar rodada 1 + navegador 390×780 | engenheiro-chefe | — | — | — | R1 | fluxo inteiro com leilão no mock | ⬜ |
 | T11 | (só leitura) | QA do leilão, visual e números | qa-testador | opus | high | — | T10 | nada bloqueia a demo | ⬜ |
@@ -146,6 +146,11 @@ sonnet/high: telas grandes mas padrão. T4–T6 e T12/T14 opus/medium: texto que
 
 ## Registro de execução
 - 17/10 ~22h — plano aprovado; branches criados a partir de `ccr-4c429dbb-lp7btg` (= etapa 03 em 7cef578); rodada 1 disparada.
+- 17/10 ~22h20 — 👥 1º diagnóstico real no PC: 23 tools (falta `listItemTaxonomy` vs. doc); `getUser`/`listAddresses`
+  ok; **`searchOffers` e `getRecommendations` exigem `userLocation: {latitude, longitude}` (objeto)** — o diagnóstico
+  mandava lat/lng soltos → 0 resultados. Pedido ao T0: montar argumentos pelo `input_schema` + `--lat/--lng`.
+  **Para o T8:** `busca.py`/`checkout.py` devem mandar `userLocation` (e o `demo_server.py` passa a aceitar `userLocation`
+  também, para o demo espelhar o real); registrar no `feedback-mcp.md` (doc não cita `userLocation`; 23 × 24 tools).
 
 ## Fechamento
 (preenchido ao concluir)
