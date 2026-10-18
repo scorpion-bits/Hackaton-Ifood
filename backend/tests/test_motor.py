@@ -472,3 +472,16 @@ async def test_mock_invalido_continua_pedindo_endereco(monkeypatch):
     monkeypatch.setenv("IFOOD_MCP_ENDERECO_MOCK", "São Carlos")
     r = await _rodar_com_endereco({"addresses": []})
     assert r["problema"] == "endereco" and r["avisos"] == [motor_mod.MSG_SEM_ENDERECO]
+
+
+# ---------- pedido completo (Trilha A′, etapa 05) ----------
+@pytest.mark.parametrize("texto", ["uma pizza e uma coca", "pizza e um guaraná, até 50", "uma pizza e um refri"])
+async def test_pizza_e_refrigerante_saem_da_mesma_pizzaria(texto):
+    """Regressão: "uma pizza e uma coca" virava pizza + açaí de outra loja; "guaraná" ficava de fora com 2 avisos
+    que se contradiziam ("Não achei" e "não cabe no orçamento")."""
+    r = await _rodar([Desejo("ana", "Ana", texto)])
+    melhor = r["combinacoes"][0]
+    assert set(melhor["escolhas"]) == {"ana", "ana#2"}
+    assert melhor["lojas"] == ["loja-demo-pizza"]
+    assert "refrigerante" in melhor["escolhas"]["ana#2"]["item_nome"].lower()
+    assert not any("Não achei" in a or "ficou de fora" in a for a in r["avisos"])

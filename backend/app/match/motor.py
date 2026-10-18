@@ -125,8 +125,10 @@ def _nomes_na_explicacao(texto: str, nomes: dict[str, str]) -> str:
 
 
 def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], validos: dict[str, list[Candidato]],
-                      pessoa_de: dict[str, str], nomes: dict[str, str]) -> tuple[list[str], list[str]]:
-    """Avisos sobre o que ficou de fora na melhor combinação; devolve (avisos, slots que ficaram de fora)."""
+                      pessoa_de: dict[str, str], nomes: dict[str, str],
+                      ja_avisados: set[str] | None = None) -> tuple[list[str], list[str]]:
+    """Avisos sobre o que ficou de fora na melhor combinação; devolve (avisos, slots que ficaram de fora).
+    `ja_avisados`: slots que já têm "Não achei X" (não ganham um 2º motivo que contradiz o 1º)."""
     avisos: list[str] = []
     fora: list[str] = []
     presentes = {pessoa_de[s] for s in melhor.escolhas}
@@ -137,7 +139,7 @@ def _avisos_da_melhor(melhor: Combinacao, slots: list[tuple[Desejo, Intencao]], 
     limite_atingido = len(melhor.lojas) >= MAX_LOJAS
     for desejo, intencao in slots:
         slot, pid = intencao.participante_id, desejo.participante_id
-        if slot in melhor.escolhas or not validos[slot]:
+        if slot in melhor.escolhas or not validos[slot] or slot in (ja_avisados or set()):
             continue
         fora.append(slot)
         if pid not in presentes:
@@ -308,7 +310,8 @@ async def rodar_match(cfg: Config, cliente: ClienteIFood, desejos: list[Desejo])
             novo = (f"{base}; a opção mais próxima é {esc.item_nome} ({esc.loja_nome}). Quer mudar o pedido?"
                     if esc else f"{base}. Quer mudar o pedido?")
             avisos[:] = [novo if a == texto else a for a in avisos]
-        extras, fora = _avisos_da_melhor(melhor, slots, validos, pessoa_de, nomes)
+        extras, fora = _avisos_da_melhor(melhor, slots, validos, pessoa_de, nomes,
+                                         {i.participante_id for _, i in descartados})
         avisos.extend(extras)
         if fora:  # mediação: mostra o que daria para incluir com mais uma loja (sempre com confirmação humana)
             com_mais = otimizar(candidatos, pesos, max_lojas=MAX_LOJAS + 1, top=1, orcamentos=orcamentos,
