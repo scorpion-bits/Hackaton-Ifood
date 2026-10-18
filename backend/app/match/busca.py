@@ -46,20 +46,82 @@ PERECIVEIS = ["sorvete", "gelato", "açaí", "picolé", "sundae", "milkshake", "
 
 
 # ---------- leitura de campos ----------
+_CHAVES_LISTA_ENDERECO = ("addresses", "enderecos", "items", "results", "data", "content", "userAddresses")
+_CHAVES_ENDERECO = {"addressId", "formattedAddress", "coordinates", "streetName", "street", "latitude", "location",
+                    "alias", "neighborhood", "postalCode", "zipCode"}
+
+
+def _lista_de_enderecos(dados: Any, profundidade: int = 0) -> list[dict]:
+    """Acha a lista de endereços em qualquer formato razoável (raiz lista, `addresses`, `data.addresses`…)."""
+    if profundidade > 3:
+        return []
+    if isinstance(dados, list):
+        dicts = [e for e in dados if isinstance(e, dict)]
+        if dicts and any(_CHAVES_ENDERECO & set(e) for e in dicts):
+            return dicts
+        for e in dicts:
+            achada = _lista_de_enderecos(e, profundidade + 1)
+            if achada:
+                return achada
+        return []
+    if not isinstance(dados, dict):
+        return []
+    for chave in _CHAVES_LISTA_ENDERECO:
+        achada = _lista_de_enderecos(dados.get(chave), profundidade + 1)
+        if achada:
+            return achada
+    if profundidade > 0 and _CHAVES_ENDERECO & set(dados):  # um endereço só, sem lista
+        return [dados]
+    for valor in dados.values():
+        if isinstance(valor, (dict, list)):
+            achada = _lista_de_enderecos(valor, profundidade + 1)
+            if achada:
+                return achada
+    return []
+
+
+def _coordenada(endereco: dict, nomes: tuple[str, ...], profundidade: int = 0) -> float | None:
+    """latitude/longitude em qualquer nível do endereço (`coordinates`, `location`, `geo`…)."""
+    for nome in nomes:
+        valor = endereco.get(nome)
+        if valor is None or isinstance(valor, (bool, dict, list)) or not str(valor).strip():
+            continue
+        try:  # coordenada tem sinal e várias casas: não usar `_numero` (que lê preço)
+            return float(str(valor).replace(",", "."))
+        except ValueError:
+            continue
+    if profundidade < 3:
+        for valor in endereco.values():
+            if isinstance(valor, dict):
+                achado = _coordenada(valor, nomes, profundidade + 1)
+                if achado is not None:
+                    return achado
+    return None
+
+
+def _texto_endereco(e: dict) -> str:
+    for chave in ("formattedAddress", "fullAddress", "displayName"):
+        if isinstance(e.get(chave), str) and e[chave]:
+            return e[chave]
+    if isinstance(e.get("location"), str):
+        return e["location"]
+    partes = [e.get(k) for k in ("streetName", "street", "streetNumber", "number", "neighborhood", "city")]
+    return ", ".join(str(p) for p in partes if p not in (None, ""))
+
+
 def ler_endereco(dados: dict) -> dict | None:
     """Endereço a usar: o marcado como último usado, senão o 1º. Saída: id, apelido, texto, latitude, longitude."""
-    lista = dados.get("addresses") or dados.get("enderecos") or []
-    lista = [e for e in lista if isinstance(e, dict)]
+    lista = _lista_de_enderecos(dados)
     if not lista:
         return None
-    escolhido = next((e for e in lista if (e.get("usagePattern") or {}).get("isLastUsedAddress")), lista[0])
-    coords = escolhido.get("coordinates") or {}
+    escolhido = next((e for e in lista if (e.get("usagePattern") or {}).get("isLastUsedAddress")
+                      or e.get("isLastUsedAddress") or e.get("default") or e.get("isDefault")), lista[0])
     return {
         "id": escolhido.get("addressId") or escolhido.get("id"),
-        "apelido": escolhido.get("alias") or "",
-        "texto": escolhido.get("formattedAddress") or escolhido.get("location") or "",
-        "latitude": coords.get("latitude", escolhido.get("latitude")),
-        "longitude": coords.get("longitude", escolhido.get("longitude")),
+        "apelido": escolhido.get("alias") or escolhido.get("label") or "",
+        "texto": _texto_endereco(escolhido),
+        "latitude": _coordenada(escolhido, ("latitude", "lat")),
+        "longitude": _coordenada(escolhido, ("longitude", "lng", "lon", "long")),
     }
 
 
