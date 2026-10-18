@@ -70,6 +70,13 @@ def pede_refrigerante(termos: list[str]) -> bool:
 # Ordem = prioridade quando um trecho cita mais de uma categoria. "consultas" vão para o searchOffers
 # (só termos descritivos); "vontades" ajudam o juiz a dar nota.
 CATEGORIAS: list[dict] = [
+    # refeição de restaurante (bug 40): "marmita", "PF", "executivo". "so_consultas": o gatilho não vira consulta
+    # ("pf" e "comida caseira" quase não aparecem no nome do prato; "marmita"/"prato feito"/"executivo" aparecem)
+    {"nome": "marmita", "so_consultas": True, "gatilhos": ["marmita", "marmitex", "prato feito", "pf",
+                                                             "prato executivo", "executivo", "comida caseira",
+                                                             "prato do dia", "prato comercial"],
+     "consultas": ["marmita", "prato feito", "executivo"],
+     "vontades": ["marmita", "marmitex", "prato feito", "executivo", "pf"], "vertical": "RESTAURANT"},
     {"nome": "japonês", "gatilhos": ["japonês", "japonesa", "sushi", "temaki", "sashimi", "uramaki", "hot roll",
                                       "hossomaki", "niguiri", "oriental"],
      "consultas": ["japonês"], "vontades": ["japonês", "sushi", "temaki", "sashimi", "uramaki", "hot roll"],
@@ -404,7 +411,7 @@ def aplicar_quantidades(desejo: Desejo, intencoes: list[Intencao]) -> tuple[list
 
 def interpretar_fallback(desejo: Desejo) -> list[Intencao]:
     """Interpretação determinística por palavras-chave (sem LLM)."""
-    return aplicar_quantidades(desejo, _interpretar_palavras(desejo))[0]
+    return aplicar_onde(desejo, aplicar_quantidades(desejo, _interpretar_palavras(desejo))[0])
 
 
 def itens_alem_do_limite(desejo: Desejo) -> list[str]:
@@ -415,7 +422,102 @@ def itens_alem_do_limite(desejo: Desejo) -> list[str]:
 
 
 # pratos que só restaurante faz: continuam em restaurante mesmo numa lista de compras
-_PRATOS_PRONTOS = {"japonês", "hambúrguer", "pizza", "poke", "açaí"}
+_PRATOS_PRONTOS = {"japonês", "hambúrguer", "pizza", "poke", "açaí", "marmita"}
+
+# ---- refeição × lista de compras (bug 40): "arroz, feijão, salada e guarnição" é um prato feito, não mercado
+_CAT_MARMITA = next(c for c in CATEGORIAS if c["nome"] == "marmita")
+# partes de um prato feito: numa refeição, viram 1 item só (a marmita) em vez de 1 produto cada
+_COMPONENTES_REFEICAO = ["arroz", "feijão", "salada", "carne", "frango", "bife", "ovo", "ovo frito", "farofa", "purê",
+                         "batata", "batata frita", "fritas", "guarnição", "acompanhamento", "legumes", "linguiça",
+                         "peixe", "filé", "costela", "strogonoff", "estrogonofe", "macarrão", "parmegiana", "omelete",
+                         "vinagrete", "couve", "polenta", "mandioca", "aipim", "frango grelhado", "carne assada"]
+# arroz + feijão + uma destas = refeição (sem sinal de compra)
+_JUNTO_DO_ARROZ = ["salada", "carne", "frango", "bife", "ovo", "guarnição", "acompanhamento", "farofa", "linguiça",
+                   "peixe", "filé", "parmegiana", "strogonoff", "estrogonofe", "omelete", "costela"]
+# só valem como refeição se não houver outro prato pronto ("hambúrguer com acompanhamento" segue hambúrguer)
+_REFEICAO_FRACA = ["guarnição", "acompanhamento"]
+_OUTROS_PRATOS = {"japonês", "hambúrguer", "pizza", "açaí", "sorvete", "massa"}
+# sinal de compra: quantidade/embalagem de mercado ou marca de produto ("1 kg de arroz", "feijão Camil")
+_RE_COMPRA = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:kg|g|quilos?|gramas?)\b|\b(?:kg|quilos?|pacotes?|pct|sacos?|fardos?|"
+                        r"duzias?)\b")  # "lata"/"2 L" não: "uma lata de coca" é pedido de restaurante
+_MARCAS_MERCADO = ["camil", "tio joao", "kicaldo", "prato fino", "broto legitimo", "qualita",
+                   "great value", "carrefour", "pao de acucar", "ype", "omo", "minuano", "limpol", "nestle", "italac",
+                   "piracanjuba", "parmalat", "sadia", "seara", "perdigao", "friboi"]
+
+
+def sinal_de_compra(texto_norm: str) -> bool:
+    """A frase é lista de mercado: lugar ("compras", "mercado"), quantidade/embalagem, marca, ou produto de varejo
+    que não é parte de prato ("detergente", "carne moída", "ovos")."""
+    if vertical_de_contexto(texto_norm) or _RE_COMPRA.search(texto_norm):
+        return True
+    if any(contem(texto_norm, m) for m in _MARCAS_MERCADO):
+        return True
+    for cat, gatilhos in categorias_do_trecho(texto_norm):
+        if cat["nome"] == "mercado":
+            return True
+        if cat.get("varejo") and any(normalizar(g) not in {"arroz", "feijao"} for g in gatilhos):
+            return True
+    return False
+
+
+def pede_refeicao(texto_norm: str, ignorar_compra: bool = False) -> bool:
+    """Frase com cara de refeição de restaurante: "marmita", "PF", "executivo", "guarnição" (sem outro prato) ou
+    arroz + feijão junto de salada/carne/frango/ovo… sem sinal de compra. `ignorar_compra`: a pessoa marcou
+    "Onde pedir? Restaurante"."""
+    nomes = {c["nome"] for c, _ in categorias_do_trecho(texto_norm)}
+    if "marmita" in nomes:
+        return True
+    compra = not ignorar_compra and sinal_de_compra(texto_norm)
+    if any(contem(texto_norm, t) for t in _REFEICAO_FRACA) and not (nomes & _OUTROS_PRATOS) and not compra:
+        return True
+    if not (contem(texto_norm, "arroz") and contem(texto_norm, "feijao")):
+        return False
+    # no restaurante (chip), "arroz e feijão" já é prato feito; sem o chip, precisa de mais um pedaço do prato
+    return ignorar_compra or (any(contem(texto_norm, t) for t in _JUNTO_DO_ARROZ) and not compra)
+
+
+def _parte_da_refeicao(parte: str) -> list[str]:
+    """Gatilhos que fazem a parte ser pedaço do prato feito ("bife acebolado", "guarnição"); [] se é outro item
+    ("pizza de frango", "uma coca", "detergente")."""
+    cats = categorias_do_trecho(parte)
+    nomes = {c["nome"] for c, _ in cats}
+    if "marmita" in nomes:
+        return next(gs for c, gs in cats if c["nome"] == "marmita")
+    if nomes - {"mercearia", "poke", "batata", "massa"}:
+        return []
+    if any(normalizar(g) not in {"arroz", "feijao"} for c, gs in cats if c["nome"] == "mercearia" for g in gs):
+        return []
+    return [t for t in _COMPONENTES_REFEICAO if contem(parte, t)]
+
+
+# "Onde pedir?" (T16): chip `onde:X` escolhido na tela; todos os itens da pessoa vão para esse tipo de loja
+ONDE_PEDIR = ("RESTAURANT", "GROCERIES", "DRUGSTORE", "PETSTORE")
+
+
+def onde_pedir(chips: list[str] | None) -> str | None:
+    """Tipo de loja escolhido no chip `onde:X` (ou None = "IBits decide")."""
+    for c in chips or []:
+        valor = str(c).strip()
+        if valor.lower().startswith("onde:") and valor[5:].strip().upper() in ONDE_PEDIR:
+            return valor[5:].strip().upper()
+    return None
+
+
+def aplicar_onde(desejo: Desejo, intencoes: list[Intencao]) -> list[Intencao]:
+    """Com `onde:X`, todos os itens da pessoa buscam só naquele tipo de loja; sem o chip, nada muda."""
+    onde = onde_pedir(desejo.chips)
+    if not onde:
+        return intencoes
+    return [dataclasses.replace(i, verticais=[onde]) for i in intencoes]
+
+
+def _modo_refeicao(desejo: Desejo, texto_norm: str) -> bool:
+    """A pessoa pede uma refeição (prato feito)? "Onde pedir? Mercado/Farmácia/Pet" desliga; "Restaurante" faz
+    arroz + feijão + salada valer refeição mesmo com sinal de compra."""
+    onde = onde_pedir(desejo.chips)
+    if onde and onde != "RESTAURANT":
+        return False
+    return pede_refeicao(texto_norm, ignorar_compra=onde == "RESTAURANT")
 
 
 def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) -> list[Intencao]:
@@ -429,6 +531,7 @@ def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) ->
     # "e", ",", "+", ";", ":", "com" separam itens; "ou" junta alternativas no mesmo item.
     partes = re.split(r"\s*(,|;|:|\+|\be\b|\bcom\b|\bou\b)\s*", sem_orcamento)
     contexto = vertical_de_contexto(norm)
+    refeicao = _modo_refeicao(desejo, norm)
     acentos: dict[str, str] = {}
     for tok in re.findall(r"[^\W\d_]+", (desejo.texto or "").lower()):
         acentos.setdefault(normalizar(tok), tok)
@@ -441,6 +544,16 @@ def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) ->
             continue
         if contexto and _so_contexto(parte):  # "preciso fazer compras:" diz onde, não o quê
             slots.append({"cats": [], "textos": [parte], "livres": [], "contexto": True})
+            continue
+        pedacos = _parte_da_refeicao(parte) if refeicao else []
+        if pedacos:  # "arroz, feijão, salada e guarnição" = 1 prato feito (bug 40), não 4 produtos de mercado
+            prato = next((sl for sl in slots if sl.get("refeicao")), None)
+            if prato is None:
+                slots.append({"cats": [(_CAT_MARMITA, list(pedacos))], "textos": [parte], "livres": [],
+                              "refeicao": True})
+            else:
+                prato["cats"][0][1].extend(pedacos)
+                prato["textos"].append(parte)
             continue
         cats = categorias_do_trecho(parte)
         varejo = [(c, g) for c, g in cats if c.get("varejo")]
@@ -504,7 +617,9 @@ def _interpretar_palavras(desejo: Desejo, ignorados: list[str] | None = None) ->
             if cat["nome"] == "bebida" and pede_refrigerante(gatilhos):
                 base = ["refrigerante", *base]
             # gatilho mais específico que a categoria (ex.: "temaki") vira a 1ª consulta
-            consultas += [g for g in gatilhos if normalizar(g) not in {normalizar(b) for b in base}][:1] + base
+            especifico = [] if cat.get("so_consultas") else [
+                g for g in gatilhos if normalizar(g) not in {normalizar(b) for b in base}][:1]
+            consultas += especifico + base
             vontades += cat["vontades"]
             verticais.append(cat["vertical"])
         if not slot["cats"]:
@@ -538,6 +653,9 @@ _REGRAS = """Você interpreta pedidos em português para buscar no iFood: comida
 farmácia, pet shop e bebidas. Divida a frase em ITENS: um por produto/comida/bebida DIFERENTE que a pessoa citou.
 "japonês e um sorvete" = 2 itens; "preciso fazer compras: arroz, detergente e ração" = 3 itens (o lugar não é item);
 "algo barato e vegetariano" = 1; "sushi ou poke" = 1; "🍕🍕" = 1 pizza (emoji de comida vale como a comida).
+Refeição é 1 item de restaurante: "marmita", "prato feito", "PF", "executivo" ou "arroz, feijão, salada e
+guarnição" = 1 item, verticais ["RESTAURANT"], consultas ["marmita","prato feito","executivo"]. Arroz e feijão só
+são compra de mercado com sinal de compra ("compras", "mercado", "1 kg", "pacote", marca, "detergente").
 NÃO crie item para: restrição ("não como carne", "nada de carne", "nada com glúten", "sem lactose" vão só em
 restricoes), preço, prazo ("chega rápido" = perfil rapido), "pra dividir", "qualquer", "mas". "pizza pra dividir,
 mas não como carne" = 1 item (pizza) + restricoes ["vegetariano"]; "doce qualquer, chega rápido" = 1 item (doce).
@@ -604,6 +722,13 @@ def validar_resposta_llm(dados: dict | None, desejo: Desejo) -> list[Intencao] |
     perfil = perfil_texto if perfil_texto != "equilibrado" else (
         perfil_llm if perfil_llm in PERFIS else "equilibrado")
 
+    if _modo_refeicao(desejo, norm) and not any(
+            isinstance(item, dict) and "RESTAURANT" in _lista_de_textos(item.get("verticais"), 3)
+            and any(c["nome"] == "marmita" for t in _lista_de_textos(item.get("consultas"), 3)
+                    for c, _ in categorias_do_trecho(normalizar(t)))
+            for item in itens):
+        return None  # a IA leu o prato feito como lista de mercado (bug 40): o fallback junta numa marmita
+
     termos_restricao = [CONSULTA_RESTRICAO[r] for r in restricoes]
     intencoes: list[Intencao] = []
     for item in itens[:MAX_SLOTS]:
@@ -655,7 +780,7 @@ async def _interpretar_lote(cfg: Config, desejos: list[Desejo]) -> list[list[Int
         d = desejos[0]
         dados = await completar_json(cfg, SISTEMA, _json_compacto(_entrada_pessoa(d)), max_tokens=450)
         validas = validar_resposta_llm(dados, d)
-        return [aplicar_quantidades(d, validas)[0] if validas else interpretar_fallback(d)]
+        return [aplicar_onde(d, aplicar_quantidades(d, validas)[0]) if validas else interpretar_fallback(d)]
     usuario = _json_compacto({"pessoas": [{"id": d.participante_id, **_entrada_pessoa(d)} for d in desejos]})
     dados = await completar_json(cfg, SISTEMA_GRUPO, usuario, max_tokens=min(1400, 200 + 220 * len(desejos)))
     por_id: dict[str, dict] = {}
@@ -664,7 +789,7 @@ async def _interpretar_lote(cfg: Config, desejos: list[Desejo]) -> list[list[Int
     saida = []
     for d in desejos:
         validas = validar_resposta_llm(por_id.get(d.participante_id), d)
-        saida.append(aplicar_quantidades(d, validas)[0] if validas else interpretar_fallback(d))
+        saida.append(aplicar_onde(d, aplicar_quantidades(d, validas)[0]) if validas else interpretar_fallback(d))
     return saida
 
 

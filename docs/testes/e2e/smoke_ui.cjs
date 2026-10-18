@@ -45,6 +45,9 @@ const SOLO = [
   ['solo-combo', 'hambúrguer com batata e refri', ['Combo smash + batata + refri', 'Combo com']],
   ['solo-farmacia', 'dipirona e protetor solar', ['Drogaria Bem Estar', 'Dipirona', 'Protetor solar']],
   ['solo-mercado', 'preciso fazer compras: arroz, feijão e detergente', ['Mercadinho Bairro Feliz', 'Arroz', 'Detergente']],
+  // T16 / bug 40: prato feito vai para restaurante; "Onde pedir? Restaurante" faz "arroz e feijão" virar PF
+  ['solo-marmita', 'arroz, feijão, salada e guarnição', ['Tempero de Casa']],
+  ['solo-onde-restaurante', 'arroz e feijão', ['Tempero de Casa'], 'Restaurante'],
 ];
 
 (async () => {
@@ -55,7 +58,7 @@ const SOLO = [
     vigiar(p, nome);
     return p;
   };
-  for (const [nome, frase, esperados] of SOLO) {
+  for (const [nome, frase, esperados, onde] of SOLO) {
     const antes = falhas.length;
     try {
       const p = await novo(nome);
@@ -64,6 +67,7 @@ const SOLO = [
       await p.getByRole('button', { name: /Só eu/ }).click();
       await p.getByLabel('Seu nome').fill('Teste');
       await p.locator('#soeu-texto').fill(frase);
+      if (onde) await p.getByRole('radio', { name: onde }).click();
       await p.getByRole('button', { name: 'Encontrar meu pedido' }).click();
       await verPedido(p);
       await checar(p, nome, esperados);
