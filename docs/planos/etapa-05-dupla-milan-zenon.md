@@ -62,7 +62,7 @@
   1. A1: `cd backend` → `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` → push de `docs/mcp-real/`.
   2. A3: no `.env`, `LLM_PROVIDER=groq` + `GROQ_API_KEY` → `.venv\Scripts\python.exe -m app.agente.listar_modelos`
      → escolher `LLM_MODEL` → `.venv\Scripts\python.exe -m app.match.testar_ia` → salvar a saída (sem a chave) em
-     `docs/testes/ia-real.txt` e dar push. Linha de base sem IA (fallback) abaixo, no registro de 00h50.
+     `docs/testes/ia-real.txt` e dar push. Linha de base sem IA (fallback) abaixo, no registro de 00h41.
   3. Thales: `iniciar.bat` e o roteiro de testes; confirmar as frases marcadas do pitch (`CONFIRMAR NO PC DO THALES`)
      e 3 ensaios cronometrados (antes eram do Zenon).
 - **Zenon (remoto):** bugs de front que o Thales registrar no `bugs.md` (B4), regerar o PDF da entrega/pitch perto das
@@ -77,7 +77,7 @@
 - **Zenon (remoto, só git):** B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) → Haiku.
 
 ## Registro de execução
-- 18/10 00h50 — Zenon passa a ser remoto: trilha B só com git; confirmação de frases e ensaios → Milan + Thales.
+- 18/10 00h41 — Zenon passa a ser remoto: trilha B só com git; confirmação de frases e ensaios → Milan + Thales.
   A3: novo `backend/app/match/testar_ia.py` (roteiro + 5 frases livres, conta chamadas ao LLM ok × fallback). Linha de
   base sem IA: roteiro ok (todos bem atendidos); fallback erra em "pizza… não como carne" (põe um burger extra), "lanche
   caprichado" (2 burgers), "doce qualquer" (poke junto) e não acha "marmita". É isso que a Groq tem que melhorar.
