@@ -101,7 +101,8 @@ export default function Ajustar({
   const idCampo = useId();
   const fimRef = useRef<HTMLDivElement>(null);
 
-  const nomes = participantes.map((p) => p.nome).filter(Boolean);
+  // só quem respondeu tem pedido para ajustar (o organizador que não respondeu não entra nos chips nem nos exemplos)
+  const nomes = participantes.filter((p) => p.respondeu).map((p) => p.nome).filter(Boolean);
   const solo = participantes.length === 1;
   const exemplos = exemplosDa(nomes, solo);
   const campoRef = useRef<HTMLInputElement>(null);
