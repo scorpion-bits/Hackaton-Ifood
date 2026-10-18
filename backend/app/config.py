@@ -46,6 +46,8 @@ class Config:
     ifood_mcp_endereco_mock: str = ""
     # Leilão de agentes por loja no Match (MATCH_LEILAO=off volta ao motor sem leilão).
     match_leilao: bool = True
+    # Buscas MCP ao mesmo tempo no Match (MATCH_BUSCAS_PARALELAS; 1 = em sequência, como antes). Latência no real.
+    match_buscas_paralelas: int = 4
     # Modelos de reserva do LLM (LLM_MODELOS_RESERVA, separados por vírgula): usados quando o principal dá 429.
     llm_modelos_reserva: tuple[str, ...] = ()
 
@@ -89,4 +91,12 @@ def carregar() -> Config:
         ifood_mcp_endereco_mock=os.getenv("IFOOD_MCP_ENDERECO_MOCK", "").strip(),
         llm_modelos_reserva=tuple(m.strip() for m in os.getenv("LLM_MODELOS_RESERVA", "").split(",") if m.strip()),
         match_leilao=os.getenv("MATCH_LEILAO", "on").strip().lower() not in ("off", "0", "false", "nao", "não"),
+        match_buscas_paralelas=_inteiro(os.getenv("MATCH_BUSCAS_PARALELAS"), 4, minimo=1, maximo=8),
     )
+
+
+def _inteiro(valor: str | None, padrao: int, minimo: int, maximo: int) -> int:
+    try:
+        return max(minimo, min(maximo, int(str(valor).strip())))
+    except (TypeError, ValueError):
+        return padrao
