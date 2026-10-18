@@ -31,12 +31,18 @@
 | A5 | Bugs de backend vindos do Thales | conforme o bug (só backend) | bug fechado no `docs/testes/bugs.md` | 🔄 otimizador (recado do Zenon 23h38) ✅ `65b4aeb` |
 
 ### Trilha B — Zenon (agente do Zenon: front, entrega, pitch)
+> **Zenon trabalha de casa (remoto); Milan e Thales estão no evento.** Toda tarefa do Zenon tem que ser feita só com o
+> git: nada que dependa do PC do Thales, do `.env` ou de ensaio presencial. O que exige o PC do Thales (confirmar as
+> frases do pedido real, ensaios cronometrados) passou para Milan + Thales no evento. Recados ao Zenon só pelo quadro.
 | ID | Tarefa | Arquivos (só estes) | Pronto quando | Status |
 |---|---|---|---|---|
 | B1 | C14 front: campo "Ajustar com o IBits" no deck, bolhas da conversa, disputa curta, aviso ao convidado | `frontend/src/telas/Deck.tsx`, `Resultado.tsx`, `frontend/src/componentes/leilao/*`, `frontend/src/leilao.css`, `frontend/src/api.ts`, `frontend/src/tipos.ts`, `frontend/src/App.tsx` | build ok; fluxo funciona contra a rota da A2 (antes dela: contra um mock local no próprio front) | ✅ integrado (Zenon testou no navegador contra a A2); B4 forma de pagamento na tela ✅ integrado |
 | B2 | Pacote de entrega (T22): `docs/ENTREGA.md` + PDF único dos 6 entregáveis | `docs/ENTREGA.md`, `docs/entrega/*` | PDF gerado com os 6 entregáveis e capturas | ✅ integrado 23h39; gerar o PDF de novo antes das 12h30 |
 | B3 | Pitch final (T24): ~5 min, palavras do regulamento, MCP real, Ajustar | `pitch/*`, `docs/roteiro-demo.md`, `docs/roteiro-video.md`, `docs/pitch-perguntas-banca.md` | PDF do pitch; roteiro cronometrado com o Thales | ✅ integrado (`ce9296a`); 👥 confirmar frases marcadas no PC do Thales + 3 ensaios |
 | B4 | Bugs de front vindos do Thales | conforme o bug (só `frontend/`) | bug fechado no `docs/testes/bugs.md` | 🔄 bolha do Ajustar com nome duplicado ✅ (`a6810d7`) |
+| B6 | Smoke no navegador 390×780, modo demonstração: sala → 3 convidados → Rodar Match → disputa → deck → **Ajustar** → pagamento → pedido; também Só eu e "Recarregar demo". Conferir checklist (nenhum botão quebrado, selo DEMONSTRAÇÃO) e trocar as capturas de `docs/entrega/04-interface.md` | `docs/testes/bugs.md` (só linhas novas, área/front ou back), `docs/entrega/*` | lista do que quebrou no `bugs.md`; capturas novas | ⬜ |
+| B7 | Vídeo do plano B (≤ 2 min, `docs/roteiro-video.md`) gravado em casa no modo demonstração → arquivo para o Thales (Drive/WhatsApp, **não** no git) | `docs/roteiro-video.md`, `docs/roteiro-demo.md` (só a seção Plano B) | `match-demo.mp4` no PC do Thales | ⬜ |
+| B8 | Jurado simulado no pitch final + 6 entregáveis e correção de texto do que tirar ponto; README com passo a passo para a banca | `README.md`, `pitch/*`, `docs/ENTREGA.md`, `docs/racional-ux.md`, `docs/proposta-negocio.md`, `docs/avaliacao-jurado.md` | nota do jurado registrada; README testado do zero | ⬜ |
 | B5 | Só eu (C15) + polimento de UI — **só se a prioridade 1–4 estiver ok** | `frontend/src/telas/Inicio.tsx`, `Organizador.tsx`, `Convidado.tsx`, `SoEu.tsx`, `componentes/Folha.tsx`, `estilo.css` | build ok; 1 pessoa pede em ~20 s | Só eu ✅ (T20, sessão da etapa 04, 961a8a7); polimento ⏸️ |
 
 ### Trilha C — Thales (agente do Thales guia os testes; não edita código)
@@ -55,19 +61,34 @@
 - Commit com autor humano (`--author="Nome <email>"` + `Responsável: Nome`).
 
 ## 👥 Agora
-- **O `.env` está no PC Windows do Thales.** 17/10 23h53: ele está fazendo login (Conectar iFood no app) e vai rodar `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` e dar push de `docs/mcp-real/` (destrava A1).
-- Chave Groq/Gemini no `.env` + `python listar_modelos.py` (destrava A3).
-- Thales: `iniciar.bat` no PC dele e o roteiro de testes.
+- **O `.env` está no PC Windows do Thales** (MCP + chave Groq já lá). Milan e Thales juntos no evento:
+  1. A1: `cd backend` → `.venv\Scripts\python.exe -m app.ifood_mcp.diagnostico --carrinho` → push de `docs/mcp-real/`.
+  2. A3: no `.env`, `LLM_PROVIDER=groq` + `GROQ_API_KEY` → `.venv\Scripts\python.exe -m app.agente.listar_modelos`
+     → escolher `LLM_MODEL` → `.venv\Scripts\python.exe -m app.match.testar_ia` → salvar a saída (sem a chave) em
+     `docs/testes/ia-real.txt` e dar push. Linha de base sem IA (fallback) abaixo, no registro de 00h41.
+  3. Thales: `iniciar.bat` e o roteiro de testes; confirmar as frases marcadas do pitch (`CONFIRMAR NO PC DO THALES`)
+     e 3 ensaios cronometrados (antes eram do Zenon).
+- **Zenon (remoto):** bugs de front que o Thales registrar no `bugs.md` (B4), regerar o PDF da entrega/pitch perto das
+  12h30 (B2/B3) e ajustes de texto do pitch quando Milan/Thales registrarem no quadro o que mudou.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
-- **Agora (Milan):** smoke do fluxo completo com "Ajustar" no navegador 390×780 (modo demonstração) → se ok, merge
-  do PR #6 (`ccr-4c429dbb-lp7btg` → `main`) → **Sonnet**. Bug do otimizador e `;` do Mermaid ✅ (17/10 23h58).
-  Começar com `/clear` → `/continuar`.
+- **Agora:** PR #6 já está **mergeado em `main`** (18/10 00h37 BRT; `cc5413f`). 378 testes + typecheck ok. Falta só
+  👥: Thales rodar o `diagnostico --carrinho` no PC e dar push de `docs/mcp-real/` (destrava A1/T8) e criar chave
+  Groq/Gemini (destrava A3). Sem isso, a demo vai no modo demonstração (já estável). Congelar código às 10h30.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
-- **Zenon:** B4 (mostrar "Pagamento: Dinheiro na entrega" + bugs do Thales) → Sonnet; B3 pitch final → Opus.
+- **Zenon (remoto, só git):** B6 smoke no navegador → Sonnet; B7 vídeo do plano B (👥); B8 jurado + README → Opus;
+  B4 bugs de front do `bugs.md` → Sonnet; regerar PDFs (B2/B3) perto das 12h30 → Haiku.
 
 ## Registro de execução
+- 18/10 00h52 — Integrado `zenon/plano-nota-maxima` (`docs/plano-nota-maxima.md`). Milan delegou os 🔒 ao engenheiro-chefe:
+  D4 ✅ (sem Patrocinado na demo, `politica_lojas.json` + `test_leilao.py`), D1 liberado com prazo (03h; sai às 07h se
+  instável), D3 parcial depois do B6, D5 fora (microfone exige HTTPS; o QR é http). Ordem do Zenon no quadro. 378 testes.
+- 18/10 00h41 — Zenon passa a ser remoto: trilha B só com git; confirmação de frases e ensaios → Milan + Thales.
+  A3: novo `backend/app/match/testar_ia.py` (roteiro + 5 frases livres, conta chamadas ao LLM ok × fallback). Linha de
+  base sem IA: roteiro ok (todos bem atendidos); fallback erra em "pizza… não como carne" (põe um burger extra), "lanche
+  caprichado" (2 burgers), "doce qualquer" (poke junto) e não acha "marmita". É isso que a Groq tem que melhorar.
+- 18/10 00h37 — A4: PR #6 confirmado mergeado em `main` (`6bc3fa0`). 378 testes ok. `docs/mcp-real/` ainda não chegou → A1/T8 e A3 seguem bloqueadas por 👥.
 - 18/10 00h30 — A4: integrados `zenon/b3-pitch-final` (pitch final) e `zenon/b4-fix-bolha-ajustar`. 377 testes, build ok. Smoke no navegador (qa-testador, Sonnet) em andamento; depois merge do PR #6 → `main`.
 - 17/10 ~23h27 — plano criado; divisão Milan × Zenon; Thales nos testes. A sessão que conduziu a etapa 04 tinha
   T18–T22 marcados 🔄 sem branch no remoto: **se essa sessão ainda tem trabalho, ela dá push no branch e escreve no

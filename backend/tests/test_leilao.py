@@ -69,14 +69,14 @@ async def test_roteiro_mock_mantem_top1_e_preenche_leilao():
     assert replicas == [{"quem": "loja-demo-sorvete", "tipo": "replica",
                          "texto": "Fecho 2 sorvetes num pedido só: 1 entrega em vez de 2."}]
 
-    # patrocinado do demo: só tinha suco (bebida) dentro do orçamento do Antonio, que pediu comida → não oferta
-    # bebida; passa com fala honesta e, por ser patrocinado, fala primeiro. Não vence.
+    # poke do demo: só tinha suco (bebida) dentro do orçamento do Antonio, que pediu comida → não oferta
+    # bebida; passa com fala honesta. Não vence. A demo não tem loja patrocinada (o mecanismo é testado abaixo).
     lojas = {l["loja_id"]: l for l in bloco["lojas"]}
     poke = lojas["loja-demo-poke"]
-    assert poke["patrocinado"] is True and poke["vencedora"] is False and poke["passou"] and poke["ofertas"] == []
-    assert falas[1] == {"quem": "loja-demo-poke", "tipo": "passe",
-                        "texto": "Aqui não tem o que Antonio pediu dentro de R$ 25. Passo."}
-    assert sum(l["patrocinado"] for l in lojas.values()) == 1
+    assert poke["patrocinado"] is False and poke["vencedora"] is False and poke["passou"] and poke["ofertas"] == []
+    assert {"quem": "loja-demo-poke", "tipo": "passe",
+            "texto": "Aqui não tem o que Antonio pediu dentro de R$ 25. Passo."} in falas
+    assert not any(l["patrocinado"] for l in lojas.values())
     assert not any(o["item_id"] == "pk-suco" for l in bloco["lojas"] for o in l["ofertas"])
 
     demo = _itens_do_demo()
