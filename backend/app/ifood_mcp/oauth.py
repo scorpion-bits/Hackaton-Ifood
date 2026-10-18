@@ -59,6 +59,8 @@ _transporte: httpx.AsyncBaseTransport | None = None
 _metodo_auth: str = "basic"
 # state → (code_verifier, criado_em, redirect_uri). Só em memória.
 _estados: dict[str, tuple[str, float, str]] = {}
+# RFC 8707: mandamos `resource=`; se o iFood recusar (`invalid_target`), paramos de mandar (só em memória).
+_enviar_resource: bool = True
 # Uma trava de renovação por event loop (evita 2 refresh simultâneos com o mesmo refresh_token).
 _travas: dict[int, asyncio.Lock] = {}
 
@@ -94,6 +96,8 @@ class ErroOAuthToken(ErroOAuth):
             "invalid_grant": "o código/renovação não vale mais (expirou ou já foi usado).",
             "unauthorized_client": "este agente não pode usar esse tipo de login. Confira o cadastro no Portal.",
             "invalid_request": "pedido inválido (confira a Redirect URL cadastrada no Portal).",
+            "invalid_target": "o parâmetro resource não foi aceito. Tente conectar de novo.",
+            "invalid_scope": "scopes recusados. Deixe IFOOD_MCP_SCOPE vazio no .env.",
         }
         detalhe = explicacoes.get(erro) or descricao or f"HTTP {status}"
         super().__init__(f"O login do iFood recusou: {detalhe}")
@@ -156,11 +160,18 @@ def url_login(cfg: Config) -> str:
         "code_challenge": desafio_pkce(verifier),
         "code_challenge_method": "S256",
         "state": state,
-        "resource": RECURSO_MCP,
     }
+    if _enviar_resource:
+        params["resource"] = RECURSO_MCP
     if cfg.ifood_mcp_scope:
         params["scope"] = cfg.ifood_mcp_scope
     return f"{URL_AUTORIZACAO}?{urlencode(params)}"
+
+
+def desligar_resource() -> None:
+    """Chamado quando o authorize volta com `invalid_target`: o próximo login vai sem `resource`."""
+    global _enviar_resource
+    _enviar_resource = False
 
 
 def _consumir_estado(state: str | None) -> tuple[str, str]:
@@ -229,6 +240,20 @@ def _erro_do_corpo(resposta: httpx.Response) -> tuple[str, str]:
 
 
 async def _post_token(cfg: Config, dados: dict[str, str]) -> dict:
+    """Como `_post_token_auth`, mas se o iFood recusar o `resource` (`invalid_target`), repete 1 vez sem ele."""
+    global _enviar_resource
+    if not _enviar_resource:
+        dados = {k: v for k, v in dados.items() if k != "resource"}
+    try:
+        return await _post_token_auth(cfg, dados)
+    except ErroOAuthToken as e:
+        if e.erro != "invalid_target" or "resource" not in dados:
+            raise
+        _enviar_resource = False
+        return await _post_token_auth(cfg, {k: v for k, v in dados.items() if k != "resource"})
+
+
+async def _post_token_auth(cfg: Config, dados: dict[str, str]) -> dict:
     """POST no /token com client_secret_basic; se o iFood disser `invalid_client`, tenta `_post` uma vez."""
     global _metodo_auth
     client_id, secret = _credenciais(cfg)
