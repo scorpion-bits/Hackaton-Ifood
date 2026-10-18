@@ -93,7 +93,9 @@ async def test_roteiro_da_demo_gera_top3_coerente_com_precos_do_demo():
     assert r["endereco"]["id"] == "end-demo-sao-carlos"
     # relevância: o roteiro não ganha aviso de "opção aproximada" nem de restrição sem confirmação
     assert not any("Não achei" in a or "Nenhum item confirma" in a for a in r["avisos"])
-    assert len(r["avisos"]) == 2
+    # 3 lojas + taxa estimada + "o orçamento vale para os itens" (o roteiro tem orçamento)
+    assert len(r["avisos"]) == 3
+    assert "O orçamento de cada pessoa vale para os itens; a taxa de entrega é somada à parte." in r["avisos"]
     assert not any(e["motivo"].startswith("Opção aproximada") for c in combos for e in c["escolhas"].values())
     json.dumps(r)
 
