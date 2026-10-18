@@ -1,3 +1,1 @@
-from .laco import responder
-
-__all__ = ["responder"]
+"""Provedores de IA (provedores.py) e utilitário para listar modelos (listar_modelos.py)."""

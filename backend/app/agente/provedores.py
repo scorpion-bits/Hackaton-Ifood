@@ -11,7 +11,10 @@ import unicodedata
 from dataclasses import dataclass, field
 
 from ..config import Config
-from ..mcp_server import brl
+
+
+def brl(valor: float) -> str:
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 @dataclass
