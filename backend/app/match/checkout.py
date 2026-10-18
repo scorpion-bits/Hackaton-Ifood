@@ -455,12 +455,25 @@ def _ler_totais(resp: dict) -> dict:
     corpo = _corpo_carrinho(resp)
     fontes = [resp, corpo] + [d for d in (resp.get("summary"), corpo.get("summary"), resp.get("totals"),
                                            corpo.get("totals")) if isinstance(d, dict)]
-    return {
-        "subtotal": _primeiro_valor(fontes, ("subtotal", "subtotalAmount", "itemsAmount")) or 0.0,
-        "taxa": _primeiro_valor(fontes, ("deliveryFee", "deliveryFeeAmount", "deliveryAmount")) or 0.0,
-        "desconto": _primeiro_valor(fontes, ("discount", "discountAmount", "discountsAmount")) or 0.0,
-        "total": _primeiro_valor(fontes, ("total", "totalAmount")) or 0.0,
-    }
+    subtotal = _primeiro_valor(fontes, ("subtotal", "subtotalAmount", "itemsAmount")) or 0.0
+    taxa = _primeiro_valor(fontes, ("deliveryFee", "deliveryFeeAmount", "deliveryAmount")) or 0.0
+    total = _primeiro_valor(fontes, ("total", "totalAmount")) or 0.0
+    # bug 25: o getCart real aplica promoção/benefício no total sem o app ver o campo. Nomes plausíveis, todos
+    # opcionais (suposição a confirmar no real); vale o primeiro achado (não soma, para não contar 2 vezes).
+    desconto = _primeiro_valor(fontes, _CHAVES_DESCONTO) or 0.0
+    totais = {"subtotal": subtotal, "taxa": taxa, "desconto": desconto, "total": total}
+    # sem desconto explícito e total menor que subtotal + taxa: o total do iFood é a verdade → desconto derivado
+    sobra = _centavos(subtotal) + _centavos(taxa) - _centavos(total)
+    if desconto == 0 and total > 0 and sobra > 0:
+        totais["desconto"] = sobra / 100
+        totais["desconto_derivado"] = True
+    return totais
+
+
+# Chaves de desconto aceitas no getCart (raiz, corpo, `summary` ou `totals`). Só `discount*` é visto no demo; as de
+# benefício/voucher são suposição do bug 25 (sem JSON bruto do real com desconto).
+_CHAVES_DESCONTO = ("discount", "discountAmount", "discountsAmount", "discountTotalAmount",
+                    "benefitsAmount", "benefitsTotalAmount", "voucherAmount", "voucherTotalAmount")
 
 
 def _ler_eta(resp_carrinho: dict, metodo_entrega: dict) -> int | None:
