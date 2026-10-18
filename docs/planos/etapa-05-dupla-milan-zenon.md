@@ -60,9 +60,11 @@
 - Thales: `iniciar.bat` no PC dele e o roteiro de testes.
 
 ## Próximo passo (atualizar a cada etapa — é daqui que o `/continuar` parte)
-- **Agora (Milan):** smoke do fluxo com "Ajustar" no navegador 390×780 (modo demonstração) + corrigir o `;` no
+- **Agora (Milan):** bug do otimizador visto pelo Zenon (Milan = "japonês e um açaí, até 45" + roteiro → top 1 com 2
+  lojas corta 2 itens dizendo "até 3 lojas"; ver recado 23h38 no quadro) → **Opus** (lógica de pontuação). Depois:
+  smoke do fluxo com "Ajustar" no navegador 390×780 (modo demonstração) + corrigir o `;` no
   `Note` do Mermaid em `docs/tecnico.md` §3 + atualizar o PR do `ccr-4c429dbb-lp7btg` → `main`.
-  Modelo recomendado: **Sonnet** (integração/verificação, sem lógica nova). Começar com `/clear` → `/continuar`.
+  Smoke/Mermaid/PR: **Sonnet**. Começar com `/clear` → `/continuar`.
 - **Depois (Milan):** A1/T8 formato real assim que `docs/mcp-real/` chegar → **Opus** (MCP real, risco alto).
   A3 (prompts com IA real) quando houver chave → **Sonnet**.
 - **Zenon:** B4 (mostrar "Pagamento: Dinheiro na entrega" + bugs do Thales) → Sonnet; B3 pitch final → Opus.
