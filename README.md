@@ -11,8 +11,37 @@
 3. Tudo passa pelo **MCP do iFood (consumidor)**: busca, cardápio, carrinho, entrega, pagamento, pedido e
    acompanhamento. Preço e taxa só vêm das tools do MCP; nada sai sem o "ok" do organizador.
 
-> Os agentes vendedores por loja (o "leilão") estão **em implementação nesta etapa**. Hoje o motor já busca,
-> avalia e otimiza entre as lojas. Detalhes e estado de cada parte: [`docs/tecnico.md`](docs/tecnico.md).
+Detalhes e estado de cada parte: [`docs/tecnico.md`](docs/tecnico.md).
+
+## Avaliar em 5 minutos
+
+**O que é:** um app web em que um grupo diz o que quer comer em frases livres; agentes das lojas disputam o pedido,
+o IBits escolhe a melhor combinação (até 3 lojas) e o organizador monta os carrinhos pelo MCP do iFood e dá o ok.
+Sem chave de IA e sem internet, tudo roda no modo demonstração (selo DEMONSTRAÇÃO).
+
+**Rodar (3 comandos)** — precisa de Python 3.11+ e Node 20+:
+```bash
+git clone https://github.com/scorpion-bits/Hackaton-Ifood && cd Hackaton-Ifood
+./iniciar.sh            # Windows: iniciar.bat (duplo clique)
+# abra http://localhost:8000
+```
+
+**Testar sozinho (1 aba normal + 3 abas anônimas):**
+1. Aba normal = organizador: "Fazer um match" → crie a sala e copie o link dos convidados.
+2. Em cada aba anônima, abra o link, ponha um nome e uma frase:
+   - aba 1: `Japonês e um sorvete, até 45`
+   - aba 2: `Hambúrguer e sorvete, até 50`
+   - aba 3: `Algo barato e vegetariano, até 25`
+3. Opcional, na aba do organizador ("Também quero pedir"): `feijoada completa, até 60` — mostra o aviso
+   "Não achei feijoada completa…" em vez de inventar um prato (com essa 4ª frase o resultado muda).
+4. "Rodar Match" → veja a disputa das lojas (o Patrocinado fala primeiro e não vence) → deck → "Separado" →
+   pagamentos → "Deslize para enviar" → abra o rastro das tools MCP.
+
+Resultado esperado das 3 primeiras frases e falas da disputa: [`docs/roteiro-demo.md`](docs/roteiro-demo.md).
+Os 6 entregáveis estão na [tabela abaixo](#entregáveis); slides em [`pitch/pitch.pdf`](pitch/pitch.pdf).
+
+**Rede:** para usar celulares de verdade, eles precisam alcançar o PC (`http://<IP-do-PC>:8000`). Se o Wi-Fi
+isolar os aparelhos (comum em rede de evento), use o hotspot do celular ou as abas anônimas no próprio PC.
 
 ## Como funciona (fluxo da demo)
 
@@ -21,9 +50,9 @@ Organizador (PC, único logado no iFood)          Convidados (celular, sem login
   1. Cria a sala ─────── QR + link ──────────────▶ 2. Nome + frase + orçamento + chips
   3. "Rodar Match"
        listAddresses → searchOffers → getMerchant (MCP)
-       IA interpreta → IA dá nota a cada item → otimizador (justiça, custo, prazo, nº de lojas)
-       [em implementação: leilão com 1 agente vendedor por loja]
-  4. Quadro: por pessoa, item · loja · preço · nota · motivo (+ 2 alternativas)
+       IA interpreta → IA dá nota a cada item → leilão: 1 agente vendedor por loja (falas validadas)
+       → otimizador (justiça, custo, prazo, nº de lojas)
+  4. Disputa ao vivo + deck com até 3 combinações ("É um Match!"); quadro: por pessoa, item · loja · preço · nota · motivo (+ 2 alternativas)
   5. Escolhe "junto" (paga tudo) ou "separado" (vaquinha)
        1 carrinho por loja: createCart → addItemToCart → getCartDeliveryMethods → setCartDelivery
                             → listPaymentMethods → setCartPayment → getCart (taxa real)
@@ -74,6 +103,8 @@ variável repetida e vazia mais abaixo no `.env` (vale a última).
 | `LLM_PROVIDER` | `mock` (padrão) · `groq` · `gemini` · `ollama` · `openai` · `anthropic` | `mock` não usa IA nem chave: tudo cai no modo determinístico e a demo inteira roda. Os outros usam o modelo do `.env`. |
 | `LLM_MODEL` | nome do modelo | Não chute: rode `python -m app.agente.listar_modelos` dentro de `backend/` (com o venv). |
 | `LLM_API_KEY` | chave | Ou `GROQ_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. |
+| `MATCH_LEILAO` | `on` (padrão) · `off` | `off` pula o leilão dos agentes das lojas e vai direto ao otimizador. |
+| `IFOOD_MCP_PERMITIR_ENVIO` | `false` (padrão) · `true` | Só no modo real: com `false`, `submitOrder` fica travado e o pedido para no carrinho (a API responde 409 explicando). |
 
 Com qualquer provedor, se a IA falhar ou demorar (limite de 8 s por chamada), o motor segue com o modo
 determinístico. A IA nunca escreve preço, taxa ou prazo.
@@ -114,7 +145,7 @@ cd backend
 cd backend && .venv/bin/python -m pytest -q
 cd frontend && npm run typecheck
 ```
-Hoje: **mais de 220 testes** no backend (pytest), todos passando. Os testes zeram as credenciais e isolam o arquivo de
+Hoje: **303 testes** no backend (pytest), todos passando (contagem de 18/10; o comando acima mostra o número exato). Os testes zeram as credenciais e isolam o arquivo de
 tokens; nenhum teste chama o iFood real.
 
 ## Estrutura
@@ -127,8 +158,10 @@ backend/
     rotas_match.py       API da sala do Match (/api/salas/...)
     rotas_oauth.py       /oauth/login, /oauth/callback, /api/ifood/status, /api/ifood/sair
     match/               motor do Match
-      motor.py           listAddresses → interpretar → buscar → julgar → otimizar
-      interprete.py      frase → slots (consultas, restrições, orçamento, perfil); IA + regras
+      motor.py           listAddresses → interpretar → buscar → julgar → leilão → otimizar
+      interprete.py      frase → slots (consultas, restrições, orçamento, perfil, quantidades); IA + regras
+      leilao.py          1 agente vendedor por loja; validação das falas; fallback por template
+      politica_lojas.json  loja patrocinada do modo demo (só visibilidade)
       busca.py           searchOffers / getMerchant / browseOffers → candidatos (único leitor da descoberta)
       juiz.py            nota 0–1 + motivo por item; IA + regras
       otimizador.py      combinações com justiça, custo, prazo, nº de lojas (até 3)
@@ -138,7 +171,8 @@ backend/
       salas.py           estado da sala em SQLite (máquina de estados)
       llm.py             chamada de IA com saída JSON e limite de tempo
     ifood_mcp/
-      cliente.py         cliente MCP (demo em processo | real via Streamable HTTP) com rastro
+      cliente.py         cliente MCP (demo em processo | real via Streamable HTTP) com rastro;
+                         adapta argumentos ao input_schema (userLocation); trava o submitOrder real
       demo_server.py     servidor MCP de demonstração (17 tools com os nomes da doc)
       oauth.py           Authorization Code + PKCE S256 + client secret; tokens fora do git
       diagnostico.py     amostras sanitizadas do MCP real
@@ -146,8 +180,9 @@ backend/
   tests/                 pytest
 frontend/src/
   App.tsx, api.ts, tipos.ts, estilo.css
-  telas/                 Inicio, Organizador, Convidado, Resultado, Pagamento, Pedidos
-  componentes/           Selo, Rastro, StatusIfood, CartaoPessoa, ContadorPrazo, BarraInferior
+  telas/                 Inicio, Organizador, Convidado, Leilao, Deck, Resultado, Pagamento, Pedidos
+  componentes/           Selo, Rastro, StatusIfood, CartaoPessoa, ContadorPrazo, BarraInferior, Deslizar…
+    leilao/              visual das lojas, "É um Match!", confete, utilitários do deck
 pitch/                   slides (Reveal.js local); npm run pdf gera pitch/pitch.pdf
 docs/                    entregáveis, planos e decisões
 iniciar.bat · iniciar.ps1 · iniciar.sh · .env.example

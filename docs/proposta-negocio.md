@@ -101,7 +101,8 @@ E o iFood quer **multiplicar por 5** a frente de Ads até 2030 ([Startups, 12/11
 
 O Patrocinado leva essa regra ao extremo, no momento em que um **agente** compra:
 - A loja patrocinada tem o lance **mostrado primeiro**, com o rótulo "Patrocinado".
-- O pagamento **nunca** muda nota, filtro ou escolha do IBits. Na demo, a patrocinada fala primeiro e **perde**.
+- O pagamento **nunca** muda nota, filtro ou escolha do IBits e não garante vaga entre as lojas consultadas. Na
+  demo, a patrocinada fala primeiro e **perde**.
 - **O iFood vende atenção, não a decisão.** O agente comprador trabalha para o grupo; se ele pudesse ser comprado,
   ninguém confiaria nele, e o canal inteiro perderia valor.
 - Rótulo sempre visível, em texto (não só cor), cumprindo o princípio da identificação da publicidade do CDC
@@ -190,7 +191,8 @@ PC da equipe e latência medida no rastro]. Detalhes em `docs/tecnico.md`.
 e sai uma cesta com pagamento local plugável. Validação: a mesma engine com cardápio simulado em inglês e espanhol.
 
 **Além de comida.** O iFood já vende mercado, farmácia, pet e bebidas ([iFood, 04/06/2026](https://institucional.ifood.com.br/clientes/ifood-e-mais-que-comida/)),
-e os mentores do evento confirmaram que o catálogo de mercado vem com preço no MCP (`docs/planos/etapa-01b-match-estrategia.md` §12).
+e, em relato oral à equipe durante o evento (não documentado), os mentores disseram que o catálogo de mercado vem
+com preço no MCP (`docs/planos/etapa-01b-match-estrategia.md` §12).
 A mesma lógica serve para a compra do mês da república (cada um diz o que precisa, a IA divide em lojas e a vaquinha
 fecha) ou a farmácia da família.
 

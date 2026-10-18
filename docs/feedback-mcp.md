@@ -1,5 +1,29 @@
 # Feedback sobre o MCP do iFood (entregável 06)
 
+## Top 3 por gravidade
+
+1. **`userLocation` exigido e sem documentação.** `searchOffers` e `getRecommendations` recusam `latitude`/`longitude`
+   soltos (como nos exemplos da doc) e pedem `userLocation: {latitude, longitude}`. No 1º teste real nenhuma busca
+   funcionou. Contornamos lendo o `input_schema` do `list_tools` e montando o objeto (`backend/app/ifood_mcp/cliente.py`).
+2. **23 tools no servidor × 24 na documentação.** `listItemTaxonomy` está na doc e não existe no `list_tools` real.
+3. **`listAddresses` com formato diferente do exemplo da doc.** Nosso leitor não achou a lista e a sala dizia
+   "nenhum endereço salvo", sem erro. Contornamos com um leitor que aceita formatos variados (`match/busca.py`).
+
+## O que funcionou bem
+
+- **OAuth com PKCE S256 conforme os metadados** de `id.ifood.com.br`: seguindo os metadados (não a doc), o login da
+  conta de teste funcionou.
+- **Mensagem de erro do `userLocation` clara:** diz o campo, o tipo (objeto) e os subcampos numéricos; deu para
+  corrigir sem adivinhar.
+- **`list_tools` com `input_schema` útil:** foi o que permitiu adaptar os argumentos ao servidor real e descartar o
+  que a tool não declara.
+
+Amostras sanitizadas do MCP real (`list_tools` e respostas de leitura, geradas por `app.ifood_mcp.diagnostico` no PC
+da equipe): [`docs/mcp-real/`](mcp-real/) — enviadas pela equipe; se a pasta não estiver no repositório, ainda não
+foram publicadas.
+
+## Registro
+
 Anotar **na hora** cada dor real: data/hora, o que tentamos, o que aconteceu, impacto, sugestão.
 
 | Quando | Situação | O que aconteceu | Impacto | Sugestão |
