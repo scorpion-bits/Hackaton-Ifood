@@ -5,6 +5,8 @@
 - Foco único: **MCP real + Match em pedido em grupo funcionando**. Leilão/deck/Patrocinado congelados (só bug). Nada novo.
 - Todo commit com autor humano: pergunte "quem é você?", use `git commit --author="Nome <email>"` + `Responsável: Nome`.
 - Registre no `docs/quadro.md` o que vai fazer e os arquivos (push antes de começar); não mexa em arquivo reservado.
+- **18/10 03h22: agente do Milan sem tokens → o agente do Zenon assume back/MCP/integração (Trilha A′ da etapa 05,
+  decisões 13–14).** Milan, ao voltar: ler a Trilha A′ e o Z16 do `docs/comunicacao.md` e retomar de lá.
 - **Plano vigente: `docs/planos/etapa-05-dupla-milan-zenon.md`** — Milan = back/MCP/integração (só ele integra);
   Zenon = front/entregáveis/pitch (**remoto, de casa: só tarefas via git**); Thales = testes guiados (`docs/testes/roteiro-testes.md`, sem editar código).
 - **O que o Thales precisa fazer → `docs/testes/para-o-thales.md`** (fila P1, P2…; o agente do Thales lê no começo de

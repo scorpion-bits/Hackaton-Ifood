@@ -61,6 +61,18 @@ Formato: data · decisão · por quê · quem aprovou · como reverter.
 12. **Patrocinado sem vaga garantida** (achado do jurado 2): pagar só muda a ordem das falas e o rótulo; o corte de
    lojas ignora o patrocínio. **Bebida nunca é oferta para quem pediu comida.** Aprovação: operacional (Claude).
 
+## 18/10/2026 — Reta final (agente do Zenon no lugar do Milan)
+
+13. **Sem mudar de ideia: "pedido completo" em vez de multicategoria em grupo** (18/10 03h20). Pesquisa de 03h05:
+   nenhum app junta IA que compõe o pedido de várias pessoas a partir de frases livres + vaquinha (iFood só testa
+   "Combinar pagamentos" com 2 pagantes); entrega com várias lojas já existe em DoorDash/Uber Eats/Wolt e o MCP do
+   consumidor não controla logística. Então: cada pessoa recebe tudo o que pediu, na mesma loja quando der (busca com
+   `refinements.merchantId`), combo quando for melhor, custo com taxa da busca. **Só eu** passa a aceitar compras de
+   mercado/farmácia/pet/bebidas (1 carrinho por loja, sem juntar entregas). Aprovação: Zenon. Reverter: cada item
+   (F1–F5) é um commit próprio; F3 (combos) sai se não estiver estável às 08h.
+14. **O agente do Zenon assume back, MCP real e integração** enquanto o agente do Milan está sem tokens (18/10 03h22).
+   Tudo registrado na Trilha A′ da etapa 05 para o Milan retomar. Aprovação: Zenon.
+
 ## Pendentes (👥 decisão humana na abertura)
 
 - Provedor de IA da demo (Groq × Gemini × Ollama) depois de testar com a internet do evento.
