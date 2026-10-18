@@ -6,6 +6,14 @@ Voz: **Thales**. Tela: PC (app em 390 px de largura, centralizado) + abas de con
 Frase que guia: *"pedido em grupo sem dor: cada um fala o que quer, o IBits monta, divide a conta e pede pelo iFood"*.
 Não narrar o Patrocinado. Não dizer que os restaurantes têm agentes no iFood.
 
+## Rascunho pronto (18/10, Zenon)
+- `match-demo-rascunho.mp4` (1080p, 98 s, **sem voz**): gravado automaticamente no modo demonstração seguindo as cenas
+  abaixo, com o organizador e o Milan lado a lado e a fala de cada cena escrita no painel da direita (funciona mesmo
+  sem narração). Enviado ao Thales por fora do git (WhatsApp/Drive), como pede o B7.
+- Para usar com voz: tocar o vídeo e narrar ao vivo lendo o painel, ou gravar a voz por cima (ex.: no Clipchamp do
+  Windows: importar o vídeo → gravar narração → exportar 1080p).
+- Gravação própria no PC continua possível (seção abaixo) se a equipe preferir mostrar a tela real do Thales.
+
 ## Como gravar (no PC do Thales)
 - Gravador: **Win + Alt + R** (Xbox Game Bar) ou OBS. 1080p, 30 fps. Áudio: microfone do fone, ambiente silencioso.
 - App: `iniciar.bat`, `IFOOD_MCP_MODO=demo`, `LLM_PROVIDER=mock`, `MATCH_LEILAO=on`. **Recarregar demo** antes.
@@ -23,7 +31,7 @@ Não narrar o Patrocinado. Não dizer que os restaurantes têm agentes no iFood.
 | 2 | 0:08–0:15 | Sala criada, QR e link | "Só eu entro no iFood. Meus amigos leem o QR, sem login." |
 | 3 | 0:15–0:33 | Aba do convidado: Milan digita "japonês e um sorvete, até R$ 45" e envia; corte rápido para Zenon e Antonio; volta à sala com os 3 "respondeu" | "Cada um fala do seu jeito: japonês e sorvete até 45; hambúrguer e sorvete até 50; algo barato e vegetariano até 25." |
 | 4 | 0:33–0:36 | **Rodar Match** | "Agora o IBits monta o pedido." |
-| 5 | 0:36–0:46 | Disputa (cortar na edição para ~10 s) até o fechamento do IBits | "Para cada loja, o IBits olha só o cardápio dela, que vem do iFood. A tela mostra isso como uma disputa." |
+| 5 | 0:36–0:46 | "Como o IBits avaliou cada loja" (cortar na edição para ~10 s) até o fechamento do IBits | "Para cada loja, o IBits olha só o cardápio dela, que vem do iFood." |
 | 6 | 0:46–0:54 | **Ver as opções** → 1º cartão: Kaigan + Gelato + Brasa, 3 de 3 bem atendidos | "Três de três bem atendidos, e cada item diz o porquê." |
 | 7 | 0:54–1:14 | Desce até **Ajustar com o IBits** → digita "troca o sorvete do Milan e do Zenon por açaí" → bolha "Entendi" → disputa curta → cartão "Atualizado" com Açaí do Campus e "Novo" | "E se mudar de ideia? É só falar com o agente. Ele entende quem e o quê, refaz só o que mudou, e o açaí entra. Conversa com o agente; a conta, com o código." |
 | 8 | 1:14–1:20 | **Dar match** → "É um Match!" → **Cada um paga a sua parte (vaquinha)** | "Agora a conta: cada um paga a sua parte; a taxa de cada loja só entre quem pediu dela." |
@@ -32,8 +40,6 @@ Não narrar o Patrocinado. Não dizer que os restaurantes têm agentes no iFood.
 | 11 | 1:48–1:56 | **Como a IA chegou aqui** (rastro do MCP) | "Cada linha é uma tool do MCP do iFood. Aqui, com dados de demonstração; o mesmo código fala com o MCP real." |
 | 12 | 1:56–2:00 | Cartela final vermelha: "Match — pedido em grupo sem dor" + "Protótipo de hackathon · não afiliado ao iFood" | "Cada um fala, o IBits monta, divide a conta e pede pelo iFood." |
 
-Se a bolha da cena 7 mostrar o nome duas vezes ("Milan: Milan: …", bug de front visto em 18/10 ~03h), regravar
-depois da correção ou cortar a bolha na edição e manter o cartão "Atualizado".
 
 ## Se der tempo: trecho com o MCP real
 > ⚠️ confirmar no PC do Thales (tarefa A1): só gravar se o Match real chegar ao carrinho da conta de teste.
